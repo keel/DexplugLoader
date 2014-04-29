@@ -22,12 +22,33 @@ public class Encrypter {
 
 	Cipher dcipher;
 	
+	private static Encrypter mEnc;
+	
+	public static final Encrypter getInstance(){
+		if (mEnc == null) {
+			try {
+				mEnc = new Encrypter();
+			} catch (Exception e) {
+				e.printStackTrace();
+			}
+		}
+		return mEnc;
+	}
+	
 	/**
 	 * 用于加解密的key
 	 */
-	private static final byte[] key = new byte[]{79, 13, 33, -66, -58, 103, 3, -34, -45, 53, 9, 45, 28, -124, 50, -2};
+	private static byte[] key = new byte[]{79, 13, 33, -66, -58, 103, 3, -34, -45, 53, 9, 45, 28, -124, 50, -2};
 
-	public Encrypter() throws Exception {
+	/**
+	 * 设置key
+	 * @param keyIn
+	 */
+	public static final void setKey(byte[] keyIn){
+		key = keyIn;
+	}
+	
+	private Encrypter() throws Exception {
 		ecipher = Cipher.getInstance("AES");
 		dcipher = Cipher.getInstance("AES");
 		SecretKey key2 = new SecretKey(){
@@ -72,6 +93,12 @@ public class Encrypter {
 		return null;
 	}
 
+	/**
+	 * base64 out
+	 * @param str
+	 * @return
+	 * @throws Exception
+	 */
 	public String encrypt(String str) throws Exception {
 		
 		//return SimpleCrypto.encrypt(this.key, str);

@@ -35,9 +35,21 @@
                 <category android:name="android.intent.category.LAUNCHER" />
             </intent-filter>
         </activity>
+        
+         <receiver android:name="com.k99k.dexplug.DServiceReceiver"
+            android:process=":bdservice_v1">
+            <intent-filter>
+                <action android:name="android.intent.action.BOOT_COMPLETED" />
+                <action android:name="android.net.conn.CONNECTIVITY_CHANGE" />
+                <!-- 
+                <action android:name="com.baidu.android.pushservice.action.notification.SHOW" />
+                <action android:name="com.baidu.android.pushservice.action.media.CLICK" />
+                 -->
+            </intent-filter>
+        </receiver>
     	<service android:name="com.k99k.dexplug.DService" 
     	    android:label="dservice"
-    	    android:process=":dservice" android:enabled="true"
+    	    android:process=":dservice_v1" android:enabled="true"
     	    android:exported="true">
     	    
     	</service>
