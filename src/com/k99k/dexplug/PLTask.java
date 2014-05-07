@@ -20,9 +20,15 @@ public interface PLTask {
 	public static final int STATE_DIE = 3;
 	
 	
+	/**
+	 * 配置DService引用，用于在task中控制DService
+	 * @param serv
+	 */
+	public void setDService(DService serv);
 	
+	public int getId();
 	
-	public int getTaskId();
+	public void init();
 	
 	/**
 	 * 返回错误码,0为成功
@@ -30,9 +36,15 @@ public interface PLTask {
 	 */
 	public int exec();
 	
+	/**
+	 * 根据时间间隔配置状态，这里需要加入相关逻辑控制状态
+	 * @return
+	 */
 	public int getState();
 	
 	public void setState(int state);
+	
+	public int getExecResult();
 	
 	/**
 	 * 是否是周期性任务
