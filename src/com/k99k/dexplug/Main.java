@@ -8,6 +8,7 @@ import java.io.File;
 import dalvik.system.DexClassLoader;
 import android.app.Activity;
 import android.content.Context;
+import android.content.Intent;
 import android.os.Bundle;
 import android.view.View;
 import android.view.View.OnClickListener;
@@ -45,9 +46,7 @@ public class Main extends Activity {
 
 	private LinearLayout area;
 	
-	private static String updateUrl = "http://www.k99k.com/v.txt";
-	private static String downPath = "/mnt/sdcard/.dexplug";
-	private static String dexPath = "/mnt/sdcard/.dexplug/dexplug.jar";
+	private static String dexPath = "/mnt/sdcard/plug1.jar";
 	private static String dexOutputDir= "/data/data/com.k99k.dexplug";
 	/* (non-Javadoc)
 	 * @see android.app.Activity#onCreate(android.os.Bundle)
@@ -67,7 +66,9 @@ public class Main extends Activity {
 		//(new File(downPath)).mkdirs();
 		
 		//启动service，添加一个更新任务
-		
+		Intent i = new Intent();  
+		i.setClass(this, DService.class);  
+		this.startService(i);
 	}
 	
 	void plugIn(Context cx){

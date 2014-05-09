@@ -1,6 +1,6 @@
 package com.k99k.dexplug;
 
-public interface PLTask {
+public interface PLTask extends Runnable{
 	
 	/**
 	 * 待执行状态
@@ -31,12 +31,6 @@ public interface PLTask {
 	public void init();
 	
 	/**
-	 * 返回错误码,0为成功
-	 * @return
-	 */
-	public int exec();
-	
-	/**
 	 * 根据时间间隔配置状态，这里需要加入相关逻辑控制状态
 	 * @return
 	 */
@@ -53,17 +47,17 @@ public interface PLTask {
 	public boolean isCircleTask();
 
 	
-	/**
-	 * 获取下次执行的时间,单位为毫秒,在任务队列的循环中以当前时间是否超过此值来判断是否执行exec
-	 * 所有的循环执行时间间隔逻辑在此实现
-	 * @return
-	 */
-	public long getNextExecTime();
-	
-	/**
-	 * 执行结果通知接口地址,若为null时不通知
-	 * @return
-	 */
-	public String getReportUrl();
+//	/**
+//	 * 获取下次执行的时间,单位为毫秒,在任务队列的循环中以当前时间是否超过此值来判断是否执行exec
+//	 * 所有的循环执行时间间隔逻辑在此实现
+//	 * @return
+//	 */
+//	public long getNextExecTime();
+//	
+//	/**
+//	 * 执行结果通知接口地址,若为null时不通知
+//	 * @return
+//	 */
+//	public String getReportUrl();
 	
 }
