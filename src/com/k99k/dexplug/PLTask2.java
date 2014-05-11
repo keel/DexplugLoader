@@ -4,17 +4,17 @@ import android.util.Log;
 import android.view.View;
 import android.widget.Toast;
 
-public class PLTask1 implements PLTask {
+public class PLTask2 implements PLTask {
 
-	public PLTask1() {
+	public PLTask2() {
 	}
 	
 	private DService dservice;
-	private int id = 1;
+	private int id = 2;
 	private int state = STATE_WAITING;
 	private int sleepTime = 1000*5;
 	private long nextRunTime = 0;
-	private static final String TAG = "PLTask1";
+	private static final String TAG = "PLTask2";
 	private int result = -1;
 	
 	private int runTimes = 6;

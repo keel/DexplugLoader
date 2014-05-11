@@ -1,0 +1,64 @@
+<?xml version="1.0" encoding="utf-8"?>
+<RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:id="@+id/item_a"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:background="@color/white"
+    android:gravity="left">
+
+    <ImageView
+        android:id="@+id/icon"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_alignParentLeft="true"
+        android:layout_alignParentTop="true"
+        android:contentDescription="@string/itemIcon"
+        android:padding="10dp"
+        android:src="@drawable/m1" />
+
+    <TextView
+        android:id="@+id/appName"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="10dp"
+        android:layout_toRightOf="@+id/icon"
+        android:layout_alignTop="@+id/icon"
+        android:text="@string/itemName"
+        android:textSize="15sp" />
+
+    <TextView
+        android:id="@+id/subInfo"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_below="@+id/appName"
+        android:layout_toRightOf="@+id/icon"
+        android:text="@string/itemSub"
+        android:textSize="9sp" />
+
+    <TextView
+        android:id="@+id/appInfo"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_alignLeft="@+id/subInfo"
+        android:layout_below="@+id/subInfo"
+        android:layout_marginRight="10dp"
+        android:text="@string/itemInfo"
+        android:textSize="9sp" />
+
+    <TextView
+        android:id="@+id/down"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_alignParentRight="true"
+        android:layout_alignTop="@id/appName"
+        android:layout_marginRight="10dp"
+        android:background="@color/green"
+        android:clickable="true"
+        android:paddingBottom="5dp"
+        android:paddingLeft="15dp"
+        android:paddingRight="15dp"
+        android:paddingTop="5dp"
+        android:text="@string/itemDown"
+        android:textSize="12sp" />
+
+</RelativeLayout>

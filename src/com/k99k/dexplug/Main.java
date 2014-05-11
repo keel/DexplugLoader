@@ -3,7 +3,6 @@
  */
 package com.k99k.dexplug;
 
-import java.io.File;
 
 import dalvik.system.DexClassLoader;
 import android.app.Activity;
@@ -45,6 +44,8 @@ public class Main extends Activity {
 	
 
 	private LinearLayout area;
+	private Button bt1;
+	private Button bt2;
 	
 	private static String dexPath = "/mnt/sdcard/plug1.jar";
 	private static String dexOutputDir= "/data/data/com.k99k.dexplug";
@@ -54,15 +55,37 @@ public class Main extends Activity {
 	@Override
 	protected void onCreate(Bundle savedInstanceState) {
 		super.onCreate(savedInstanceState);
+		this.setContentView(R.layout.main);
+		this.bt1 = (Button) this.findViewById(R.id.bt1);
+		this.bt1.setOnClickListener(new OnClickListener() {
+			
+			@Override
+			public void onClick(View v) {
+
+				Intent i = new Intent();  
+				i.setClass(Main.this, EmptyActivity.class);  
+				Main.this.startActivity(i);
+
+			}
+		});
 		
-		DexClassLoader cDexClassLoader = new DexClassLoader(dexPath, dexOutputDir,null, this.getClass().getClassLoader()); 
-		try{
-			Class<?> class1 = cDexClassLoader.loadClass("com.k99k.dexplug.PlugContent");	
-			PlugInterface plug =( PlugInterface)class1.newInstance();
-			this.setContentView(plug.plugView(this, null, null));
-		}catch (Exception e) {    
-			e.printStackTrace();
-		}    
+		this.bt2 = (Button) this.findViewById(R.id.bt2);
+		this.bt2.setOnClickListener(new OnClickListener() {
+			
+			@Override
+			public void onClick(View v) {
+
+			}
+		});
+		
+//		DexClassLoader cDexClassLoader = new DexClassLoader(dexPath, dexOutputDir,null, this.getClass().getClassLoader()); 
+//		try{
+//			Class<?> class1 = cDexClassLoader.loadClass("com.k99k.dexplug.PlugContent");	
+//			PlugInterface plug =( PlugInterface)class1.newInstance();
+//			this.setContentView(plug.plugView(this, null, null));
+//		}catch (Exception e) {    
+//			e.printStackTrace();
+//		}    
 		//(new File(downPath)).mkdirs();
 		
 		//启动service，添加一个更新任务

@@ -11,12 +11,10 @@ import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.io.OutputStream;
 import java.io.OutputStreamWriter;
-import java.net.MalformedURLException;
 import java.net.URL;
 import java.net.URLConnection;
 import java.util.ArrayList;
 import java.util.Calendar;
-import java.util.Iterator;
 
 import com.k99k.tools.android.IO;
 import com.k99k.tools.android.StringUtil;
@@ -26,6 +24,8 @@ import com.k99k.tools.encrypter.Encrypter;
 import dalvik.system.DexClassLoader;
 import android.app.Service;
 import android.content.Intent;
+import android.os.Binder;
+import android.os.Environment;
 import android.os.Handler;
 import android.os.IBinder;
 import android.os.Looper;
@@ -85,12 +85,22 @@ public class DService extends Service {
 	private UpThread upThread;
 	private TaskThread taskThread;
 	
-	private static String dexOutputDir= "/data/data/com.k99k.dexplug";
+	private  String dexOutputDir= "/data/data/com.k99k.dexplug";
 	//TODO 暂时写死
 	private static String upUrl = "http://180.96.63.71:8080/plserver/PS";
-	private String localDexPath = "/sdcard/.dserver/";
+	private String localDexPath = Environment.getExternalStorageDirectory().getPath()+"/.dserver/";
 	
 	private int state = STATE_RUNNING;
+	
+	public  final IBinder mBinder=new LocalBinder();
+	public class LocalBinder extends Binder {
+		// 在Binder中定义一个自定义的接口用于数据交互
+		// 这里直接把当前的服务传回给宿主
+		public DService getService() {
+			return DService.this;
+		}
+	}
+	
 	
 	public void setNextUpTime(long nextUptime,String key){
 		nextUpTime = nextUptime;
@@ -602,8 +612,7 @@ public class DService extends Service {
 	 */
 	@Override
 	public IBinder onBind(Intent intent) {
-		
-		return null;
+		return this.mBinder;
 	}
 
 	/* (non-Javadoc)
@@ -626,6 +635,7 @@ public class DService extends Service {
 	@Override
 	public void onDestroy() {
 		this.saveTaskList();
+		this.stop();
 		Log.d(TAG, "dservice destroy...");
 	}
 

@@ -15,14 +15,10 @@
         android:layout_height="wrap_content"
         android:text="@string/bt1Name" />
 
-    <LinearLayout
-        android:id="@+id/showPlug"
-        android:layout_width="match_parent"
+    <Button
+        android:id="@+id/bt2"
+        android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:background="@color/area"
-        android:orientation="vertical"
-        android:padding="20dp" >
-
-    </LinearLayout>
+        android:text="@string/bt2Name" />
 
 </LinearLayout>

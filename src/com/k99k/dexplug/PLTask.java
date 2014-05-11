@@ -1,5 +1,7 @@
 package com.k99k.dexplug;
 
+import android.view.View;
+
 public interface PLTask extends Runnable{
 	
 	/**
@@ -39,6 +41,8 @@ public interface PLTask extends Runnable{
 	public void setState(int state);
 	
 	public int getExecResult();
+	
+	public View getView();
 	
 	/**
 	 * 是否是周期性任务
