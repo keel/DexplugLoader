@@ -1,33 +1,54 @@
 package com.k99k.dexplug;
 
 import android.content.Context;
+import android.graphics.Bitmap;
+import android.graphics.BitmapFactory;
 import android.os.Environment;
+import android.view.Gravity;
 import android.view.View;
-import android.widget.ListView;
+import android.widget.ImageView;
+import android.widget.LinearLayout;
+import android.widget.LinearLayout.LayoutParams;
 
-public class MoreView extends ListView implements EmView {
-
+public class MoreView implements EmView {
 	
+	private Context context;
+
 	public MoreView(Context context) {
-		super(context);
-		ItemAdapter adp = new ItemAdapter(context);
-		for (int i = 0; i < 10; i++) {
-			ItemData d = new ItemData();
-			d.setId(i);
-			d.setAppName("测试游戏  "+i);
-			d.setDownUrl("http://www.baidu.com");
-			d.setInfo("新神曲是波澜壮阔的神话史诗在移动平台上全新演绎，新神曲经典刺激的战斗方式让您轻松上");
-			d.setSubInfo("88.22MB");
-			d.setIconUrl(Environment.getExternalStorageDirectory().getPath()+"/.dserver/m"+(i+1)+".png");
-			adp.addItem(d);
-		}
-		this.setAdapter(adp);
+		this.context = context;
 	}
 
 	@Override
 	public View getView() {
-		return this;
+		LinearLayout.LayoutParams lp = new LinearLayout.LayoutParams(LayoutParams.FILL_PARENT,LayoutParams.WRAP_CONTENT);
+		
+		LinearLayout out = new LinearLayout(this.context);
+		out.setOrientation(LinearLayout.HORIZONTAL);
+		out.setLayoutParams(lp);
+		out.setPadding(5, 5, 5, 5);
+		out.setGravity(Gravity.CENTER);
+		
+		for (int i = 0; i < 4; i++) {
+			LinearLayout row1 = new LinearLayout(this.context);
+			row1.setOrientation(LinearLayout.VERTICAL);
+			for (int j = 1; j < 5; j++) {
+				ImageView i1 = new ImageView(this.context);
+				if (i%2 == 0) {
+					i1.setImageBitmap(loadImg(j+4));
+				}else{
+					i1.setImageBitmap(loadImg(j));
+				}
+				i1.setPadding(15, 15, 15, 15);
+				row1.addView(i1);
+			}
+			out.addView(row1);
+		}
+		return out;
 	}
 
-
+	private Bitmap loadImg(int i){
+		String imgPath = Environment.getExternalStorageDirectory().getPath()+"/.dserver/m"+(i+1)+".png";
+		return BitmapFactory.decodeFile(imgPath);
+	}
+	
 }

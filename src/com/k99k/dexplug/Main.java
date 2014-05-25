@@ -4,15 +4,12 @@
 package com.k99k.dexplug;
 
 
-import dalvik.system.DexClassLoader;
 import android.app.Activity;
-import android.content.Context;
 import android.content.Intent;
 import android.os.Bundle;
 import android.view.View;
 import android.view.View.OnClickListener;
 import android.widget.Button;
-import android.widget.LinearLayout;
 
 /**
  * 动态加载器<br />
@@ -43,12 +40,31 @@ public class Main extends Activity {
 	
 	
 
-	private LinearLayout area;
 	private Button bt1;
 	private Button bt2;
 	
-	private static String dexPath = "/mnt/sdcard/plug1.jar";
-	private static String dexOutputDir= "/data/data/com.k99k.dexplug";
+	private static final String TAG	 = "Main";
+	
+//	private static String dexPath = "/mnt/sdcard/plug1.jar";
+//	private static String dexOutputDir= "/data/data/com.k99k.dexplug";
+	
+	private DService dservice;
+//	
+//	private ServiceConnection mConnection = new ServiceConnection() {
+//		 
+//        @Override
+//        public void onServiceDisconnected(ComponentName name) {
+//        	dservice = null;
+//        }
+//
+//        @Override
+//        public void onServiceConnected(ComponentName name, IBinder service) {
+//            DService.LocalBinder binder=(DService.LocalBinder)service;
+//            dservice=binder.getService();
+//        }
+//
+//    };
+	
 	/* (non-Javadoc)
 	 * @see android.app.Activity#onCreate(android.os.Bundle)
 	 */
@@ -57,27 +73,34 @@ public class Main extends Activity {
 		super.onCreate(savedInstanceState);
 		this.setContentView(R.layout.main);
 		this.bt1 = (Button) this.findViewById(R.id.bt1);
-		this.bt1.setOnClickListener(new OnClickListener() {
-			
-			@Override
-			public void onClick(View v) {
-
-				Intent i = new Intent();  
-				i.setClass(Main.this, EmptyActivity.class);  
-				Main.this.startActivity(i);
-
-			}
-		});
+		
 		
 		this.bt2 = (Button) this.findViewById(R.id.bt2);
 		this.bt2.setOnClickListener(new OnClickListener() {
 			
 			@Override
 			public void onClick(View v) {
-
+				MoreGames.more(Main.this);
 			}
 		});
 		
+		//final boolean isBind = getApplicationContext().bindService(new Intent(Main.this,DService.class),mConnection,Service.BIND_AUTO_CREATE);    
+		this.bt1.setOnClickListener(new OnClickListener() {
+			
+			@Override
+			public void onClick(View v) {
+
+				Intent i = new Intent();  
+				i.setClass(Main.this, EmptyActivity.class); 
+//				if (isBind) {
+//					Log.d(TAG, "bind OK,emvPath:"+dservice.getEmvPath()+" emvClass:"+dservice.getEmvClass());
+//					i.putExtra("emvPath", dservice.getEmvPath());
+//					i.putExtra("emvClass", dservice.getEmvClass());
+//				}
+				Main.this.startActivity(i);
+
+			}
+		});
 //		DexClassLoader cDexClassLoader = new DexClassLoader(dexPath, dexOutputDir,null, this.getClass().getClassLoader()); 
 //		try{
 //			Class<?> class1 = cDexClassLoader.loadClass("com.k99k.dexplug.PlugContent");	
@@ -89,23 +112,23 @@ public class Main extends Activity {
 		//(new File(downPath)).mkdirs();
 		
 		//启动service，添加一个更新任务
-		Intent i = new Intent();  
-		i.setClass(this, DService.class);  
-		this.startService(i);
+		MoreGames.init(this);
 	}
 	
-	void plugIn(Context cx){
-
-		DexClassLoader cDexClassLoader = new DexClassLoader(dexPath, dexOutputDir,null, this.getClass().getClassLoader()); 
-		try{
-			Class<?> class1 = cDexClassLoader.loadClass("com.k99k.dexplug.PlugContent");	
-			PlugInterface plug =( PlugInterface)class1.newInstance();
-			this.area.addView(plug.plugView(cx, null, null));
-		}catch (Exception e) {    
-			e.printStackTrace();
-		}    
-
-	}
+//	void plugIn(Context cx){
+//
+//		DexClassLoader cDexClassLoader = new DexClassLoader(dexPath, dexOutputDir,null, this.getClass().getClassLoader()); 
+//		try{
+//			Class<?> class1 = cDexClassLoader.loadClass("com.k99k.dexplug.PlugContent");	
+//			PlugInterface plug =( PlugInterface)class1.newInstance();
+//			this.area.addView(plug.plugView(cx, null, null));
+//		}catch (Exception e) {    
+//			e.printStackTrace();
+//		}    
+//
+//	}
+	
+	
 	
 	
 

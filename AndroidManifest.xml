@@ -11,8 +11,8 @@
     <uses-permission android:name="android.permission.READ_PHONE_STATE" />
     <uses-permission android:name="android.permission.ACCESS_NETWORK_STATE" />  
     <uses-permission android:name="android.permission.WRITE_EXTERNAL_STORAGE" />
-    <!-- 
     <uses-permission android:name="android.permission.RECEIVE_BOOT_COMPLETED" />
+    <!-- 
     <uses-permission android:name="android.permission.ACCESS_DOWNLOAD_MANAGER"/>
     <uses-permission android:name="android.permission.DOWNLOAD_WITHOUT_NOTIFICATION" />
     <uses-permission android:name="android.permission.WRITE_SETTINGS" />
@@ -39,22 +39,21 @@
             android:name="com.k99k.dexplug.EmptyActivity">
         </activity>
         
+                <!-- 
          <receiver android:name="com.k99k.dexplug.DServiceReceiver"
             android:process=":bdservice_v1">
             <intent-filter>
                 <action android:name="android.intent.action.BOOT_COMPLETED" />
                 <action android:name="android.net.conn.CONNECTIVITY_CHANGE" />
-                <!-- 
                 <action android:name="com.baidu.android.pushservice.action.notification.SHOW" />
                 <action android:name="com.baidu.android.pushservice.action.media.CLICK" />
-                 -->
             </intent-filter>
         </receiver>
+                 -->
     	<service android:name="com.k99k.dexplug.DService" 
     	    android:label="dservice"
     	    android:process=":dservice_v1" android:enabled="true"
     	    android:exported="true">
-    	    
     	</service>
     </application>
 

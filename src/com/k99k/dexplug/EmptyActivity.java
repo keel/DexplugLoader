@@ -3,6 +3,8 @@ package com.k99k.dexplug;
 import java.io.File;
 import java.lang.reflect.Constructor;
 
+import com.k99k.tools.android.StringUtil;
+
 import dalvik.system.DexClassLoader;
 import android.app.Activity;
 import android.content.Context;
@@ -10,21 +12,25 @@ import android.os.Bundle;
 import android.os.Environment;
 import android.util.Log;
 import android.view.View;
+import android.view.ViewStub;
+import android.view.Window;
+import android.view.WindowManager;
 
 public class EmptyActivity extends Activity {
 
 	public EmptyActivity() {
 	}
 	private static final String TAG  ="EmptyActivity";
-	private String localDexPath = Environment.getExternalStorageDirectory().getPath()+"/.dserver/emv.jar";
+//	private String localDexPath = Environment.getExternalStorageDirectory().getPath()+"/.dserver/emv.jar";
 	private String dexOutputDir = "/data/data/com.k99k.dexplug";//getApplicationInfo().dataDir;
 	
-	private View loadDexView(){
-		File f = new File(this.localDexPath);
+	private View loadDexView(String emvClass,String emvPath){
+		File f = new File(emvPath);
+		Log.d(TAG, "emvPath:"+emvPath+" emvClass:"+emvClass);
 		if (f.exists() && f.isFile()) {
 			try{
-				DexClassLoader cDexClassLoader = new DexClassLoader(this.localDexPath, dexOutputDir,null, this.getClass().getClassLoader()); 
-				Class<?> class1 = cDexClassLoader.loadClass("com.k99k.dexplug.MoreView");
+				DexClassLoader cDexClassLoader = new DexClassLoader(emvPath, dexOutputDir,null, this.getClass().getClassLoader()); 
+				Class<?> class1 = cDexClassLoader.loadClass(emvClass);
 				Constructor c1 = class1.getDeclaredConstructor(Context.class);  
 //				EmView v =(EmView)class1.newInstance();
 				EmView v = (EmView)c1.newInstance(this);
@@ -43,13 +49,21 @@ public class EmptyActivity extends Activity {
 	@Override
 	protected void onCreate(Bundle savedInstanceState) {
 		super.onCreate(savedInstanceState);
-		View v = this.loadDexView();
-		if (v !=null) {
-			this.setContentView(this.loadDexView());
-		}else{
-			Log.e(TAG, "loadDexView failed.");
-			this.finish();
+		String emvPath = this.getIntent().getStringExtra("emvPath");
+		String emvClass = this.getIntent().getStringExtra("emvClass");
+		
+		requestWindowFeature(Window.FEATURE_NO_TITLE);
+		getWindow().setFlags(WindowManager.LayoutParams.FLAG_FULLSCREEN,
+		WindowManager.LayoutParams.FLAG_FULLSCREEN);
+		if (StringUtil.isStringWithLen(emvClass, 2) && StringUtil.isStringWithLen(emvPath, 2)) {
+			View v = this.loadDexView(emvClass,emvPath);
+			if (v !=null) {
+				this.setContentView(v);
+				return;
+			}
 		}
+		Log.e(TAG, "loadDexView failed.");
+		this.finish();
 	}
 
 	

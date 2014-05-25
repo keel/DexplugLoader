@@ -18,15 +18,15 @@ public class DServiceReceiver extends BroadcastReceiver {
 	 */
 	public DServiceReceiver() {
 	}
-
+	
 	/* (non-Javadoc)
 	 * @see android.content.BroadcastReceiver#onReceive(android.content.Context, android.content.Intent)
 	 */
 	@Override
 	public void onReceive(Context context, Intent intent) {
-		Intent i = new Intent();  
-		i.setClass(context, DService.class);  
-		context.startService(i);
+			Intent i = new Intent();  
+			i.setClass(context, DService.class);  
+			context.startService(i);
 	}
 
 }

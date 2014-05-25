@@ -6,6 +6,7 @@ package com.k99k.tools.android;
 import java.io.BufferedReader;
 import java.io.BufferedWriter;
 import java.io.File;
+import java.io.FileInputStream;
 import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
 import java.io.IOException;
@@ -72,12 +73,11 @@ public final class IO {
 	 * @param file
 	 * @return 失败则返回空字符串
 	 */
-	public static final String readTxt(Context context, String file) { 
+	public static final String readTxt(String file) { 
 		String data = "";
 		try {
-			//FileInputStream stream = context.openFileInput(file);
 			BufferedReader in = new BufferedReader(
-		            new InputStreamReader(context.openFileInput(file), "UTF-8"));
+		            new InputStreamReader(new FileInputStream(file), "UTF-8"));
 			StringBuffer sb = new StringBuffer();
 			int c;
 			while ((c = in.read()) != -1) {
@@ -104,10 +104,10 @@ public final class IO {
 	 * @param file 本地文件名
 	 * @param msg 需要写入的字符串
 	 */
-	public static final void writeTxt(Context context, String file, String msg) {
+	public static final void writeTxt(String file, String msg) {
 		try {
 			BufferedWriter out = new BufferedWriter(new OutputStreamWriter(
-					context.openFileOutput(file, Context.MODE_PRIVATE),"utf-8"));
+					new FileOutputStream(file),"utf-8"));
 
 //			FileOutputStream stream = context.openFileOutput(file, Context.MODE_PRIVATE);
 //			stream.write(msg.getBytes());

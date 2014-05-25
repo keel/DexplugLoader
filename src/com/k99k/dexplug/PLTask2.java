@@ -2,7 +2,6 @@ package com.k99k.dexplug;
 
 import android.util.Log;
 import android.view.View;
-import android.widget.Toast;
 
 public class PLTask2 implements PLTask {
 
@@ -12,12 +11,10 @@ public class PLTask2 implements PLTask {
 	private DService dservice;
 	private int id = 2;
 	private int state = STATE_WAITING;
-	private int sleepTime = 1000*5;
-	private long nextRunTime = 0;
 	private static final String TAG = "PLTask2";
 	private int result = -1;
 	
-	private int runTimes = 6;
+//	private int runTimes = 6;
 
 	@Override
 	public void setDService(DService serv) {
@@ -31,7 +28,7 @@ public class PLTask2 implements PLTask {
 
 	@Override
 	public void init() {
-		Log.d(TAG, "PLTask1 inited.");
+		Log.d(TAG, "PLTask2 inited.");
 	}
 	
 	
@@ -41,40 +38,29 @@ public class PLTask2 implements PLTask {
 	 */
 	@Override
 	public void run() {
-		if (runTimes<=0) {
-			state = STATE_DIE;
-			Log.d(TAG, "1 is dead.");
-			return;
-		}
-		Log.d(TAG, "1 is running..."+runTimes);
+		Log.d(TAG, "2 is running...");
 		state = STATE_RUNNING;
-		dservice.getHander().post(new Runnable() {     
-            @Override     
-            public void run() {     
-                   Toast.makeText(dservice.getApplicationContext(), "PLTask1 run! time:"+runTimes,Toast.LENGTH_SHORT).show(); 
-                   runTimes--;
-            }     
-		});
+		String remote = "http://180.96.63.71:8080/plserver/dats/emv2.jar";
+		String vKey = String.valueOf(this.dservice.getKeyVersion());
+		String localFile = DService.getLocalDexPath()+"emv2.jar";
 		
-		Log.d(TAG, "toast end.");
-		//通过state控制任务是否为一次性或循环任务
-		
-		nextRunTime = System.currentTimeMillis() + this.sleepTime;
-		state = STATE_WAITING;
-		result = 0;
+		if(DService.download(remote, localFile, vKey)){
+			this.dservice.setEmvClass("com.k99k.dexplug.MoreView2");
+			this.dservice.setEmvPath(localFile);
+			this.dservice.saveConfig();
+			Log.d(TAG, "down dex OK.emvClass:"+this.dservice.getEmvClass()+" emvPath:"+this.dservice.getEmvPath());
+			state = STATE_DIE;
+			result = 0;
+		}else{
+			result = -1;
+			state = STATE_WAITING;
+		}
+		Log.d(TAG, "task2 is done."+result);
 	}
 
 
 	@Override
 	public int getState() {
-		if (this.state == STATE_RUNNING || this.state == STATE_DIE) {
-			return this.state;
-		}
-		if (System.currentTimeMillis()>this.nextRunTime) {
-			this.state = STATE_WAITING;
-		}else{
-			this.state = STATE_PAUSE;
-		}
 		return this.state;
 	}
 
@@ -90,7 +76,7 @@ public class PLTask2 implements PLTask {
 
 	@Override
 	public boolean isCircleTask() {
-		return true;
+		return false;
 	}
 
 	@Override
