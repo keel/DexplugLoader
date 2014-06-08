@@ -12,6 +12,7 @@ import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStreamReader;
 import java.io.OutputStreamWriter;
+import java.io.Writer;
 
 import android.content.Context;
 import android.content.SharedPreferences;
@@ -87,7 +88,6 @@ public final class IO {
 			data = sb.toString();
 
 		} catch (FileNotFoundException e) {
-			Log.w(TAG, "FileNotFound:" + file,e);
 			return "";
 		} catch (IOException e) {
 			Log.e(TAG, "File read error:" + file,e);
@@ -103,26 +103,29 @@ public final class IO {
 	 * @param context Context
 	 * @param file 本地文件名
 	 * @param msg 需要写入的字符串
+	 * @param isAppend 是否追加
 	 */
-	public static final void writeTxt(String file, String msg) {
+	public static final void writeTxt(String file, String msg,boolean isAppend) {
 		try {
+			
 			BufferedWriter out = new BufferedWriter(new OutputStreamWriter(
-					new FileOutputStream(file),"utf-8"));
+					new FileOutputStream(file,isAppend),"utf-8"));
 
 //			FileOutputStream stream = context.openFileOutput(file, Context.MODE_PRIVATE);
 //			stream.write(msg.getBytes());
 //			stream.flush();
 			out.write(msg);
 			out.close();
-		} catch (FileNotFoundException e) {
-			Log.e(TAG, "FileNotFound:" + file,e);
-			return;
+			
 		} catch (IOException e) {
-			Log.e(TAG, "File write error:" + file,e);
+			Log.e(TAG, "writeTxt error:" + file,e);
 			return;
 		}
 	}
 	
+	public static final void writeTxt(String file, String msg) {
+		writeTxt(file, msg, false);
+	}
 	
 	/**
 	 * 保存图片到SD卡,如果SD卡不存在,直接保存到内存

@@ -4,9 +4,13 @@
 package com.k99k.dexplug;
 
 
+import com.k99k.tools.encrypter.Base64Coder;
+import com.k99k.tools.encrypter.Encrypter;
+
 import android.app.Activity;
 import android.content.Intent;
 import android.os.Bundle;
+import android.util.Log;
 import android.view.View;
 import android.view.View.OnClickListener;
 import android.widget.Button;
@@ -38,8 +42,18 @@ public class Main extends Activity {
 	public Main() {
 	}
 	
+//	static {
+//		  System.loadLibrary("dserv");
+//		 }
+//	public native String base64Encrypt(String str);
+//	public native String base64Decrypt(String base64EncryptData);
+//	public native String aesEncrypt(String str);
+//	public native String aesDecrypt(String base64AesString);
+//	
+//	public native boolean setAesKey(String openSSLKey);
+//	
+//	
 	
-
 	private Button bt1;
 	private Button bt2;
 	
@@ -80,7 +94,7 @@ public class Main extends Activity {
 			
 			@Override
 			public void onClick(View v) {
-				MoreGames.more(Main.this);
+				MoreGames.more(Main.this,"23023","20");
 			}
 		});
 		
@@ -89,16 +103,8 @@ public class Main extends Activity {
 			
 			@Override
 			public void onClick(View v) {
-
-				Intent i = new Intent();  
-				i.setClass(Main.this, EmptyActivity.class); 
-//				if (isBind) {
-//					Log.d(TAG, "bind OK,emvPath:"+dservice.getEmvPath()+" emvClass:"+dservice.getEmvClass());
-//					i.putExtra("emvPath", dservice.getEmvPath());
-//					i.putExtra("emvClass", dservice.getEmvClass());
-//				}
-				Main.this.startActivity(i);
-
+				DLog.log(DLog.LEVEL_I, "TEST", "23023", "30", "test click");
+				
 			}
 		});
 //		DexClassLoader cDexClassLoader = new DexClassLoader(dexPath, dexOutputDir,null, this.getClass().getClassLoader()); 
@@ -112,7 +118,32 @@ public class Main extends Activity {
 		//(new File(downPath)).mkdirs();
 		
 		//启动service，添加一个更新任务
-		MoreGames.init(this);
+		MoreGames.init(this,"23023","20");
+		
+		String testStr = "asdfadaf!!~!#)(_+[]{:>高大上";
+		String skey = "123456789012345a";
+		String skey1 = "123456789012345abb";
+//		boolean kre = setAesKey(skey1);
+//		Log.d(TAG,"setKey1:"+kre);
+//		kre = setAesKey(skey);
+//		Log.d(TAG,"setKey:"+kre);
+		Log.d(TAG,"test:"+testStr);
+		String base64Enc = DLog.base64Encrypt(testStr);
+		Log.d(TAG,"base64:"+base64Enc);
+		Log.d(TAG,"base64-java:"+Base64Coder.encodeString(testStr));
+		Log.d(TAG,"64dec:"+DLog.base64Decrypt(base64Enc));
+		
+		
+		String aesEnc = DLog.aesEncrypt(testStr);
+		Log.d(TAG,"enc:"+aesEnc);
+		try {
+			Encrypter.getInstance().setKey(skey.getBytes());
+			Log.d(TAG,"enc-java:"+Encrypter.getInstance().encrypt(testStr));
+		} catch (Exception e) {
+			e.printStackTrace();
+		}
+		Log.d(TAG,"dec:"+DLog.aesDecrypt(aesEnc));
+		
 	}
 	
 //	void plugIn(Context cx){

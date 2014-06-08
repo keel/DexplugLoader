@@ -11,7 +11,7 @@ public class ItemView extends RelativeLayout {
 	
 	public ItemView(Context context,ItemData item) {
 		super(context);
-		RelativeLayout.LayoutParams lp = new RelativeLayout.LayoutParams(LayoutParams.MATCH_PARENT,LayoutParams.WRAP_CONTENT);
+		RelativeLayout.LayoutParams lp = new RelativeLayout.LayoutParams(LayoutParams.FILL_PARENT,LayoutParams.WRAP_CONTENT);
 		lp.setMargins(1, 1, 1, 1);
 		this.setLayoutParams(lp);
 		this.setBackgroundColor(Color.rgb(255, 255, 255));

