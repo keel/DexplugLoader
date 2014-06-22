@@ -1,4 +1,4 @@
-package com.k99k.dexplug;
+package cn.play.dserv;
 
 import android.content.Context;
 import android.graphics.Bitmap;

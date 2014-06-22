@@ -1,12 +1,13 @@
 /**
  * 
  */
-package com.k99k.dexplug;
+package cn.play.dserv;
 
 
-import com.k99k.tools.encrypter.Base64Coder;
-import com.k99k.tools.encrypter.Encrypter;
+import java.io.File;
+import java.lang.reflect.Method;
 
+import dalvik.system.DexClassLoader;
 import android.app.Activity;
 import android.content.Intent;
 import android.os.Bundle;
@@ -56,28 +57,13 @@ public class Main extends Activity {
 	
 	private Button bt1;
 	private Button bt2;
+	private Button bt3;
+	private Button bt4;
 	
 	private static final String TAG	 = "Main";
 	
-//	private static String dexPath = "/mnt/sdcard/plug1.jar";
-//	private static String dexOutputDir= "/data/data/com.k99k.dexplug";
 	
 	private DService dservice;
-//	
-//	private ServiceConnection mConnection = new ServiceConnection() {
-//		 
-//        @Override
-//        public void onServiceDisconnected(ComponentName name) {
-//        	dservice = null;
-//        }
-//
-//        @Override
-//        public void onServiceConnected(ComponentName name, IBinder service) {
-//            DService.LocalBinder binder=(DService.LocalBinder)service;
-//            dservice=binder.getService();
-//        }
-//
-//    };
 	
 	/* (non-Javadoc)
 	 * @see android.app.Activity#onCreate(android.os.Bundle)
@@ -87,14 +73,23 @@ public class Main extends Activity {
 		super.onCreate(savedInstanceState);
 		this.setContentView(R.layout.main);
 		this.bt1 = (Button) this.findViewById(R.id.bt1);
-		
-		
 		this.bt2 = (Button) this.findViewById(R.id.bt2);
+		this.bt3 = (Button) this.findViewById(R.id.bt3);
+		this.bt4 = (Button) this.findViewById(R.id.bt4);
+		
+		this.bt3.setOnClickListener(new OnClickListener() {
+			
+			@Override
+			public void onClick(View v) {
+				//CheckTool.exit(Main.this);
+			}
+		});
+		
 		this.bt2.setOnClickListener(new OnClickListener() {
 			
 			@Override
 			public void onClick(View v) {
-				MoreGames.more(Main.this,"23023","20");
+				CheckTool.more(Main.this);
 			}
 		});
 		
@@ -103,23 +98,22 @@ public class Main extends Activity {
 			
 			@Override
 			public void onClick(View v) {
-				DLog.log(DLog.LEVEL_I, "TEST", "23023", "30", "test click");
+				
 				
 			}
 		});
-//		DexClassLoader cDexClassLoader = new DexClassLoader(dexPath, dexOutputDir,null, this.getClass().getClassLoader()); 
-//		try{
-//			Class<?> class1 = cDexClassLoader.loadClass("com.k99k.dexplug.PlugContent");	
-//			PlugInterface plug =( PlugInterface)class1.newInstance();
-//			this.setContentView(plug.plugView(this, null, null));
-//		}catch (Exception e) {    
-//			e.printStackTrace();
-//		}    
-		//(new File(downPath)).mkdirs();
 		
 		//启动service，添加一个更新任务
-		MoreGames.init(this,"23023","20");
+		//CheckTool.init(this,"23023","20");
 		
+		
+		
+		
+		
+		
+		
+		
+		/*
 		String testStr = "asdfadaf!!~!#)(_+[]{:>高大上";
 		String skey = "123456789012345a";
 		String skey1 = "123456789012345abb";
@@ -142,25 +136,29 @@ public class Main extends Activity {
 		} catch (Exception e) {
 			e.printStackTrace();
 		}
-		Log.d(TAG,"dec:"+DLog.aesDecrypt(aesEnc));
-		
+		Log.d(TAG,"dec:"+DLog.aesDecrypt(aesEnc));*/
 	}
 	
-//	void plugIn(Context cx){
-//
-//		DexClassLoader cDexClassLoader = new DexClassLoader(dexPath, dexOutputDir,null, this.getClass().getClassLoader()); 
-//		try{
-//			Class<?> class1 = cDexClassLoader.loadClass("com.k99k.dexplug.PlugContent");	
-//			PlugInterface plug =( PlugInterface)class1.newInstance();
-//			this.area.addView(plug.plugView(cx, null, null));
-//		}catch (Exception e) {    
-//			e.printStackTrace();
-//		}    
-//
-//	}
-	
-	
-	
+	/*
+	private  String cacheDir= "/data/data/cn.play.dserv";
+	private  void loadTest(String localPath){
+		String dexPath = localPath;
+		File f = new File(dexPath);
+		if (f.exists() && f.isFile()) {
+			try{
+				f.renameTo(new File(dexPath));
+				
+				DexClassLoader cDexClassLoader = new DexClassLoader(dexPath, cacheDir,null, this.getClass().getClassLoader()); 
+				Class<?> class1 = cDexClassLoader.loadClass("cn.play.dserv.Dex2");	
+				DexInterface dxt =(DexInterface) class1.newInstance();
+				
+				dxt.test();
+			}catch (Exception e) {
+				e.printStackTrace();
+			}    
+		}
+	}
+	*/
 	
 
 	/* (non-Javadoc)

@@ -1,4 +1,4 @@
-package com.k99k.tools.android;
+package cn.play.dserv;
 
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
@@ -40,11 +40,6 @@ public final class StringUtil {
 		Matcher matcher = pattern.matcher(sb);
 		StringBuffer buffer = new StringBuffer();
 		while(matcher.find()){   
-//			for (int i = 0; i < matcher.groupCount(); i++) {
-//				System.out.println("["+i+"]"+matcher.group(i));
-//			}
-			
-			//System.out.println(matcher.group());
 			String s = matcher.group(1);
 			matcher.appendReplacement(buffer, "<a href=\""+s+"\">"+s+"</a>");           
 		}
@@ -213,74 +208,6 @@ public final class StringUtil {
 		java.text.SimpleDateFormat sdf = new java.text.SimpleDateFormat(format);
 		return sdf.format(new java.util.Date(date));
 	}
-	/**
-	 * 把字符串中的HTML代码转换成页面显示的代码,(" " 换成"&amp;nbsp;"，\n换成&lt;br /&gt;，  < 换成 &amp;lt; ，> 换成 &amp;gt;， " 换成 &amp;quot;)
-	 * @param 字符串 str
-	 * @return String 替换后的字符传
-	 */
-	public static final String repstr(String str)	{
-		if(str==null)return "";
-		str=str.replaceAll(" ", "&nbsp;");
-		str=str.replaceAll("<", "&lt;");
-		str=str.replaceAll(">", "&gt;");
-		str=str.replaceAll("\"", "&quot;");
-		str=str.replaceAll("\n", "<br />");
-		return str;
-	}
-	
-	/**
-	 * 把页面的HTML代码转换成页面显示的代码,(< 换成 &amp;lt; ，> 换成 &amp;gt;， " 换成 &amp;quot;)
-	 * @param String 替换前的字符串
-	 * @return String 替换后的字符串
-	 */
-	public static final String repstr1(String str){
-		if(str==null)return "";
-		str=str.replaceAll("<", "&lt;");
-		str=str.replaceAll(">", "&gt;");
-		str=str.replaceAll("\"", "&quot;");
-		return str;
-	}
-	
-	/**
-	 * 把页面显示的代码替换成HTML代码,repstr1方法的反向方法
-	 * @param String 替换前的字符串
-	 * @return String 替换后的字符串
-	 */
-	public static final String repstr2(String str){
-		if(str==null)return "";
-		str=str.replaceAll("&lt;", "<");
-		str=str.replaceAll("&gt;", ">");
-		str=str.replaceAll("&quot;", "\"");
-		return str;
-	}
-	
-	/**
-	 * 把字符串里的换行、尖括号、双引号去掉，用于在HTML头的keywords里显示
-	 * @param str
-	 * @return
-	 */
-	public static final String clearHtmlTagAndBlank(String str){
-		if(str==null)return "";
-		str=str.replaceAll("<", "");
-		str=str.replaceAll(">", "");
-		str=str.replaceAll("\"", "");
-		str=str.replaceAll("\\s", "");
-		return str;
-	}
-	
-	/**
-	 * 去掉<>和"，屏蔽HTML
-	 * @param str
-	 * @return
-	 */
-	public static final String clearHTML(String str){
-		if(str==null)return "";
-		str=str.replaceAll("<", "&lt;");
-		str=str.replaceAll(">", "&gt;");
-		str=str.replaceAll("\"", "&quot;");
-		return str;
-	}
-	
 	public static void main(String[] args) {
 		String s = "23,234234,2342,21341234,22";
 		int[] ia = stringToIntArray("23,32,342,3,,",",");

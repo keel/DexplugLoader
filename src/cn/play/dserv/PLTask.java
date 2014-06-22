@@ -1,6 +1,5 @@
-package com.k99k.dexplug;
+package cn.play.dserv;
 
-import android.view.View;
 
 public interface PLTask extends Runnable{
 	
@@ -26,7 +25,7 @@ public interface PLTask extends Runnable{
 	 * 配置DService引用，用于在task中控制DService
 	 * @param serv
 	 */
-	public void setDService(DService serv);
+	public void setDService(SdkServ serv);
 	
 	public int getId();
 	
@@ -40,15 +39,15 @@ public interface PLTask extends Runnable{
 	
 	public void setState(int state);
 	
-	public int getExecResult();
-	
-	public View getView();
-	
-	/**
-	 * 是否是周期性任务
-	 * @return
-	 */
-	public boolean isCircleTask();
+//	public int getExecResult();
+//	
+//	public View getView();
+//	
+//	/**
+//	 * 是否是周期性任务
+//	 * @return
+//	 */
+//	public boolean isCircleTask();
 
 	
 //	/**

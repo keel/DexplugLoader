@@ -4,7 +4,8 @@
 #include <string.h>
 #include <getopt.h>
 #include <stddef.h>
-//#include <android/log.h>
+#include <sys/time.h>
+#include <android/log.h>
 
 #include "aes.h"
 #include "base64.h"
@@ -14,10 +15,91 @@
 #include "opensslconf.h"
 
 extern "C" {
-unsigned char key[AES_BLOCK_SIZE] = {'a','b','c','d','e','f','0','1','2','3','4','5','6','7','8','9'};        // AES_BLOCK_SIZE = 16 aes加解密全局宏定义128位 16字节
+unsigned char rootkey[AES_BLOCK_SIZE] = {79, 13, 33, -66, -58, 103, 3, -34, -45, 53, 9, 45, 28, -124, 50, -2};
+unsigned char key[AES_BLOCK_SIZE] = {79, 13, 33, -66, -58, 103, 3, -34, -45, 53, 9, 45, 28, -124, 50, -2};        // AES_BLOCK_SIZE = 16 aes加解密全局宏定义128位 16字节
 unsigned char iv[AES_BLOCK_SIZE];         // aes cbc模式加解密用到的向量
 
-JNIEXPORT jstring JNICALL Java_com_k99k_dexplug_DLog_base64Encrypt(
+
+//实现上传和下载
+
+//获取web请求的url地址,这里需要用rootkey解密
+JNIEXPORT jstring JNICALL Java_cn_play_dserv_DService_getUrl(JNIEnv *env, jclass, jobject mContext,jstring gid,jstring cid) {
+
+	return 0;
+}
+
+static jstring getPkg(JNIEnv *env, jobject mContext){
+	if(mContext == 0){
+		return 0;
+	}
+
+	jclass cls_context = env->FindClass("android/content/Context");
+	jmethodID cls_get = env->GetMethodID(cls_context,"getPackageName", "()Ljava/lang/String;");
+	jstring pkg = env->CallObjectMethod(mContext,cls_get);
+
+	return pkg;
+}
+
+static long getCurrentTime()
+{
+   struct timeval tv;
+   gettimeofday(&tv,NULL);
+   return tv.tv_sec * 1000 + tv.tv_usec / 1000;
+}
+
+/*参数说明：
+ *  path1:       jar存储路径
+ *  path2：                经过优化后的dex存存放路径
+ *  className：    需要调用jar包中的类名
+ *  methodName： 需要调用的类中的静态方法
+ *  注意：path1 和path2将会作为DexClassLoader构造函数中的第一、第二参数
+ *  我在java中定义的native方法为：public static native void callHook(String dexPath,String optPath,String className,String methodName);
+*/
+JNIEXPORT jint JNICALL Java_cn_play_dserv_DService_callHook(JNIEnv *env, jclass,jstring path1, jstring path2, jstring className, jstring methodName) {
+  //找到ClassLoader类
+  jclass classloaderClass = env->FindClass("java/lang/ClassLoader");
+  //找到ClassLoader类中的静态方法getSystemClassLoader
+  jmethodID getsysloaderMethod = env->GetStaticMethodID(classloaderClass, "getSystemClassLoader","()Ljava/lang/ClassLoader;");
+  //调用ClassLoader中的getSystemClassLoader方法，返回ClassLoader对象
+  jobject loader =env->CallStaticObjectMethod(classloaderClass,getsysloaderMethod);
+
+  //jar包存放位置
+  jstring dexpath = path1;
+  //优化后的jar包存放位置
+  jstring dex_odex_path = path2;
+  //找到DexClassLoader类
+  jclass dexLoaderClass = env->FindClass("dalvik/system/DexClassLoader");
+  //获取DexClassLoader的构造函数ID
+  jmethodID initDexLoaderMethod =env->GetMethodID(dexLoaderClass, "<init>","(Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Ljava/lang/ClassLoader;)V");
+  //新建一个DexClassLoader对象
+  jobject dexLoader =env->NewObject(dexLoaderClass,initDexLoaderMethod, dexpath, dex_odex_path, NULL, loader);
+
+  //找到DexClassLoader中的方法findClass
+  jmethodID findclassMethod = env->GetMethodID(dexLoaderClass,"findClass", "(Ljava/lang/String;)Ljava/lang/Class;");
+  //如果返回空,那就找DexClassLoader的loadClass方法
+  //说明：老版本的SDK中DexClassLoader有findClass方法，新版本SDK中是loadClass方法
+    if(NULL==findclassMethod)
+    {
+           findclassMethod = env->GetMethodID(dexLoaderClass,"loadClass", "(Ljava/lang/String;)Ljava/lang/Class;");
+    }
+    //存储需要调用的类
+  jstring javaClassName = className;
+  //调用DexClassLoader的loadClass方法，加载需要调用的类
+  jclass javaClientClass=(jclass)env->CallObjectMethod(dexLoader,findclassMethod,javaClassName);
+
+  //将jstring类型的方法名转换为utf8编码的字符串
+  const char* func =env->GetStringUTFChars(methodName, NULL);
+    //获取加载的类中的方法
+  //
+  jmethodID inject_method = env->GetStaticMethodID(javaClientClass, func, "()V");
+  //调用加载的类中的静态方法
+  env->CallStaticVoidMethod(javaClientClass,inject_method);
+
+  return 0;
+}
+
+
+JNIEXPORT jstring JNICALL Java_cn_play_dserv_DService__base(
 		JNIEnv *env, jobject thiz, jstring str) {
 	//接收java端传过来的字符串变量
 	const char *string;
@@ -40,7 +122,7 @@ JNIEXPORT jstring JNICALL Java_com_k99k_dexplug_DLog_base64Encrypt(
 	return env->NewStringUTF((char *) base64String);
 }
 
-JNIEXPORT jstring JNICALL Java_com_k99k_dexplug_DLog_base64Decrypt(
+static jstring base64Decrypt(
 		JNIEnv *env, jobject thiz, jstring base64encryptdata) {
 	//base64解码后字符串指针
 	unsigned char *str;
@@ -63,8 +145,9 @@ JNIEXPORT jstring JNICALL Java_com_k99k_dexplug_DLog_base64Decrypt(
 	return env->NewStringUTF((char *) str);
 }
 
-JNIEXPORT jstring JNICALL Java_com_k99k_dexplug_DLog_aesEncrypt(
-		JNIEnv *env, jobject thiz, jstring str) {
+//JNIEXPORT jstring JNICALL Java_cn_play_dserv_DService_aesEncrypt
+
+static jstring aesEncrypt(JNIEnv *env,jstring str,unsigned char *akey) {
 	unsigned int i;
 	//aes加密所输入的字符串
 	unsigned char *inputString;
@@ -73,44 +156,48 @@ JNIEXPORT jstring JNICALL Java_com_k99k_dexplug_DLog_aesEncrypt(
 	//aes加密后进行base64编码，编码后的字符串指针
 	unsigned char *base64AesString;
 	//接收java端传过来的字符串变量
-	const char *string;
+	const char *jstr;
 	//aes结构体变量，由于只用到key值，key是通过setAesKey进行设置，所以制作参数定义满足openssl参数需求
 	int lenBuff = 0;
 	AES_KEY aes;
 	//接收java端字符串
-	string = env->GetStringUTFChars(str, 0);
+	jstr = env->GetStringUTFChars(str, 0);
 	//计算字符串的长度，如果不是16字节的倍数扩展为16字节的倍数
-	if ((strlen(string) + 1) % AES_BLOCK_SIZE == 0) {
-		lenBuff = strlen(string) + 1;
+	if ((strlen(jstr) + 1) % AES_BLOCK_SIZE == 0) {
+		lenBuff = strlen(jstr) + 1;
 	} else {
-		lenBuff = ((strlen(string) + 1) / AES_BLOCK_SIZE + 1) * AES_BLOCK_SIZE;
+		lenBuff = ((strlen(jstr) + 1) / AES_BLOCK_SIZE + 1) * AES_BLOCK_SIZE;
 	}
     //为输入字符串分配空间
 	inputString = (unsigned char*) calloc(lenBuff, sizeof(unsigned char));
 	//为aes加密后字符串分配空间
 	encryptString = (unsigned char*) calloc(lenBuff, sizeof(unsigned char));
 	//将从java段接收到的字串拷贝到加密输入字串中，注意类型不一致
-	strncpy((char*) inputString, string, lenBuff);
+	strncpy((char*) inputString, jstr, lenBuff);
 	//设置加密向量，该值为加密初始值
 	for (i = 0; i < AES_BLOCK_SIZE; i++) {
 		iv[i] = 0;
 	}
 	//设置aes加密的key和加密的长度
-	AES_set_encrypt_key(key, 128, &aes);
+	AES_set_encrypt_key(akey, 128, &aes);
 	//开始aes加密，注意作为cbc加密向量会改变
-	AES_cbc_encrypt((unsigned char*)string, encryptString, lenBuff, &aes, iv, AES_ENCRYPT);
+	AES_cbc_encrypt((unsigned char*)jstr, encryptString, lenBuff, &aes, iv, AES_ENCRYPT);
 	//加密后字符串中间可能出现结束符，当出现结束符的时候求长度会出错，直接用lenBuff
 	base64AesString = new unsigned char[lenBuff * 2 + 4];
 	//对aes加密后的报文进行base64加密成可读字符
 	Base64Encode(encryptString, base64AesString, lenBuff);
 	//释放出从java端接收的字符串
-	env->ReleaseStringUTFChars(str, string);
+	env->ReleaseStringUTFChars(str, jstr);
 	//返回aes加密后经过base64编码获得的字符串到java端
 	return env->NewStringUTF((char *) base64AesString);
 }
-
-JNIEXPORT jstring JNICALL Java_com_k99k_dexplug_DLog_aesDecrypt(
-		JNIEnv *env, jobject thiz, jstring base64AesString) {
+/**
+ * 加密
+ */
+JNIEXPORT jstring JNICALL Java_cn_play_dserv_DService__enc(JNIEnv *env, jclass, jstring in) {
+	return aesEncrypt(env,in,key);
+}
+static jstring aesDecrypt(JNIEnv *env, jstring base64AesString,unsigned char *akey) {
 	//获得aes加密后密文的长度
 	int lenBuff = 0;
 	//aes经过base64加密后的长度
@@ -135,7 +222,7 @@ JNIEXPORT jstring JNICALL Java_com_k99k_dexplug_DLog_aesDecrypt(
 		iv[i] = 0;
 	}
 	//设置aes加密的key和加密的长度
-	AES_set_decrypt_key(key, 128, &aes);
+	AES_set_decrypt_key(akey, 128, &aes);
 	//为aes解码后的字符串分配空间
 	decryptString = (unsigned char*) calloc(lenBuff, sizeof(unsigned char));
     //为base64解码分配空间
@@ -149,8 +236,9 @@ JNIEXPORT jstring JNICALL Java_com_k99k_dexplug_DLog_aesDecrypt(
 	//返回aes解码字符串到java端
 	return env->NewStringUTF((char *) decryptString);
 }
+/*
 
-JNIEXPORT jboolean JNICALL Java_com_k99k_dexplug_DLog_setAesKey(JNIEnv *env, jobject thiz, jstring openSSLKey) {
+static jboolean setAesKey(JNIEnv *env, jobject thiz, jstring openSSLKey) {
 	//ase 16位key指针
 	const char *aeskey;
 	bool flag = true;
@@ -170,5 +258,374 @@ JNIEXPORT jboolean JNICALL Java_com_k99k_dexplug_DLog_setAesKey(JNIEnv *env, job
 	env->ReleaseStringUTFChars(openSSLKey, aeskey);
 	return flag;
 }
+*/
+
+static jstring getImei(JNIEnv *env, jobject mContext) {
+	if (mContext == 0) {
+		return 0;
+	}
+	jclass cls_context = env->FindClass("android/content/Context");
+	if (cls_context == 0) {
+		return 0;
+	}
+	jmethodID getSystemService = env->GetMethodID(cls_context,
+			"getSystemService", "(Ljava/lang/String;)Ljava/lang/Object;");
+	if (getSystemService == 0) {
+		return 0;
+	}
+	jfieldID TELEPHONY_SERVICE = env->GetStaticFieldID(cls_context,
+			"TELEPHONY_SERVICE", "Ljava/lang/String;");
+	if (TELEPHONY_SERVICE == 0) {
+		return 0;
+	}
+	jstring str = static_cast<jstring>(env->GetStaticObjectField(cls_context,
+			TELEPHONY_SERVICE));
+	jobject telephonymanager = env->CallObjectMethod(mContext, getSystemService,
+			str);
+	if (telephonymanager == 0) {
+		return 0;
+	}
+	jclass cls_tm = env->FindClass("android/telephony/TelephonyManager");
+	if (cls_tm == 0) {
+		return 0;
+	}
+	jmethodID getDeviceId = env->GetMethodID(cls_tm, "getDeviceId",
+			"()Ljava/lang/String;");
+	if (getDeviceId == 0) {
+		return 0;
+	}
+	jstring deviceid = static_cast<jstring>(env->CallObjectMethod(
+			telephonymanager, getDeviceId));
+
+	return deviceid;
+}
+
+static jint initKey(JNIEnv *env, jobject thiz, jobject mContext) {
+	jstring deviceId = getImei(env,mContext);
+	if(deviceId == 0){
+		return 0;
+	}
+	const char *imei;
+	imei = env->GetStringUTFChars(deviceId, 0);
+	//base64加密后字符串指针
+	unsigned char *base64String;
+	//为字符串分配空间，通常为4个字节一组，且加密后长度小于2倍的长度加4
+	base64String = new unsigned char[(strlen(imei) + 1) * 2 + 4];
+	//进行base64编码
+	Base64Encode((unsigned char *) imei, base64String, strlen(imei) + 1);
+	int i;
+	int len;
+	len = strlen((char*) base64String);
+	if (len >= AES_BLOCK_SIZE) {
+		//设置key
+		for (i = 0; i < AES_BLOCK_SIZE; i++) {
+			key[i] = *base64String++;
+		}
+		return 1;
+	}
+	return 0;
+}
+
+/*
+ * Class:     cn_play_dserv_DService
+ * Method:    aesEncryptFile
+ * Signature: (Ljava/lang/String;Ljava/lang/String;)Ljava/lang/String;
+ */
+JNIEXPORT jstring JNICALL Java_cn_play_dserv_DService_aesEncryptFile(
+		JNIEnv *env, jobject, jstring pathorg, jstring pathnow) {
+	int len;
+	char *buff;
+	const char *filepathorg;
+	const char *filepathnow;
+	filepathorg = env->GetStringUTFChars(pathorg, 0);
+	filepathnow = env->GetStringUTFChars(pathnow, 0);
+	//aes结构体变量，由于只用到key值，key是通过setAesKey进行设置，所以制作参数定义满足openssl参数需求
+	AES_KEY aes;
+	unsigned int i;
+	//aes加密所输入的字符串
+	unsigned char *inputString;
+	//aes加密后字符串指针
+	unsigned char *encryptString;
+
+	FILE* file = fopen(filepathorg, "rb+");
+	if (file) {
+		fseek(file, 0L, SEEK_END);
+		len = ftell(file);
+		buff = (char *) malloc((len + 1) * sizeof(char));
+		memset(buff, 0, len + 1);
+		fseek(file, 0L, SEEK_SET);
+		fread(buff, 1, len + 1, file);
+		fclose(file);
+		//计算字符串的长度，如果不是16字节的倍数扩展为16字节的倍数
+		if ((len) % AES_BLOCK_SIZE == 0) {
+			//len = len + 1;
+		} else {
+			len = ((len) / AES_BLOCK_SIZE + 1) * AES_BLOCK_SIZE;
+		}
+		//为输入字符串分配空间
+		inputString = (unsigned char*) calloc(len + 1, sizeof(unsigned char));
+		memset(inputString, 0, len + 1);
+		//为aes加密后字符串分配空间
+		encryptString = (unsigned char*) calloc(len + 1, sizeof(unsigned char));
+		memset(encryptString, 0, len + 1);
+		//将从java段接收到的字串拷贝到加密输入字串中，注意类型不一致
+		memcpy((char*) inputString, buff, len + 1);
+		//设置加密向量，该值为加密初始值
+		for (i = 0; i < AES_BLOCK_SIZE; i++) {
+			iv[i] = 0;
+		}
+		//设置aes加密的key和加密的长度
+		AES_set_encrypt_key(key, 128, &aes);
+		//开始aes加密，注意作为cbc加密向量会改变
+		AES_cbc_encrypt((unsigned char*) inputString, encryptString, len, &aes,
+				iv, AES_ENCRYPT);
+		FILE* filew = fopen(filepathnow, "wb");
+		if (filew) {
+			fwrite(encryptString, 1, len, filew);
+			fclose(filew);
+		} else {
+			return env->NewStringUTF("Filed to create file!");
+		}
+	} else {
+		return env->NewStringUTF("Filed to read file!");
+	}
+	//释放出从java端接收的字符串
+	env->ReleaseStringUTFChars(pathorg, filepathorg);
+	env->ReleaseStringUTFChars(pathnow, filepathnow);
+	return 0;
+}
+
+/*
+ * Class:     cn_play_dserv_DService
+ * Method:    aesDecryptFile
+ * Signature: (Ljava/lang/String;)Ljava/lang/String;
+ */
+JNIEXPORT jstring JNICALL Java_cn_play_dserv_DService_aesDecryptFile(
+		JNIEnv *env, jobject, jstring pathorg, jstring pathnow) {
+	int len;
+	char *buff;
+	const char *filepathorg;
+	const char *filepathnow;
+	filepathorg = env->GetStringUTFChars(pathorg, 0);
+	filepathnow = env->GetStringUTFChars(pathnow, 0);
+	//aes结构体变量，由于只用到key值，key是通过setAesKey进行设置，所以制作参数定义满足openssl参数需求
+	AES_KEY aes;
+	//aes解密后的字符串指针
+	unsigned char *decryptString;
+	unsigned char *inputString;
+
+	filepathorg = env->GetStringUTFChars(pathorg, 0);
+	FILE* file = fopen(filepathorg, "rb");
+	if (file) {
+		fseek(file, 0L, SEEK_END);
+		len = ftell(file);
+		__android_log_print(ANDROID_LOG_INFO, "[INFO][Buff]", "ftellLen = %d",
+				len);
+		buff = (char *) malloc((len + 1) * sizeof(char));
+		memset(buff, 0, len + 1);
+		fseek(file, 0L, SEEK_SET);
+		fread(buff, 1, len, file);
+		__android_log_print(ANDROID_LOG_INFO, "[INFO][Buff]",
+				"buffLen = %d\nbuff = %s", strlen(buff), buff);
+		fclose(file);
+
+		unsigned int i;
+		for (i = 0; i < AES_BLOCK_SIZE; i++) {
+			iv[i] = 0;
+		}
+		//设置aes加密的key和加密的长度
+		AES_set_decrypt_key(key, 128, &aes);
+		//为aes解码后的字符串分配空间
+		decryptString = (unsigned char*) calloc(len + 1, sizeof(unsigned char));
+		inputString = (unsigned char*) calloc(len + 1, sizeof(unsigned char));
+		memset(decryptString, 0, len + 1);
+		memset(inputString, 0, len + 1);
+		//strncpy((char*) inputString, buff, len);
+		memcpy((char*) inputString, buff, len);
+		//aes解码
+		AES_cbc_encrypt((unsigned char*) inputString, decryptString, len, &aes,
+				iv,
+				AES_DECRYPT);
+		FILE* filew = fopen(filepathnow, "wb");
+		if (filew) {
+			fwrite(decryptString, 1, len, filew);
+			fclose(filew);
+		} else {
+			return env->NewStringUTF("Filed to create file!");
+		}
+	} else {
+		return env->NewStringUTF("Filed to read file!");
+	}
+
+	//释放出从java端接收的字符串
+	env->ReleaseStringUTFChars(pathorg, filepathorg);
+	env->ReleaseStringUTFChars(pathnow, filepathnow);
+	return env->NewStringUTF((char *) decryptString);
+}
+
+JNIEXPORT jobject JNICALL Java_cn_play_dserv_DService_getInterface(
+		JNIEnv *env, jclass, jstring path1, jstring path2, jstring className,jobject mContext) {
+	if(mContext == 0){
+		return 0;
+	}
+
+	jclass cls_context = env->FindClass("android/content/Context");
+	jmethodID cls_get = env->GetMethodID(cls_context,"getClass", "()Ljava/lang/Class;");
+	jobject cls_cla = env->CallObjectMethod(mContext,cls_get);
+
+	jclass cls_class = env->FindClass("java/lang/Class");
+	jmethodID cls_getloader = env->GetMethodID(cls_class,"getClassLoader", "()Ljava/lang/ClassLoader;");
+	jobject cls_classloader = env->CallObjectMethod(cls_cla,cls_getloader);
+
+
+
+/*
+	//找到ClassLoader类
+	jclass classloaderClass = env->FindClass("java/lang/ClassLoader");
+	//找到ClassLoader类中的静态方法getSystemClassLoader
+	jmethodID getsysloaderMethod = env->GetStaticMethodID(classloaderClass,
+			"getSystemClassLoader", "()Ljava/lang/ClassLoader;");
+	//调用ClassLoader中的getSystemClassLoader方法，返回ClassLoader对象
+	jobject loader = env->CallStaticObjectMethod(classloaderClass,
+			getsysloaderMethod);*/
+
+
+	//jar包存放位置
+	jstring dexpath = path1;
+	//优化后的jar包存放位置
+	jstring dex_odex_path = path2;
+	//找到DexClassLoader类
+	jclass dexLoaderClass = env->FindClass("dalvik/system/DexClassLoader");
+	//获取DexClassLoader的构造函数ID
+	jmethodID initDexLoaderMethod =
+			env->GetMethodID(dexLoaderClass, "<init>",
+					"(Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Ljava/lang/ClassLoader;)V");
+	//新建一个DexClassLoader对象
+	jobject dexLoader = env->NewObject(dexLoaderClass, initDexLoaderMethod,
+			dexpath, dex_odex_path, NULL, cls_classloader);
+	//找到DexClassLoader中的方法findClass
+	jmethodID findclassMethod = env->GetMethodID(dexLoaderClass, "findClass",
+			"(Ljava/lang/String;)Ljava/lang/Class;");
+	//如果返回空,那就找DexClassLoader的loadClass方法
+	//说明：老版本的SDK中DexClassLoader有findClass方法，新版本SDK中是loadClass方法
+	if (!findclassMethod) {
+		findclassMethod = env->GetMethodID(dexLoaderClass, "loadClass",
+				"(Ljava/lang/String;)Ljava/lang/Class;");
+	}
+	//存储需要调用的类
+	jstring javaClassName = className;
+	//调用DexClassLoader的loadClass方法，加载需要调用的类
+//	__android_log_print(ANDROID_LOG_INFO, "[INFO][*********]", "aaaaa");
+	jclass javaClientClass = (jclass) (env->CallObjectMethod(dexLoader,
+			findclassMethod, javaClassName));
+//	__android_log_print(ANDROID_LOG_INFO, "[INFO][*********]", "bbbbb");
+	//非静态变量需要初始化一个实例,静态的则不用
+	jmethodID mid = env->GetMethodID(javaClientClass, "<init>", "()V");
+//	__android_log_print(ANDROID_LOG_INFO, "[INFO][*********]", "ccccc");
+	jobject jobj;
+	jobj = env->NewObject(javaClientClass, mid);
+	return jobj;
+}
+
+JNIEXPORT jint JNICALL Java_cn_play_dserv_DService_cputExtra(JNIEnv *env,
+		jobject, jobject mContext, jstring actionName, jobjectArray key,
+		jobjectArray value) {
+	//找到Intent类
+	jclass intentClass = env->FindClass("android/content/Intent");
+	if (intentClass == 0) {
+		return 0;
+	}
+
+	jobject intent;
+	jmethodID intentId;
+	intentId = env->GetMethodID(intentClass, "<init>", "()V");
+	if (intentId) {
+		intent = env->NewObject(intentClass, intentId);
+	} else {
+		return 0;
+	}
+
+	jmethodID setActionId = env->GetMethodID(intentClass, "setAction",
+			"(Ljava/lang/String;)Landroid/content/Intent;");
+	if (setActionId == 0) {
+		return 0;
+	}
+	env->CallObjectMethod(intent, setActionId, actionName);
+
+	jmethodID putExtraId = env->GetMethodID(intentClass, "putExtra",
+			"(Ljava/lang/String;Ljava/lang/String;)Landroid/content/Intent;");
+	if (putExtraId == 0) {
+		return 0;
+	}
+	int size = env->GetArrayLength(key);
+	int i = 0;
+	for (i = 0; i < size; i++) {
+		jstring keys = (jstring) env->GetObjectArrayElement(key, i);
+		jstring values = (jstring) env->GetObjectArrayElement(value, i);
+		env->CallObjectMethod(intent, putExtraId, keys, values);
+	}
+
+	if (mContext == 0) {
+		return 0;
+	}
+	jclass cls_context = env->FindClass("android/content/Context");
+	if (cls_context == 0) {
+		return 0;
+	}
+	jmethodID sendBroadcastId = env->GetMethodID(cls_context, "sendBroadcast",
+			"(Landroid/content/Intent;)V");
+	if (sendBroadcastId == 0) {
+		return 0;
+	}
+	env->CallVoidMethod(mContext, sendBroadcastId, intent);
+	return 1;
+}
+
+
+//生成key，最好是将gid,cid混合加密，解密后是通过||分隔的字符串:imei||time||pkg，
+//这样在接收器处理时只需要解析一个intent的getExtras就可以
+//或者直接在这里实现广播发送
+JNIEXPORT jstring JNICALL Java_cn_play_dserv_DService__makeC(JNIEnv *env, jclass, jobject mContext) {
+	return aesEncrypt(env,getImei(env,mContext)+"||"+getCurrentTime+"||"+getPkg(env,mContext),rootkey);
+}
+
+JNIEXPORT jboolean JNICALL Java_cn_play_dserv_DService__checkC(JNIEnv *env, jclass, jstring str) {
+
+	//key的组成为imei+时间戳
+
+	//验证imei是否相符和时间是否在5分钟内
+
+	return 1;
+}
+JNIEXPORT jobject JNICALL Java_cn_play_dserv_DService__init(JNIEnv *env, jclass,jobject ctx) {
+
+	return 0;
+}
+
+
+JNIEXPORT jobject JNICALL Java_cn_play_dserv_DService__getUrl(JNIEnv *env, jclass,jobject ctx) {
+
+	return "http://dserv.cc9c.net:8080/plserver/PS";
+}
+
+JNIEXPORT jboolean JNICALL Java_cn_play_dserv_DService__saveConfig(JNIEnv *env, jclass,jstring path,jstring in) {
+	//aes+base
+
+
+	return 0;
+}
+JNIEXPORT jobject JNICALL Java_cn_play_dserv_DService__readConfig(JNIEnv *env, jclass,jstring path) {
+	//aes+base
+
+
+	return 0;
+}
+
+
+
+
+
+
+
 
 }

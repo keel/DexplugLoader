@@ -20,5 +20,17 @@
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:text="@string/bt2Name" />
+    
+     <Button
+        android:id="@+id/bt3"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="@string/bt2Name" />
+     
+     <Button
+        android:id="@+id/bt4"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="@string/bt2Name" />
 
 </LinearLayout>

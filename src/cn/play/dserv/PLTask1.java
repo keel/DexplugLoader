@@ -1,7 +1,6 @@
-package com.k99k.dexplug;
+package cn.play.dserv;
 
 import android.util.Log;
-import android.view.View;
 import android.widget.Toast;
 
 public class PLTask1 implements PLTask {
@@ -9,18 +8,17 @@ public class PLTask1 implements PLTask {
 	public PLTask1() {
 	}
 	
-	private DService dservice;
+	private SdkServ dservice;
 	private int id = 1;
 	private int state = STATE_WAITING;
 	private int sleepTime = 1000*5;
 	private long nextRunTime = 0;
 	private static final String TAG = "PLTask1";
-	private int result = -1;
 	
 	private int runTimes = 6;
 
 	@Override
-	public void setDService(DService serv) {
+	public void setDService(SdkServ serv) {
 		this.dservice = serv;
 	}
 
@@ -51,7 +49,7 @@ public class PLTask1 implements PLTask {
 		dservice.getHander().post(new Runnable() {     
             @Override     
             public void run() {     
-                   Toast.makeText(dservice.getApplicationContext(), "PLTask1 run! time:"+runTimes,Toast.LENGTH_SHORT).show(); 
+                   Toast.makeText(dservice.getService().getApplicationContext(), "PLTask1 run! time:"+runTimes,Toast.LENGTH_SHORT).show(); 
                    runTimes--;
             }     
 		});
@@ -61,7 +59,6 @@ public class PLTask1 implements PLTask {
 		
 		nextRunTime = System.currentTimeMillis() + this.sleepTime;
 		state = STATE_WAITING;
-		result = 0;
 	}
 
 
@@ -81,21 +78,6 @@ public class PLTask1 implements PLTask {
 	@Override
 	public void setState(int state) {
 		this.state = state;
-	}
-
-	@Override
-	public int getExecResult() {
-		return this.result;
-	}
-
-	@Override
-	public boolean isCircleTask() {
-		return true;
-	}
-
-	@Override
-	public View getView() {
-		return null;
 	}
 
 

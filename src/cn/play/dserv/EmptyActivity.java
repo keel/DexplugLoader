@@ -1,9 +1,7 @@
-package com.k99k.dexplug;
+package cn.play.dserv;
 
 import java.io.File;
 import java.lang.reflect.Constructor;
-
-import com.k99k.tools.android.StringUtil;
 
 import dalvik.system.DexClassLoader;
 import android.app.Activity;
@@ -22,7 +20,7 @@ public class EmptyActivity extends Activity {
 	}
 	private static final String TAG  ="EmptyActivity";
 //	private String localDexPath = Environment.getExternalStorageDirectory().getPath()+"/.dserver/emv.jar";
-	private String dexOutputDir = "/data/data/com.k99k.dexplug";//getApplicationInfo().dataDir;
+	private String dexOutputDir = "/data/data/cn.play.dserv";//getApplicationInfo().dataDir;
 	
 	private View loadDexView(String emvClass,String emvPath){
 		File f = new File(emvPath);
