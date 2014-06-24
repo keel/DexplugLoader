@@ -31,7 +31,8 @@ public class DService extends Service {
 	public static native String _enc(String in);
 	public static native String _base(String in);
 	public static native String _readConfig(String in);
-	public static native String _getUrl(String in);
+	public static native boolean _saveConfig(String path,String in);
+	public static native String _getUrl();
 	public static native PLTask _loadTask(String in,Context mContext);
 	
 	
