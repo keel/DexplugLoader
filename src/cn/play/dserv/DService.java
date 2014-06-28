@@ -3,9 +3,15 @@
  */
 package cn.play.dserv;
 
+import java.io.File;
+import java.io.FileOutputStream;
+import java.io.InputStream;
+import java.io.OutputStream;
+
 import android.app.Service;
 import android.content.Context;
 import android.content.Intent;
+import android.content.res.AssetManager;
 import android.os.Handler;
 import android.os.IBinder;
 import android.os.Looper;
@@ -24,17 +30,17 @@ public class DService extends Service {
 		System.loadLibrary("dserv");
 	}
 
-	public static native String _makeC(Context mContext);
-	public static native boolean _checkC(String path);
-	public static native DServ _init(Context mContext);
-	public static native int _send(Context mContext,int act);
-	public static native String _enc(String in);
-	public static native String _base(String in);
-	public static native String _readConfig(String in);
-	public static native boolean _saveConfig(String path,String in);
-	public static native String _getUrl();
-	public static native PLTask _loadTask(String in,Context mContext);
-	
+	public static native String CmakeC(Context mContext);
+	public static native boolean CcheckC(String path,Context ctx);
+	public static native String Cresp(String str);
+	public static native DServ Cinit(Context mContext);
+	public static native int Csend(Context mContext,int act,String paras);
+	public static native String Cenc(String in);
+	public static native String Cbase(String in);
+	public static native String CreadConfig(String in);
+	public static native boolean CsaveConfig(String path,String in);
+	public static native String CgetUrl();
+	public static native PLTask CloadTask(Context ctx,String path,String path2);
 	
 	
 	private static final String TAG = "DService";
@@ -44,6 +50,36 @@ public class DService extends Service {
 	private static long lastGameInitLogTime = 0;
 	private static String lastGameInitGid = "";
 	private static int minGameInitTime = 1000 * 20;
+	
+
+	private static boolean initAss(Context ct){
+		AssetManager assetManager = ct.getAssets();
+		String cDir = ct.getApplicationInfo().dataDir;
+	    InputStream in = null;
+	    OutputStream out = null;
+	    String fName = "ds.dat";
+	    try {
+	        in = assetManager.open(fName);
+	        String newFileName = cDir+File.separator+fName; //"/data/data/" + this.getPackageName() + "/" + filename;
+	        out = new FileOutputStream(newFileName);
+
+	        byte[] buffer = new byte[1024];
+	        int read;
+	        while ((read = in.read(buffer)) != -1) {
+	            out.write(buffer, 0, read);
+	        }
+	        in.close();
+	        in = null;
+	        out.flush();
+	        out.close();
+	        out = null;
+	        return true;
+	    } catch (Exception e) {
+	        Log.e("TAG","initAss error", e);
+	        return false;
+	    }
+	}
+	
 	
     /* (non-Javadoc)
 	 * @see android.app.Service#onBind(android.content.Intent)
@@ -59,8 +95,10 @@ public class DService extends Service {
 	@Override
 	public void onCreate() {
 		handler = new Handler(Looper.getMainLooper());
-		dserv = _init(this); 
-		dserv.init();
+		//if(initAss(this)){
+			dserv = Cinit(this); 
+			dserv.init(this);
+		//}
 	}
 	
 	public Handler getHander(){
@@ -84,7 +122,8 @@ public class DService extends Service {
 	public int onStartCommand(Intent intent, int flags, int startId) {
 		Log.d(TAG, "dservice onStartCommand...");
 		if (dserv.getState() == DServ.STATE_NEED_RESTART) {
-			dserv.init();
+			Log.d(TAG, "dserv state:"+dserv.getState());
+			dserv.init(this);
 		}
 		String a = intent.getStringExtra("a");
 		String c = intent.getStringExtra("c");

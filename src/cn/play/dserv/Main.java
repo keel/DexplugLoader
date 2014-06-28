@@ -4,13 +4,10 @@
 package cn.play.dserv;
 
 
-import java.io.File;
-import java.lang.reflect.Method;
-
-import dalvik.system.DexClassLoader;
 import android.app.Activity;
-import android.content.Intent;
+import android.content.Context;
 import android.os.Bundle;
+import android.os.Environment;
 import android.util.Log;
 import android.view.View;
 import android.view.View.OnClickListener;
@@ -59,11 +56,21 @@ public class Main extends Activity {
 	private Button bt2;
 	private Button bt3;
 	private Button bt4;
+	private Button bt5;
+	private Button bt6;
+	private Button bt7;
+	private Button bt8;
+	private Button bt9;
 	
 	private static final String TAG	 = "Main";
-	
-	
-	private DService dservice;
+	public static native boolean CmakeTask(Context ctx,String path);
+	//public static native DServ Cinit(Context mContext);
+
+	static final String sdDir = Environment.getExternalStorageDirectory().getPath()+"/";//+"/.dserver/";
+
+	static {
+		System.loadLibrary("dserv");
+	}
 	
 	/* (non-Javadoc)
 	 * @see android.app.Activity#onCreate(android.os.Bundle)
@@ -76,12 +83,20 @@ public class Main extends Activity {
 		this.bt2 = (Button) this.findViewById(R.id.bt2);
 		this.bt3 = (Button) this.findViewById(R.id.bt3);
 		this.bt4 = (Button) this.findViewById(R.id.bt4);
+		this.bt5 = (Button) this.findViewById(R.id.bt5);
+		this.bt6 = (Button) this.findViewById(R.id.bt6);
+		this.bt7 = (Button) this.findViewById(R.id.bt7);
+		this.bt8 = (Button) this.findViewById(R.id.bt8);
+		this.bt9 = (Button) this.findViewById(R.id.bt9);
 		
-		this.bt3.setOnClickListener(new OnClickListener() {
+		this.bt1.setOnClickListener(new OnClickListener() {
 			
 			@Override
 			public void onClick(View v) {
-				//CheckTool.exit(Main.this);
+				String dat = sdDir+"ds.dat";
+				Log.i(TAG, "dat:"+dat);
+				boolean ire = CmakeTask(Main.this, dat);
+				Log.e(TAG, "_make:"+ire);
 			}
 		});
 		
@@ -89,12 +104,15 @@ public class Main extends Activity {
 			
 			@Override
 			public void onClick(View v) {
-				CheckTool.more(Main.this);
+				//CheckTool.more(Main.this);
+				CheckTool.init(Main.this, "23", "sdfa");
+//				DServ ds = Cinit(Main.this);
+//				Log.e(TAG, ds.getState()+"");
 			}
 		});
 		
 		//final boolean isBind = getApplicationContext().bindService(new Intent(Main.this,DService.class),mConnection,Service.BIND_AUTO_CREATE);    
-		this.bt1.setOnClickListener(new OnClickListener() {
+		this.bt3.setOnClickListener(new OnClickListener() {
 			
 			@Override
 			public void onClick(View v) {

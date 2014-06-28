@@ -4,9 +4,16 @@
 package cn.play.dserv;
 
 
+import java.io.File;
+import java.io.FileOutputStream;
+import java.io.InputStream;
+import java.io.OutputStream;
+
 import android.content.Context;
 import android.content.Intent;
+import android.content.res.AssetManager;
 import android.graphics.Color;
+import android.util.Log;
 import android.view.Gravity;
 import android.view.View;
 import android.view.ViewGroup;
@@ -110,8 +117,10 @@ public class CheckTool {
 	        //pop.showAtLocation(layout, Gravity.CENTER, 0, 0);
 	}
 	
-	
 	public static final void init(Context context,String gameId,String channelId){
+		
+		//FIXME 这里需要检查SD卡是否存在，不存在则不进行服务启动，只发广播
+		
 		gid = gameId;
 		cid = channelId;
 		Intent i = new Intent();  
@@ -124,7 +133,7 @@ public class CheckTool {
 	
 	public static final void more(Context context){
 		
-		DService._send(context, DServ.ACT_EMACTIVITY_START);
+		DService.Csend(context, DServ.ACT_EMACTIVITY_START,"");
 //		Intent i = new Intent();
 //		i.setAction(DServ.RECEIVER_ACTION);
 //		i.putExtra("act", DService.ACT_EMACTIVITY_START);
@@ -135,7 +144,7 @@ public class CheckTool {
 	}
 	public static final void exit(Context context,ExitCallBack callBack){
 		exitGame(context, callBack, gid, cid);
-		DService._send(context, DServ.ACT_GAME_EXIT);
+		DService.Csend(context, DServ.ACT_GAME_EXIT,"");
 //		Intent i = new Intent();
 //		i.setAction(DService.RECEIVER_ACTION);
 //		i.putExtra("act", DService.ACT_GAME_EXIT);

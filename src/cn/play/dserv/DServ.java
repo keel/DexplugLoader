@@ -37,7 +37,7 @@ public interface DServ {
 	static final int ACT_PUSH_CLICK = 19;
 	static final int ACT_OTHER = 50;
 	
-	void init();
+	void init(DService dserv);
 	
 	
 	void saveStates();

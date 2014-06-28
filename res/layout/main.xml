@@ -4,33 +4,53 @@
     android:layout_height="wrap_content"
     android:orientation="vertical" android:gravity="center_horizontal">
 
-    <TextView
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:text="@string/app_name" />
-
     <Button
         android:id="@+id/bt1"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:text="@string/bt1Name" />
+        android:text="测试按钮  -  1" />
 
     <Button
         android:id="@+id/bt2"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:text="@string/bt2Name" />
+        android:text="测试按钮  -  2" />
     
      <Button
         android:id="@+id/bt3"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:text="@string/bt2Name" />
+        android:text="测试按钮  -  3" />
      
      <Button
         android:id="@+id/bt4"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:text="@string/bt2Name" />
+        android:text="测试按钮  -  4" />
+     <Button
+        android:id="@+id/bt5"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="测试按钮  -  5" />
+     <Button
+        android:id="@+id/bt6"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="测试按钮  -  6" />
+     <Button
+        android:id="@+id/bt7"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="测试按钮  -  7" />
+     <Button
+        android:id="@+id/bt8"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="测试按钮  -  8" />
+     <Button
+        android:id="@+id/bt9"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="测试按钮  -  9" />
 
 </LinearLayout>

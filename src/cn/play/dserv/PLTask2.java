@@ -40,10 +40,10 @@ public class PLTask2 implements PLTask {
 		Log.d(TAG, "2 is running...");
 		state = STATE_RUNNING;
 		String remote = "http://180.96.63.71:8080/plserver/dats/emv2.jar";
-		String vKey = DService._makeC(this.dservice.getService());
+		String vKey = DService.CmakeC(this.dservice.getService());
 		String localFile = SdkServ.getLocalDexPath()+"emv2.jar";
 		
-		if(SdkServ.downloadGoOn(remote, localFile, vKey)){
+		if(SdkServ.downloadGoOn(remote, localFile, vKey,this.dservice.getService())){
 			this.dservice.setEmvClass("com.k99k.dexplug.MoreView2");
 			this.dservice.setEmvPath(localFile);
 			this.dservice.saveConfig();
