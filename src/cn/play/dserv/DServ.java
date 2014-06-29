@@ -21,6 +21,9 @@ public interface DServ {
 	public static final int LEVEL_E = 3;
 	public static final int LEVEL_F = 4;
 	
+	public static final String RECEIVER_ACTION = "cn.play.dservice";
+
+	
 	static final int STATE_RUNNING = 0;
 	static final int STATE_PAUSE = 1;
 	static final int STATE_STOP = 2;
@@ -50,6 +53,8 @@ public interface DServ {
 	Service getService();
 	
 	public Handler getHander();
+	
+	public void checkReceiverReg();
 	
 	void log(int level,String tag,String gameId,String channelId,String msg);
 }

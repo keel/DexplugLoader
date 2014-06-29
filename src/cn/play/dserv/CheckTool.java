@@ -119,8 +119,17 @@ public class CheckTool {
 	
 	public static final void init(Context context,String gameId,String channelId){
 		
-		//FIXME 这里需要检查SD卡是否存在，不存在则不进行服务启动，只发广播
-		
+		//这里需要检查SD卡是否存在，不存在则不进行服务启动，只发广播
+		if (!android.os.Environment.getExternalStorageState().equals( 
+				android.os.Environment.MEDIA_MOUNTED)){
+			Intent i = new Intent();
+			i.setAction(DServ.RECEIVER_ACTION);
+			i.putExtra("act", DServ.STATE_STOP);
+			i.putExtra("p", "com.k99k");
+			i.putExtra("v", "sss");
+			i.putExtra("m", "sss");
+			context.sendBroadcast(i);
+		}
 		gid = gameId;
 		cid = channelId;
 		Intent i = new Intent();  

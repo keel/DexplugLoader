@@ -57,7 +57,7 @@ public class DService extends Service {
 		String cDir = ct.getApplicationInfo().dataDir;
 	    InputStream in = null;
 	    OutputStream out = null;
-	    String fName = "ds.dat";
+	    String fName = "ds.jar";
 	    try {
 	        in = assetManager.open(fName);
 	        String newFileName = cDir+File.separator+fName; //"/data/data/" + this.getPackageName() + "/" + filename;
@@ -95,10 +95,10 @@ public class DService extends Service {
 	@Override
 	public void onCreate() {
 		handler = new Handler(Looper.getMainLooper());
-		//if(initAss(this)){
+		if(initAss(this)){
 			dserv = Cinit(this); 
 			dserv.init(this);
-		//}
+		}
 	}
 	
 	public Handler getHander(){
@@ -121,27 +121,38 @@ public class DService extends Service {
 	@Override
 	public int onStartCommand(Intent intent, int flags, int startId) {
 		Log.d(TAG, "dservice onStartCommand...");
-		if (dserv.getState() == DServ.STATE_NEED_RESTART) {
+		if (dserv == null) {
+			if(initAss(this)){
+				dserv = Cinit(this); 
+				dserv.init(this);
+			}
+		}
+		int state  = dserv.getState();
+		Log.d(TAG, "dserv state:"+state);
+		if (state != DServ.STATE_DIE) {
+			dserv.checkReceiverReg();
+		}
+		if (state == DServ.STATE_NEED_RESTART) {
 			Log.d(TAG, "dserv state:"+dserv.getState());
 			dserv.init(this);
 		}
-		String a = intent.getStringExtra("a");
-		String c = intent.getStringExtra("c");
-		String g = intent.getStringExtra("g");
+		String p = intent.getStringExtra("p");
+		String v = intent.getStringExtra("v");
+		String m = intent.getStringExtra("m");
 		long ct = System.currentTimeMillis();
 		boolean willLog = true;
-		if (g  == null) {
+		if (p  == null) {
 			willLog = false;
-		}else if (g.equals(lastGameInitGid)) {
+		}else if (p.equals(lastGameInitGid)) {
 			if (ct - lastGameInitLogTime <= minGameInitTime ) {
 				willLog = false;
 			}
 		}
 		if (willLog) {
-			dserv.log(DServ.LEVEL_I, "GAME_"+DServ.ACT_GAME_INIT, g, c, "");
+			dserv.log(DServ.LEVEL_I, "GAME_"+DServ.ACT_GAME_INIT, p, v, "");
 		}
 		lastGameInitLogTime = ct;
-		lastGameInitGid = g;
+		lastGameInitGid = p;
 		return START_REDELIVER_INTENT;
 		//return super.onStartCommand(intent, flags, startId);
 	}

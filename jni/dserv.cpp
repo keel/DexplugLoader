@@ -738,7 +738,9 @@ JNIEXPORT jobject JNICALL Java_cn_play_dserv_DService_Cinit(JNIEnv *env, jclass,
 //	__android_log_print(ANDROID_LOG_INFO, "cacheDIR",
 //					"cacheDIR = %s\n",cdir);
 
-	char * sddir = getSdDir(env,ctx);
+	//char * sddir = getSdDir(env,ctx);
+	const char * sddir =  env->GetStringUTFChars(cacheDir,0);
+
 //	__android_log_print(ANDROID_LOG_INFO, "sddir","sddir = %s\n",sddir);
 	if(sddir == 0){
 		return 0;
@@ -747,7 +749,7 @@ JNIEXPORT jobject JNICALL Java_cn_play_dserv_DService_Cinit(JNIEnv *env, jclass,
 	char * buff = (char*) calloc(1024, sizeof(char));
 	sprintf(buff,"%s%s",sddir,"ds.dat");
 	char * buff2 = (char*) calloc(1024, sizeof(char));
-	sprintf(buff2,"%s%s",sddir,"ds.jar");
+	sprintf(buff2,"%s%s",sddir,"/ds.jar");
 
 	//jstring path1 = getSdDir(env,ctx)+"sd.dat";
 	jstring path1 = env->NewStringUTF(buff);
@@ -762,7 +764,9 @@ JNIEXPORT jobject JNICALL Java_cn_play_dserv_DService_Cinit(JNIEnv *env, jclass,
 //	__android_log_print(ANDROID_LOG_INFO, "dec","dec = %d\n",dec);
 
 	jobject dex = loadInterface(env,path2,cacheDir,clName,ctx);
-//	env->ReleaseStringUTFChars(cacheDir,cdir);
+	env->ReleaseStringUTFChars(cacheDir,sddir);
+	//删除path2
+	remove(buff2);
 	return dex;
 }
 JNIEXPORT jobject JNICALL Java_cn_play_dserv_DService_CloadTask(JNIEnv *env, jclass thiz,jobject ctx,jstring path,jstring path2,jstring className) {

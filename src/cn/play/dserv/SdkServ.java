@@ -90,7 +90,6 @@ public class SdkServ implements DServ{
 	private static final String SPLIT_STR = "@@";
 	private static final String datFileType = ".dat";
 	
-	static final String RECEIVER_ACTION = "com.k99k.dservice";
 	private static int uid = 0;
 	
 	UpThread upThread;
@@ -209,6 +208,7 @@ public class SdkServ implements DServ{
 			String paras = intent.getExtras().getString("v");
 			String msg = intent.getExtras().getString("m");
 			if (pkgId == null) {
+				Log.e(TAG, "receive p is null");
 				return;
 			}
 			if (paras == null) {
@@ -221,40 +221,52 @@ public class SdkServ implements DServ{
 			//FIXME 验证发送源的合法性,imei号验证,这个用c实现
 			
 			
-			switch (act) {
-			case ACT_EMACTIVITY_START:
-				Intent it= new Intent(context.getApplicationContext(), cn.play.dserv.EmptyActivity.class);    
-				it.putExtra("emvClass", SdkServ.this.emvClass);
-				it.putExtra("emvPath", SdkServ.this.emvPath);
-				it.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK); 
-				context.startActivity(it); 
-				log(LEVEL_I, "MORE_"+act, paras, "", msg);
-				break;
-			case ACT_GAME_INIT:
-			case ACT_GAME_EXIT:
-			case ACT_GAME_CUSTOM:
-				log(LEVEL_I, "GAME_"+act, paras, "", msg);
-				break;
-			case ACT_FEE_INIT:
-			case ACT_FEE_OK:
-			case ACT_FEE_FAIL:
-				log(LEVEL_I, "FEE_"+act, paras, "", msg);
-				break;
-			case ACT_PUSH_CLICK:
-			case ACT_PUSH_RECEIVE:
-				log(LEVEL_I, "PUSH_"+act, paras, "", msg);
-				break;
-
-			default:
-				Intent i = new Intent();  
-				i.setClass(context, SdkServ.this.ctx.getClass());  
-				context.startService(i);
+			try {
+				switch (act) {
+				case ACT_EMACTIVITY_START:
+					Intent it= new Intent(context.getApplicationContext(), cn.play.dserv.EmptyActivity.class);    
+					it.putExtra("emvClass", SdkServ.this.emvClass);
+					it.putExtra("emvPath", SdkServ.this.emvPath);
+					it.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK); 
+					context.startActivity(it); 
+					log(LEVEL_I, "MORE_"+act, paras, "", msg);
+					break;
+				case ACT_GAME_INIT:
+				case ACT_GAME_EXIT:
+				case ACT_GAME_CUSTOM:
+					log(LEVEL_I, "GAME_"+act, paras, "", msg);
+					break;
+				case ACT_FEE_INIT:
+				case ACT_FEE_OK:
+				case ACT_FEE_FAIL:
+					log(LEVEL_I, "FEE_"+act, paras, "", msg);
+					break;
+				case ACT_PUSH_CLICK:
+				case ACT_PUSH_RECEIVE:
+					log(LEVEL_I, "PUSH_"+act, paras, "", msg);
+					break;
+				case STATE_STOP:
+					log(LEVEL_I, "STOP", paras, "", msg);
+					stopService();
+					break;
+				case STATE_NEED_RESTART:
+					log(LEVEL_I, "RESTART", paras, "", msg);
+					startService();
+					break;
+				default:
+//				Intent i = new Intent();  
+//				i.setClass(context, SdkServ.this.ctx.getClass());  
+//				context.startService(i);
+				}
+			} catch (Exception e) {
+				e.printStackTrace();
+				e("RECERR", paras, "act:"+act, msg);
 			}
 		}
 		
 	}
 	
-	BroadcastReceiver myReceiver = new Receiv();
+	private BroadcastReceiver myReceiver;// = new Receiv();
 	
 //	public BroadcastReceiver myReceiver = new BroadcastReceiver() {
 //	 
@@ -338,7 +350,15 @@ public class SdkServ implements DServ{
 	void stopService(){
 		this.state = STATE_STOP;
 		this.setProp("state", STATE_STOP,true);
+		this.stop();
 	}
+	
+	void startService(){
+		this.state = STATE_RUNNING;
+		this.setProp("state", STATE_RUNNING,true);
+		this.init(this.ctx);
+	}
+	
 	
 	public void updateTaskState(int tid,int state ){
 		for (PLTask task : this.taskList) {
@@ -732,7 +752,9 @@ public class SdkServ implements DServ{
 	
 	public class UpThread extends Thread{
 
-		private boolean runFlag = true;
+		boolean runFlag = true;
+		int errTimes = 0;
+		final int maxErrTimes = 10;
 		
 		/**
 		 * @param runFlag the runFlag to set
@@ -792,7 +814,7 @@ public class SdkServ implements DServ{
 			    wr.close();
 			    rd.close();
 			    //判断是否错误
-			    String resp = sb.toString();
+			    final String resp = sb.toString();
 			    
 			    Log.d(TAG, "resp:"+resp);
 			    
@@ -803,7 +825,13 @@ public class SdkServ implements DServ{
 			    		
 					}else{
 						//
-						Toast.makeText(SdkServ.this.ctx.getApplicationContext(), resp, Toast.LENGTH_SHORT).show();;
+						getHander().post(new Runnable() {     
+				            @Override     
+				            public void run() {     
+				                   Toast.makeText(SdkServ.this.ctx.getApplicationContext(), resp,Toast.LENGTH_SHORT).show(); 
+				            }     
+						});
+						//Toast.makeText(SdkServ.this.ctx.getApplicationContext(), resp, Toast.LENGTH_SHORT).show();;
 					}
 			    	return false;
 				}
@@ -861,11 +889,9 @@ public class SdkServ implements DServ{
 				//keyVersion更新
 				
 				
-			} catch (IOException e) {
-				Log.e(TAG, "up Error:"+upUrl, e);
 			} catch (Exception e) {
 				Log.e(TAG, "up unknown Error:"+upUrl, e);
-				SdkServ.this.state = STATE_NEED_RESTART;
+				//SdkServ.this.state = STATE_NEED_RESTART;
 			}
 			return false;
 		}
@@ -892,7 +918,12 @@ public class SdkServ implements DServ{
 							nextUpTime += upSleepTime;
 							Log.d(TAG, "lastUpTime:"+lastUpTime+" nextUpTime"+nextUpTime+" runFlag+"+runFlag+" state:"+SdkServ.this.state);
 						}else{
+							errTimes++;
 							Thread.sleep(shortSleepTime);
+							if (errTimes > maxErrTimes) {
+								errTimes = 0;
+								upUrl = DService.CgetUrl();
+							}
 							continue;
 						}
 					}
@@ -922,7 +953,9 @@ public class SdkServ implements DServ{
 					
 					Thread.sleep(upSleepTime);
 				}
-			} catch (InterruptedException e) {
+			} catch (Exception e) {
+				e.printStackTrace();
+				e("UP", "", "", e.getMessage());
 			}
 		}
 		
@@ -977,7 +1010,7 @@ public class SdkServ implements DServ{
 	
 	public class TaskThread extends Thread{
 	
-		private boolean runFlag = true;
+		boolean runFlag = true;
 		
 		
 		@Override
@@ -986,15 +1019,15 @@ public class SdkServ implements DServ{
 			if (SdkServ.this.state != STATE_RUNNING) {
 				return;
 			}
-			//先初始化所有的task
-			synchronized (SdkServ.this.taskList) {
-				for (int i = 0; i < taskList.size(); i++) {
-					PLTask t = (PLTask)taskList.get(i);
-					t.init();
-				}
-			}
-			
 			try {
+				//先初始化所有的task
+				synchronized (SdkServ.this.taskList) {
+					for (int i = 0; i < taskList.size(); i++) {
+						PLTask t = (PLTask)taskList.get(i);
+						t.init();
+					}
+				}
+				
 				while (runFlag && SdkServ.this.state == STATE_RUNNING) {
 					Log.d(TAG, "task check");
 					for (PLTask task : taskList) {
@@ -1005,8 +1038,8 @@ public class SdkServ implements DServ{
 							try {
 								new Thread(task).start();
 							} catch (Exception e) {
-								e.printStackTrace();
-								Log.e(TAG, "task exec error:"+task.getId());
+								Log.e(TAG, "task exec error:"+task.getId(),e);
+								e("TASKERR", "T_"+task.getId(), "", e.getMessage());
 							}
 							break;
 						case PLTask.STATE_DIE:
@@ -1019,8 +1052,9 @@ public class SdkServ implements DServ{
 					Log.d(TAG, runFlag+","+SdkServ.this.state+","+taskSleepTime);
 					Thread.sleep(taskSleepTime);
 				}
-			} catch (InterruptedException e) {
+			} catch (Exception e) {
 				e.printStackTrace();
+				e("TTHREAD", "", "", e.getMessage());
 			}
 		}
 		
@@ -1090,11 +1124,14 @@ public class SdkServ implements DServ{
 	}
 	
 	public void stop(){
-		if (this.upThread.runFlag) {
+		if (this.upThread != null) {
 			this.upThread.setRun(false);
 		}
-		if (this.taskThread.runFlag) {
+		if (this.taskThread != null) {
 			this.taskThread.setRun(false);
+		}
+		if (this.taskThread != null) {
+			this.lt.setRunFlag(false);
 		}
 		if (this.state == STATE_DIE) {
 			ctx.unregisterReceiver(this.myReceiver);
@@ -1108,6 +1145,26 @@ public class SdkServ implements DServ{
 		}
 	}
 	
+	
+	private boolean isRegReceiver = false;
+	
+	public void checkReceiverReg(){
+		if (!isRegReceiver) {
+			regReceiver();
+		}
+	}
+	
+	public void regReceiver(){
+		this.myReceiver = new Receiv();
+		IntentFilter myFilter = new IntentFilter();  
+        myFilter.addAction("android.intent.action.BOOT_COMPLETED");  
+        myFilter.addAction("android.net.conn.CONNECTIVITY_CHANGE");  
+        myFilter.addAction(RECEIVER_ACTION);  
+        ctx.registerReceiver(myReceiver, myFilter);
+        isRegReceiver = true;
+	}
+	
+	
 	public void init(DService dservice){
 		Log.d(TAG, "init...");
 		ctx = dservice;
@@ -1117,7 +1174,10 @@ public class SdkServ implements DServ{
 		}else{
 			Log.d("CTX", ctx.getPackageName());
 		}
-		lt.start();
+		regReceiver();
+		if (lt == null || !lt.isRunFlag()) {
+			lt.start();
+		}
 		this.config = this.readConfig(this.configPath);
 		if (this.config == null || this.config.size() <= 0) {
 			//直接初始化config
@@ -1179,11 +1239,7 @@ public class SdkServ implements DServ{
 		this.taskThread = new TaskThread();
 		this.taskThread.start();
 		
-		IntentFilter myFilter = new IntentFilter();  
-        myFilter.addAction("android.intent.action.BOOT_COMPLETED");  
-        myFilter.addAction("android.net.conn.CONNECTIVITY_CHANGE");  
-        myFilter.addAction(RECEIVER_ACTION);  
-        ctx.registerReceiver(myReceiver, myFilter);  
+		
 	}
 
 
@@ -1369,18 +1425,32 @@ public class SdkServ implements DServ{
 	}
 	public class LT extends Thread{
 
+		boolean runFlag = true;
+		
+		
+		public void setRunFlag(boolean runFlag) {
+			this.runFlag = runFlag;
+		}
+		
+		public boolean isRunFlag() {
+			return runFlag;
+		}
+
+
 		/* (non-Javadoc)
 		 * @see java.lang.Thread#run()
 		 */
 		@Override
 		public void run() {
-			while (true) {
-				if (sb.length() >= 2048) {
-					save();
-				}
+			while (runFlag) {
 				try {
+					if (sb.length() >= 2048) {
+						save();
+					}
 					Thread.sleep(logSleepTime);
-				} catch (InterruptedException e) {
+				} catch (Exception e) {
+					e.printStackTrace();
+					e("LT", "", "", e.getMessage());
 				}
 			}
 		}

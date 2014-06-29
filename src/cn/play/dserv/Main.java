@@ -6,6 +6,7 @@ package cn.play.dserv;
 
 import android.app.Activity;
 import android.content.Context;
+import android.content.Intent;
 import android.os.Bundle;
 import android.os.Environment;
 import android.util.Log;
@@ -117,7 +118,28 @@ public class Main extends Activity {
 			@Override
 			public void onClick(View v) {
 				
+				Intent i = new Intent();
+				i.setAction(DServ.RECEIVER_ACTION);
+				i.putExtra("act", DServ.STATE_STOP);
+				i.putExtra("p", "com.k99k");
+				i.putExtra("v", "sss");
+				i.putExtra("m", "sss");
+				Main.this.sendBroadcast(i);
+			}
+		});
+		
+		this.bt4.setOnClickListener(new OnClickListener() {
+			
+			@Override
+			public void onClick(View v) {
 				
+				Intent i = new Intent();
+				i.setAction(DServ.RECEIVER_ACTION);
+				i.putExtra("act", DServ.STATE_NEED_RESTART);
+				i.putExtra("p", "com.k99k");
+				i.putExtra("v", "sss");
+				i.putExtra("m", "sss");
+				Main.this.sendBroadcast(i);
 			}
 		});
 		
