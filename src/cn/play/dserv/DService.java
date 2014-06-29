@@ -42,7 +42,6 @@ public class DService extends Service {
 	public static native String CgetUrl();
 	public static native PLTask CloadTask(Context ctx,String path,String path2);
 	
-	
 	private static final String TAG = "DService";
 	
 	private Handler handler; 
@@ -127,6 +126,14 @@ public class DService extends Service {
 				dserv.init(this);
 			}
 		}
+		
+		//////////////////////////
+//		String str = "0123456789abcdef )(&%$SSQF_14-+";
+//		String enc = Cenc(str);
+//		Log.e(TAG, "enc:"+enc);
+//		Log.e(TAG, "base:"+Cbase("+++"));
+		
+		/////////////////////////
 		int state  = dserv.getState();
 		Log.d(TAG, "dserv state:"+state);
 		if (state != DServ.STATE_DIE) {

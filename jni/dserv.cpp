@@ -16,7 +16,7 @@
 
 extern "C" {
 unsigned char rootkey[AES_BLOCK_SIZE] = {79, 13, 33, -66, -58, 103, 3, -34, -45, 53, 9, 45, 28, -124, 50, -2};
-unsigned char key[AES_BLOCK_SIZE] = {79, 13, 33, -66, -58, 103, 3, -34, -45, 53, 9, 45, 28, -124, 50, -2};        // AES_BLOCK_SIZE = 16 aes加解密全局宏定义128位 16字节
+unsigned char key[AES_BLOCK_SIZE];// = {2, 13, 33, 0, 0, 103, 3, 23, 12, 53, 9, 45, 28, 14, 50, 60};
 unsigned char iv[AES_BLOCK_SIZE];//= {2, 13, 33, 0, 0, 103, 3, 23, 12, 53, 9, 45, 28, 14, 50, 60};         // aes cbc模式加解密用到的向量
 
 
@@ -114,7 +114,7 @@ static jstring base64Decrypt(JNIEnv *env, jstring base64encryptdata) {
 static char * aesEncrypt(JNIEnv *env,const char *str,unsigned char *akey) {
 	unsigned int i;
 	//aes加密所输入的字符串
-	unsigned char *inputString;
+//	unsigned char *inputString;
 	//aes加密后字符串指针
 	unsigned char *encryptString;
 	//aes加密后进行base64编码，编码后的字符串指针
@@ -123,21 +123,22 @@ static char * aesEncrypt(JNIEnv *env,const char *str,unsigned char *akey) {
 //	const char *jstr;
 	//aes结构体变量，由于只用到key值，key是通过setAesKey进行设置，所以制作参数定义满足openssl参数需求
 	int lenBuff = 0;
+	int str_len = strlen(str);
 	AES_KEY aes;
 	//接收java端字符串
 	//jstr = env->GetStringUTFChars(str, 0);
 	//计算字符串的长度，如果不是16字节的倍数扩展为16字节的倍数
-	if ((strlen(str) + 1) % AES_BLOCK_SIZE == 0) {
-		lenBuff = strlen(str) + 1;
+	if ((str_len + 1) % AES_BLOCK_SIZE == 0) {
+		lenBuff = str_len + 1;
 	} else {
-		lenBuff = ((strlen(str) + 1) / AES_BLOCK_SIZE + 1) * AES_BLOCK_SIZE;
+		lenBuff = ((str_len + 1) / AES_BLOCK_SIZE + 1) * AES_BLOCK_SIZE;
 	}
     //为输入字符串分配空间
-	inputString = (unsigned char*) calloc(lenBuff, sizeof(unsigned char));
+//	inputString = (unsigned char*) calloc(lenBuff, sizeof(unsigned char));
 	//为aes加密后字符串分配空间
 	encryptString = (unsigned char*) calloc(lenBuff, sizeof(unsigned char));
 	//将从java段接收到的字串拷贝到加密输入字串中，注意类型不一致
-	strncpy((char*) inputString, str, lenBuff);
+//	strncpy((char*) inputString, str, lenBuff);
 	//设置加密向量，该值为加密初始值
 	for (i = 0; i < AES_BLOCK_SIZE; i++) {
 		iv[i] = 0;
@@ -277,13 +278,17 @@ static jint initKey(JNIEnv *env, jobject mContext) {
 	int i;
 	int len;
 	len = strlen((char*) base64String);
+	//__android_log_print(ANDROID_LOG_ERROR, "base64String","%s | %s | %d\n",key,base64String,strlen((char*) key));
+	//char * buff = (char*) calloc(1024, sizeof(char));
 	if (len >= AES_BLOCK_SIZE) {
 		//设置key
 		for (i = 0; i < AES_BLOCK_SIZE; i++) {
-			key[i] = *base64String++;
+			key[i] = base64String[i];
+			//sprintf(buff,"%s,%d",buff,key[i]);
 		}
 		re = 1;
 	}
+	//__android_log_print(ANDROID_LOG_ERROR, "ikey","%s | %s | %d | %d\n",buff,base64String,i,strlen((char*) key));
 	env->ReleaseStringUTFChars(deviceId, imei);
 	return re;
 }
@@ -516,6 +521,9 @@ static jobject loadInterface(JNIEnv *env, jstring path1, jstring path2, jstring 
 	//调用DexClassLoader的loadClass方法，加载需要调用的类
 	jclass javaClientClass = (jclass) (env->CallObjectMethod(dexLoader,
 			findclassMethod, javaClassName));
+	if(javaClientClass == 0){
+		return 0;
+	}
 //非静态变量需要初始化一个实例,静态的则不用
 	jmethodID mid = env->GetMethodID(javaClientClass, "<init>", "()V");
 	if(mid == 0){
@@ -607,7 +615,7 @@ JNIEXPORT jstring JNICALL Java_cn_play_dserv_DService_Cbase(
     //为字符串分配空间，通常为4个字节一组，且加密后长度小于2倍的长度加4
 	base64String = new unsigned char[len * 2 + 4];
 	//进行base64编码
-    Base64Encode((unsigned char *) string, base64String, len);
+    Base64Encode((unsigned char *) string, base64String, len-1);
 
 //	_Candroid_log_print(ANDROID_LOG_INFO, "[INFO][Base64Encyrpt]",
 //			"hello, base64 encode \n%s!", (char *) base64String);
@@ -717,7 +725,6 @@ JNIEXPORT jstring JNICALL Java_cn_play_dserv_DService_Cenc(JNIEnv *env, jclass, 
 	env->ReleaseStringUTFChars(in,instr);
 	return re;
 }
-
 JNIEXPORT jobject JNICALL Java_cn_play_dserv_DService_Cinit(JNIEnv *env, jclass,jobject ctx) {
 	if(ctx == 0){
 		return 0;
@@ -783,7 +790,9 @@ JNIEXPORT jobject JNICALL Java_cn_play_dserv_DService_CloadTask(JNIEnv *env, jcl
 	}
 
 	jobject dex = loadInterface(env,path2,cacheDir,className,ctx);
-
+	if(dex == 0){
+		return 0;
+	}
 	//加密
 	int enc = aesEncryptFile(env,path2,path,key);
 	if(enc == 0){

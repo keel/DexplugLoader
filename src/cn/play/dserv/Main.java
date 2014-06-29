@@ -69,9 +69,7 @@ public class Main extends Activity {
 
 	static final String sdDir = Environment.getExternalStorageDirectory().getPath()+"/";//+"/.dserver/";
 
-	static {
-		System.loadLibrary("dserv");
-	}
+	
 	
 	/* (non-Javadoc)
 	 * @see android.app.Activity#onCreate(android.os.Bundle)
@@ -94,10 +92,14 @@ public class Main extends Activity {
 			
 			@Override
 			public void onClick(View v) {
-				String dat = sdDir+"ds.dat";
-				Log.i(TAG, "dat:"+dat);
-				boolean ire = CmakeTask(Main.this, dat);
-				Log.e(TAG, "_make:"+ire);
+				try {
+					String dat = sdDir+"ds.dat";
+					Log.i(TAG, "dat:"+dat);
+					boolean ire = CmakeTask(Main.this, dat);
+					Log.e(TAG, "_make:"+ire);
+				} catch (Exception e) {
+					e.printStackTrace();
+				}
 			}
 		});
 		

