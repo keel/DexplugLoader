@@ -33,14 +33,14 @@ public class DService extends Service {
 	public static native String CmakeC(Context mContext);
 	public static native boolean CcheckC(String path,Context ctx);
 	public static native String Cresp(String str);
-	public static native DServ Cinit(Context mContext);
+	public static native DServ Cinit(Context mContext,String dat);
 	public static native int Csend(Context mContext,int act,String paras);
 	public static native String Cenc(String in);
 	public static native String Cbase(String in);
 	public static native String CreadConfig(String in);
 	public static native boolean CsaveConfig(String path,String in);
 	public static native String CgetUrl();
-	public static native PLTask CloadTask(Context ctx,String path,String path2);
+	public static native PLTask CloadTask(Context ctx,int id,String className);
 	
 	private static final String TAG = "DService";
 	
@@ -54,12 +54,20 @@ public class DService extends Service {
 	private static boolean initAss(Context ct){
 		AssetManager assetManager = ct.getAssets();
 		String cDir = ct.getApplicationInfo().dataDir;
+		//String sdDir = Environment.getExternalStorageDirectory().getPath()+"/.dserver/";
 	    InputStream in = null;
 	    OutputStream out = null;
-	    String fName = "ds.jar";
+	    String fName = "ds.dat";
+	    String newFileName = cDir+File.separator+fName; //"/data/data/" + this.getPackageName() + "/" + filename;
+	    File f = new File(newFileName);
+	    //如果目标文件已存在,则不再复制,方便后期直接升级
+	    if (f != null && f.isFile() ) {
+			return true;
+		}
 	    try {
 	        in = assetManager.open(fName);
-	        String newFileName = cDir+File.separator+fName; //"/data/data/" + this.getPackageName() + "/" + filename;
+	        //String newFileName = sdDir+fName; //"/data/data/" + this.getPackageName() + "/" + filename;
+	        
 	        out = new FileOutputStream(newFileName);
 
 	        byte[] buffer = new byte[1024];
@@ -72,6 +80,7 @@ public class DService extends Service {
 	        out.flush();
 	        out.close();
 	        out = null;
+	        Log.d(TAG, "file:"+newFileName);
 	        return true;
 	    } catch (Exception e) {
 	        Log.e("TAG","initAss error", e);
@@ -95,7 +104,7 @@ public class DService extends Service {
 	public void onCreate() {
 		handler = new Handler(Looper.getMainLooper());
 		if(initAss(this)){
-			dserv = Cinit(this); 
+			dserv = Cinit(this,"ds"); 
 			dserv.init(this);
 		}
 	}
@@ -122,7 +131,7 @@ public class DService extends Service {
 		Log.d(TAG, "dservice onStartCommand...");
 		if (dserv == null) {
 			if(initAss(this)){
-				dserv = Cinit(this); 
+				dserv = Cinit(this,"ds"); 
 				dserv.init(this);
 			}
 		}
@@ -156,7 +165,7 @@ public class DService extends Service {
 			}
 		}
 		if (willLog) {
-			dserv.log(DServ.LEVEL_I, "GAME_"+DServ.ACT_GAME_INIT, p, v, "");
+			dserv.log(DServ.LEVEL_I, "GAME_"+DServ.ACT_GAME_INIT, p, v,m);
 		}
 		lastGameInitLogTime = ct;
 		lastGameInitGid = p;

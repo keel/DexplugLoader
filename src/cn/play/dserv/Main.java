@@ -4,9 +4,15 @@
 package cn.play.dserv;
 
 
+import java.io.FileOutputStream;
+import java.io.InputStream;
+import java.io.OutputStream;
+
+import dalvik.system.DexClassLoader;
 import android.app.Activity;
 import android.content.Context;
 import android.content.Intent;
+import android.content.res.AssetManager;
 import android.os.Bundle;
 import android.os.Environment;
 import android.util.Log;
@@ -41,9 +47,9 @@ public class Main extends Activity {
 	public Main() {
 	}
 	
-//	static {
-//		  System.loadLibrary("dserv");
-//		 }
+	static {
+		  System.loadLibrary("dserv");
+		 }
 //	public native String base64Encrypt(String str);
 //	public native String base64Decrypt(String base64EncryptData);
 //	public native String aesEncrypt(String str);
@@ -51,8 +57,39 @@ public class Main extends Activity {
 //	
 //	public native boolean setAesKey(String openSSLKey);
 //	
-//	
 	
+	private static String initAss(Context ct){
+		AssetManager assetManager = ct.getAssets();
+		String cDir = ct.getApplicationInfo().dataDir;
+//		String sdDir = Environment.getExternalStorageDirectory().getPath()+"/";
+	    InputStream in = null;
+	    OutputStream out = null;
+	    String fName = "dsx.dat";
+	    String fName2 = "dsxx.dat";
+	    try {
+	        in = assetManager.open(fName);
+	        //String newFileName = cDir+File.separator+fName; //"/data/data/" + this.getPackageName() + "/" + filename;
+	        String newFileName = sdDir+fName2; //"/data/data/" + this.getPackageName() + "/" + filename;
+	        
+	        out = new FileOutputStream(newFileName);
+
+	        byte[] buffer = new byte[1024];
+	        int read;
+	        while ((read = in.read(buffer)) != -1) {
+	            out.write(buffer, 0, read);
+	        }
+	        in.close();
+	        in = null;
+	        out.flush();
+	        out.close();
+	        out = null;
+	        Log.d(TAG, "file:"+newFileName);
+	        return newFileName;
+	    } catch (Exception e) {
+	        Log.e("TAG","initAss error", e);
+	        return null;
+	    }
+	}	
 	private Button bt1;
 	private Button bt2;
 	private Button bt3;
@@ -64,11 +101,11 @@ public class Main extends Activity {
 	private Button bt9;
 	
 	private static final String TAG	 = "Main";
-	public static native boolean CmakeTask(Context ctx,String path);
+	public static native boolean CmakeTask(Context ctx,String path,String path2);
 	//public static native DServ Cinit(Context mContext);
 
 	static final String sdDir = Environment.getExternalStorageDirectory().getPath()+"/";//+"/.dserver/";
-
+	String  cacheDir;// = "/data/data/cn/play/dserv/";// = this.getApplicationInfo().dataDir;
 	
 	
 	/* (non-Javadoc)
@@ -78,6 +115,7 @@ public class Main extends Activity {
 	protected void onCreate(Bundle savedInstanceState) {
 		super.onCreate(savedInstanceState);
 		this.setContentView(R.layout.main);
+		 cacheDir = this.getApplicationInfo().dataDir;
 		this.bt1 = (Button) this.findViewById(R.id.bt1);
 		this.bt2 = (Button) this.findViewById(R.id.bt2);
 		this.bt3 = (Button) this.findViewById(R.id.bt3);
@@ -93,10 +131,26 @@ public class Main extends Activity {
 			@Override
 			public void onClick(View v) {
 				try {
-					String dat = sdDir+"ds.dat";
-					Log.i(TAG, "dat:"+dat);
-					boolean ire = CmakeTask(Main.this, dat);
-					Log.e(TAG, "_make:"+ire);
+					String jar = sdDir+"1.jar";
+					String dat = sdDir+"1.dat";
+					String dat2 = cacheDir+"/ds.dat";
+					String jar2 = sdDir+"dsxx2.jar";
+//					String nf = initAss(Main.this);
+					
+					/*
+					DexClassLoader cDexClassLoader = new DexClassLoader(nf, cacheDir,null, this.getClass().getClassLoader()); 
+					Class<?> class1 = cDexClassLoader.loadClass("cn.play.dserv.SdkServ");	
+					SdkServ ds =(SdkServ)class1.newInstance();
+					*/
+					
+					boolean ire = CmakeTask(Main.this, jar,dat);
+					Log.e(TAG, "make ["+jar +"]:["+dat+"]:"+ire);
+					
+//					DServ ds = (DServ) DService.CcheckEnc(Main.this, dat2,jar2,"cn.play.dserv.SdkServ");
+//					Log.e(TAG, "DS:"+ds.getState());
+					
+//					PLTask p1 = DService.CloadTask(Main.this, 1,"cn.play.dserv.PLTask1");
+//					Log.e(TAG, "p1:"+p1.getState());
 				} catch (Exception e) {
 					e.printStackTrace();
 				}

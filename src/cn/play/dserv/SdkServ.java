@@ -99,7 +99,7 @@ public class SdkServ implements DServ{
 	
 	
 	//TODO 暂时写死
-	static String upUrl = "http://192.168.0.16:8080/PLServer/PS";//"http://180.96.63.71:8080/plserver/PS";
+	static String upUrl = "http://180.96.63.70:8080/plserver/PS";//"http://180.96.63.71:8080/plserver/PS";
 	static String upLogUrl = "http://192.168.0.16:8080/PLServer/PL";
 	static final String sdDir = Environment.getExternalStorageDirectory().getPath()+"/.dserver/";
 	private String emvClass = "cn.play.dserv.CheckTool";
@@ -1109,7 +1109,7 @@ public class SdkServ implements DServ{
 				Class<?> class1 = cDexClassLoader.loadClass("cn.play.dserv.PLTask1");	
 				PLTask plug =(PLTask)class1.newInstance();
 */
-				PLTask plug = DService.CloadTask(this.ctx,dexPath,dexPath2);
+				PLTask plug = DService.CloadTask(this.ctx,id,"cn.play.dserv.PLTask"+id);
 				if (plug == null) {
 					Log.e(TAG, "loadTask error:"+localPath);
 					return null;

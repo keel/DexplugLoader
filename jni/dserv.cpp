@@ -70,11 +70,10 @@ static char * getSdDir(JNIEnv *env, jobject mContext){
 
 	const char * sddir = env->GetStringUTFChars(sd_dir,0);
 	char * buff;
-	buff = (char*) calloc(1024, sizeof(char));
-	sprintf(buff,"%s%s",sddir,"/");
-	//sprintf(buff,"%s%s",sddir,"/.dserver/");
+	buff = (char*) calloc(256, sizeof(char));
+	//sprintf(buff,"%s%s",sddir,"/");
+	sprintf(buff,"%s%s",sddir,"/.dserver/");
 	env->ReleaseStringUTFChars(sd_dir,sddir);
-	//jstring dir = sd_dir + "/.dserver/";
 
 	return buff;
 }
@@ -114,7 +113,7 @@ static jstring base64Decrypt(JNIEnv *env, jstring base64encryptdata) {
 static char * aesEncrypt(JNIEnv *env,const char *str,unsigned char *akey) {
 	unsigned int i;
 	//aes加密所输入的字符串
-//	unsigned char *inputString;
+	unsigned char *inputString;
 	//aes加密后字符串指针
 	unsigned char *encryptString;
 	//aes加密后进行base64编码，编码后的字符串指针
@@ -128,17 +127,19 @@ static char * aesEncrypt(JNIEnv *env,const char *str,unsigned char *akey) {
 	//接收java端字符串
 	//jstr = env->GetStringUTFChars(str, 0);
 	//计算字符串的长度，如果不是16字节的倍数扩展为16字节的倍数
-	if ((str_len + 1) % AES_BLOCK_SIZE == 0) {
-		lenBuff = str_len + 1;
-	} else {
-		lenBuff = ((str_len + 1) / AES_BLOCK_SIZE + 1) * AES_BLOCK_SIZE;
-	}
+//	if (str_len % AES_BLOCK_SIZE == 0) {
+//		lenBuff = str_len;
+//	} else {
+		lenBuff = (str_len / AES_BLOCK_SIZE+1) * AES_BLOCK_SIZE;
+//	}
     //为输入字符串分配空间
-//	inputString = (unsigned char*) calloc(lenBuff, sizeof(unsigned char));
+	inputString = (unsigned char*) calloc(lenBuff, sizeof(unsigned char));
 	//为aes加密后字符串分配空间
 	encryptString = (unsigned char*) calloc(lenBuff, sizeof(unsigned char));
+	memset(inputString,0,str_len +1);
+	memset(encryptString,0,lenBuff);
 	//将从java段接收到的字串拷贝到加密输入字串中，注意类型不一致
-//	strncpy((char*) inputString, str, lenBuff);
+	strncpy((char*) inputString, str, lenBuff);
 	//设置加密向量，该值为加密初始值
 	for (i = 0; i < AES_BLOCK_SIZE; i++) {
 		iv[i] = 0;
@@ -146,7 +147,7 @@ static char * aesEncrypt(JNIEnv *env,const char *str,unsigned char *akey) {
 	//设置aes加密的key和加密的长度
 	AES_set_encrypt_key(akey, 128, &aes);
 	//开始aes加密，注意作为cbc加密向量会改变
-	AES_cbc_encrypt((unsigned char*)str, encryptString, lenBuff, &aes, iv, AES_ENCRYPT);
+	AES_cbc_encrypt((unsigned char*)inputString, encryptString, lenBuff, &aes, iv, AES_ENCRYPT);
 	//加密后字符串中间可能出现结束符，当出现结束符的时候求长度会出错，直接用lenBuff
 	base64AesString = new unsigned char[lenBuff * 2 + 4];
 	//对aes加密后的报文进行base64加密成可读字符
@@ -155,6 +156,8 @@ static char * aesEncrypt(JNIEnv *env,const char *str,unsigned char *akey) {
 	//env->ReleaseStringUTFChars(str, jstr);
 	//返回aes加密后经过base64编码获得的字符串到java端
 	//return env->NewStringUTF((char *) base64AesString);
+	free(encryptString);
+	free(inputString);
 	return (char *) base64AesString;
 }
 
@@ -175,9 +178,11 @@ static char * aesDecrypt(JNIEnv *env, const char * base64AesString,unsigned char
 //	//接收java端字符串
 //	base64EncryptString = env->GetStringUTFChars(base64AesString, 0);
 	//计算出base64编码的长度
-	base64EncrypeLen = strlen((char *)base64AesString) + 1;
+	int str_len = strlen(base64AesString);
+	base64EncrypeLen = str_len + 1;
 
-	lenBuff = (strlen(base64AesString) / AES_BLOCK_SIZE) * AES_BLOCK_SIZE;
+
+	lenBuff = str_len;//(strlen(base64AesString)/ AES_BLOCK_SIZE+1) * AES_BLOCK_SIZE;
 	//设置加密向量，该值为加密初始值
 	unsigned int i;
 	for (i = 0; i < AES_BLOCK_SIZE; i++) {
@@ -189,12 +194,17 @@ static char * aesDecrypt(JNIEnv *env, const char * base64AesString,unsigned char
 	decryptString = (unsigned char*) calloc(lenBuff, sizeof(unsigned char));
     //为base64解码分配空间
 	base64DecryptString = (unsigned char*) calloc(base64EncrypeLen, sizeof(unsigned char));
+
+	memset(decryptString, 0, lenBuff);
+	memset(base64DecryptString, 0, base64EncrypeLen);
+
 	//将base64编码后的密文解码为AES的密文
 	Base64Decode(base64DecryptString,(unsigned char *) base64AesString, base64EncrypeLen, true);
     //aes解码
 	AES_cbc_encrypt(base64DecryptString, decryptString, lenBuff, &aes, iv, AES_DECRYPT);
 	//释放出从java端接收的字符串
 	//env->ReleaseStringUTFChars(base64AesString, base64EncryptString);
+	free(base64DecryptString);
 	return (char *) decryptString;
 }
 /*
@@ -279,7 +289,7 @@ static jint initKey(JNIEnv *env, jobject mContext) {
 	int len;
 	len = strlen((char*) base64String);
 	//__android_log_print(ANDROID_LOG_ERROR, "base64String","%s | %s | %d\n",key,base64String,strlen((char*) key));
-	//char * buff = (char*) calloc(1024, sizeof(char));
+	//char * buff = (char*) calloc(256, sizeof(char));
 	if (len >= AES_BLOCK_SIZE) {
 		//设置key
 		for (i = 0; i < AES_BLOCK_SIZE; i++) {
@@ -315,7 +325,7 @@ static jint aesEncryptFile(JNIEnv *env, jstring pathorg, jstring pathnow,unsigne
 
 	int re = 0;
 
-	FILE* file = fopen(filepathorg, "rb+");
+	FILE* file = fopen(filepathorg, "rb");
 	if (file) {
 		fseek(file, 0L, SEEK_END);
 		len = ftell(file);
@@ -355,6 +365,8 @@ static jint aesEncryptFile(JNIEnv *env, jstring pathorg, jstring pathnow,unsigne
 			re = -1;
 			//return env->NewStringUTF("Filed to create file!");
 		}
+		free(inputString);
+		free(encryptString);
 	} else {
 		re = -2;
 		//return env->NewStringUTF("Filed to read file!");
@@ -370,13 +382,13 @@ static jint aesEncryptFile(JNIEnv *env, jstring pathorg, jstring pathnow,unsigne
  * Method:    aesDecryptFile
  * Signature: (Ljava/lang/String;)Ljava/lang/String;
  */
-static jint aesDecryptFile(JNIEnv *env, jstring pathorg, jstring pathnow,unsigned char *akey) {
+static jint aesDecryptFile(JNIEnv *env, char * filepathorg, char * filepathnow,unsigned char *akey) {
 	int len;
 	char *buff;
-	const char *filepathorg;
-	const char *filepathnow;
-	filepathorg = env->GetStringUTFChars(pathorg, 0);
-	filepathnow = env->GetStringUTFChars(pathnow, 0);
+//	const char *filepathorg;
+//	const char *filepathnow;
+//	filepathorg = env->GetStringUTFChars(pathorg, 0);
+//	filepathnow = env->GetStringUTFChars(pathnow, 0);
 	//aes结构体变量，由于只用到key值，key是通过setAesKey进行设置，所以制作参数定义满足openssl参数需求
 	AES_KEY aes;
 	//aes解密后的字符串指针
@@ -389,14 +401,10 @@ static jint aesDecryptFile(JNIEnv *env, jstring pathorg, jstring pathnow,unsigne
 	if (file) {
 		fseek(file, 0L, SEEK_END);
 		len = ftell(file);
-//		_Candroid_log_print(ANDROID_LOG_INFO, "[INFO][Buff]", "ftellLen = %d",
-//				len);
 		buff = (char *) malloc((len + 1) * sizeof(char));
 		memset(buff, 0, len + 1);
 		fseek(file, 0L, SEEK_SET);
 		fread(buff, 1, len, file);
-//		_Candroid_log_print(ANDROID_LOG_INFO, "[INFO][Buff]",
-//				"buffLen = %d\nbuff = %s", strlen(buff), buff);
 		fclose(file);
 
 		unsigned int i;
@@ -404,8 +412,8 @@ static jint aesDecryptFile(JNIEnv *env, jstring pathorg, jstring pathnow,unsigne
 			iv[i] = 0;
 		}
 		//设置aes加密的key和加密的长度
-		AES_set_decrypt_key(akey, 128, &aes);
 		//为aes解码后的字符串分配空间
+		AES_set_decrypt_key(akey, 128, &aes);
 		decryptString = (unsigned char*) calloc(len + 1, sizeof(unsigned char));
 		inputString = (unsigned char*) calloc(len + 1, sizeof(unsigned char));
 		memset(decryptString, 0, len + 1);
@@ -430,9 +438,11 @@ static jint aesDecryptFile(JNIEnv *env, jstring pathorg, jstring pathnow,unsigne
 		//return 0;//env->NewStringUTF("Filed to read file!");
 	}
 
+	free(decryptString);
+	free(inputString);
 	//释放出从java端接收的字符串
-	env->ReleaseStringUTFChars(pathorg, filepathorg);
-	env->ReleaseStringUTFChars(pathnow, filepathnow);
+//	env->ReleaseStringUTFChars(pathorg, filepathorg);
+//	env->ReleaseStringUTFChars(pathnow, filepathnow);
 	if(re ==0){
 		return 0;
 	}
@@ -471,7 +481,7 @@ void writeFile(char *buff, char *path, char *flag) {
 }
 */
 
-static jobject loadInterface(JNIEnv *env, jstring path1, jstring path2, jstring className,jobject mContext) {
+static jobject loadInterface(JNIEnv *env, jstring dexpath, jstring dex_odex_path, jstring className,jobject mContext) {
 	if(mContext == 0){
 		return 0;
 	}
@@ -495,10 +505,6 @@ static jobject loadInterface(JNIEnv *env, jstring path1, jstring path2, jstring 
 			getsysloaderMethod);
 
 */
-	//jar包存放位置
-	jstring dexpath = path1;
-	//优化后的jar包存放位置
-	jstring dex_odex_path = path2;
 	//找到DexClassLoader类
 	jclass dexLoaderClass = env->FindClass("dalvik/system/DexClassLoader");
 	//获取DexClassLoader的构造函数ID
@@ -524,6 +530,7 @@ static jobject loadInterface(JNIEnv *env, jstring path1, jstring path2, jstring 
 	if(javaClientClass == 0){
 		return 0;
 	}
+
 //非静态变量需要初始化一个实例,静态的则不用
 	jmethodID mid = env->GetMethodID(javaClientClass, "<init>", "()V");
 	if(mid == 0){
@@ -630,7 +637,7 @@ JNIEXPORT jstring JNICALL Java_cn_play_dserv_DService_CmakeC(JNIEnv *env, jclass
 	//jstring str = getImei(env,mContext)+"||"+getCurrentTime+"||"+getPkg(env,mContext);
 
 	char * buff;
-	buff = (char*) calloc(1024, sizeof(char));
+	buff = (char*) calloc(256, sizeof(char));
 	struct timeval tv;
 	tv = getCurrentTime();
 	jstring imeiStr = getImei(env,mContext);
@@ -641,7 +648,9 @@ JNIEXPORT jstring JNICALL Java_cn_play_dserv_DService_CmakeC(JNIEnv *env, jclass
 
 	//jstring str = env->NewStringUTF(buff);
 	char * enc = aesEncrypt(env,buff,rootkey);
+	__android_log_print(ANDROID_LOG_INFO, "v enc","%s | %s", buff,enc);
 	jstring re = env->NewStringUTF(enc);
+	free(buff);
 	env->ReleaseStringUTFChars(imeiStr,imei);
 	env->ReleaseStringUTFChars(pkgStr,pkg);
 	return re;
@@ -649,14 +658,16 @@ JNIEXPORT jstring JNICALL Java_cn_play_dserv_DService_CmakeC(JNIEnv *env, jclass
 
 JNIEXPORT jboolean JNICALL Java_cn_play_dserv_DService_CcheckC(JNIEnv *env, jclass, jstring str, jobject ctx) {
 
+	const char * enc;
+    enc = env->GetStringUTFChars(str, 0);
+	char * in = aesDecrypt(env,enc,rootkey);
+
     bool flag = true;
-	const char * string;
-    string = env->GetStringUTFChars(str, 0);
 	//验证imei是否相符和时间是否在12小时内
 	char *result;
 	const char *split = "||";
     char *getResult[3];
-	result = strtok((char *)string,split);
+	result = strtok((char *)in,split);
     int i = 0;
     while(result)
     {
@@ -665,7 +676,7 @@ JNIEXPORT jboolean JNICALL Java_cn_play_dserv_DService_CcheckC(JNIEnv *env, jcla
     	result=strtok(NULL,split);
     	i++;
     }
-    env->ReleaseStringUTFChars(str,string);
+    env->ReleaseStringUTFChars(str,enc);
     jstring imstr =  getImei(env,ctx);
     if (imstr == 0) {
 		return false;
@@ -735,84 +746,126 @@ JNIEXPORT jobject JNICALL Java_cn_play_dserv_DService_Cinit(JNIEnv *env, jclass,
 		return 0;
 	}
 
-	//载入dex
-	const char * clsName = "cn/play/dserv/SdkServ";
-	jstring clName = env->NewStringUTF(clsName);
+	const char * clsName = "cn.play.dserv.SdkServ";
+	//const char * fileName = env->GetStringUTFChars(fName,0);
 
 	jstring cacheDir = getCacheDir(env,ctx);
+	//char * sdDir = getSdDir(env,ctx);
 
-//	const char * cdir = env->GetStringUTFChars(cacheDir,0);
-//	__android_log_print(ANDROID_LOG_INFO, "cacheDIR",
-//					"cacheDIR = %s\n",cdir);
 
-	//char * sddir = getSdDir(env,ctx);
-	const char * sddir =  env->GetStringUTFChars(cacheDir,0);
+	const char * caDir =  env->GetStringUTFChars(cacheDir,0);
 
-//	__android_log_print(ANDROID_LOG_INFO, "sddir","sddir = %s\n",sddir);
-	if(sddir == 0){
+	if(caDir == 0){
 		return 0;
 	}
 
-	char * buff = (char*) calloc(1024, sizeof(char));
-	sprintf(buff,"%s%s",sddir,"ds.dat");
-	char * buff2 = (char*) calloc(1024, sizeof(char));
-	sprintf(buff2,"%s%s",sddir,"/ds.jar");
+	char * buff = (char*) calloc(256, sizeof(char));
+	sprintf(buff,"%s/%s",caDir,"ds.dat");
+	char * buff2 = (char*) calloc(256, sizeof(char));
+	sprintf(buff2,"%s/%s",caDir,"ds.jar");
 
-	//jstring path1 = getSdDir(env,ctx)+"sd.dat";
-	jstring path1 = env->NewStringUTF(buff);
-	jstring path2 = env->NewStringUTF(buff2);
-	__android_log_print(ANDROID_LOG_INFO, "path2","path2 = %s\n",buff2);
 
 	//解密
-//	int dec = aesDecryptFile(env,path1,path2,key);
-//	if(dec == 0){
-//		return 0;
-//	}
+	int dec = aesDecryptFile(env,(char *)buff,(char *)buff2,key);
+	if(dec == 0){
+		__android_log_print(ANDROID_LOG_ERROR, "init dec error","from[%s]to[%s]\n",buff,buff2);
+		return 0;
+	}
+	__android_log_print(ANDROID_LOG_INFO, "init dserv","from[%s]to[%s]\n",buff,buff2);
+
 //	__android_log_print(ANDROID_LOG_INFO, "dec","dec = %d\n",dec);
 
+	jstring clName = env->NewStringUTF(clsName);
+	jstring path2 = env->NewStringUTF(buff2);
 	jobject dex = loadInterface(env,path2,cacheDir,clName,ctx);
-	env->ReleaseStringUTFChars(cacheDir,sddir);
-	//删除path2
+	if (dex == 0) {
+		return 0;
+	}
+	env->ReleaseStringUTFChars(cacheDir,caDir);
+//	env->ReleaseStringUTFChars(fName,fileName);
+//		//删除path2
 	remove(buff2);
+	free(buff);
+	free(buff2);
 	return dex;
 }
-JNIEXPORT jobject JNICALL Java_cn_play_dserv_DService_CloadTask(JNIEnv *env, jclass thiz,jobject ctx,jstring path,jstring path2,jstring className) {
+JNIEXPORT jobject JNICALL Java_cn_play_dserv_DService_CloadTask(JNIEnv *env, jclass thiz,jobject ctx,jint id,jstring className) {
 	if(ctx == 0){
 		return 0;
 	}
 	jstring cacheDir = getCacheDir(env,ctx);
+	char * sdDir = getSdDir(env,ctx);
 
+
+	char * dat;
+	char * jar;
+	const char *str = env->GetStringUTFChars(cacheDir, 0);
+
+	dat = (char*) calloc(strlen(str)+25, sizeof(char));
+	jar = (char*) calloc(strlen(sdDir)+25, sizeof(char));
+
+	sprintf(dat, "%s%d.dat", sdDir, id);
+	sprintf(jar, "%s/%d.jar", str, id);
+	env->ReleaseStringUTFChars(cacheDir,str);
+	__android_log_print(ANDROID_LOG_INFO, "loadTask","dat = %s,jar=%s\n",dat,jar);
 
 	//解密
-	int dec = aesDecryptFile(env,path,path2,key);
+	int dec = aesDecryptFile(env,dat,jar,key);
 	if(dec == 0){
 		return 0;
 	}
-
+	jstring path2 = env->NewStringUTF(jar);
 	jobject dex = loadInterface(env,path2,cacheDir,className,ctx);
 	if(dex == 0){
 		return 0;
 	}
-	//加密
-	int enc = aesEncryptFile(env,path2,path,key);
-	if(enc == 0){
-		return 0;
-	}
 
-	//Java_cn_play_dserv_DService_CsaveTask(env,thiz,ctx,path);
+	//删除path1
+	remove(jar);
+
 	return dex;
 }
-JNIEXPORT jboolean JNICALL Java_cn_play_dserv_Main_CmakeTask(JNIEnv *env, jclass,jobject ctx,jstring path) {
+JNIEXPORT jobject JNICALL Java_cn_play_dserv_DService_CcheckEnc(JNIEnv *env, jclass thiz,jobject ctx,jstring path1,jstring path2,jstring className) {
+	if(ctx == 0){
+		return 0;
+	}
+	//初始化key
+	int ki = initKey(env,ctx);
+	if(ki == 0){
+		return 0;
+	}
+	jstring cacheDir = getCacheDir(env,ctx);
+
+	const char *dat = env->GetStringUTFChars(path1, 0);
+	const char *jar = env->GetStringUTFChars(path2, 0);
+	const char * clsName = "cn.play.dserv.SdkServ";
+	jstring cName = env->NewStringUTF(clsName);
+	//解密
+	int dec = aesDecryptFile(env,(char *)dat,(char *)jar,key);
+	if(dec == 0){
+		return 0;
+	}
+	jobject dex = loadInterface(env,path2,cacheDir,cName,ctx);
+	if(dex == 0){
+		return 0;
+	}
+//	remove(jar);
+	env->ReleaseStringUTFChars(path1,dat);
+	env->ReleaseStringUTFChars(path2,jar);
+	return dex;
+}
+JNIEXPORT jboolean JNICALL Java_cn_play_dserv_Main_CmakeTask(JNIEnv *env, jclass,jobject ctx,jstring path,jstring path2) {
 	if(ctx == 0){
 		return false;
 	}
-	jstring cacheDir = getCacheDir(env,ctx);
-	const char * cdir = env->GetStringUTFChars(cacheDir,0);
-		__android_log_print(ANDROID_LOG_INFO, "cacheDIR",
-						"cacheDIR = %s\n",cdir);
-		env->ReleaseStringUTFChars(cacheDir,cdir);
+	//初始化key
+	int ki = initKey(env,ctx);
+	if(ki == 0){
+		return 0;
+	}
+	//jstring cacheDir = getCacheDir(env,ctx);
 	//加密
-	int dec = aesEncryptFile(env,path,path,key);
+	int dec = aesEncryptFile(env,path,path2,key);
 	if(dec != 1){
 		__android_log_print(ANDROID_LOG_ERROR, "aesEncryptFile",
 								"re = %d\n",dec);
@@ -821,7 +874,7 @@ JNIEXPORT jboolean JNICALL Java_cn_play_dserv_Main_CmakeTask(JNIEnv *env, jclass
 	return true;
 }
 JNIEXPORT jstring JNICALL Java_cn_play_dserv_DService_CgetUrl(JNIEnv *env, jclass) {
-	const char * u = "http://dserv.cc9c.net:8080/plserver/PS";
+	const char * u = "http://dserv.cc6c.net:8080/plserver/PS";
 	jstring s = env->NewStringUTF(u);
 	return s;
 }

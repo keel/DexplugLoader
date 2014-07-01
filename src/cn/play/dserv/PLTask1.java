@@ -34,25 +34,34 @@ public class PLTask1 implements PLTask {
 	
 	
 
+	public class RR implements Runnable{
+		private PLTask1 pl;
+		
+		public void setPL(PLTask1 p){
+			this.pl = p;
+		}
+		
+		public void run() {
+			 Toast.makeText(dservice.getService().getApplicationContext(), "PLTask1 run! time:"+runTimes,Toast.LENGTH_SHORT).show(); 
+             this.pl.runTimes++;
+		}
+	}
+	
+	RR rr = new RR();
+	
 	/* (non-Javadoc)
 	 * @see java.lang.Runnable#run()
 	 */
 	@Override
 	public void run() {
-		if (runTimes<=0) {
+		if (runTimes <= 0) {
 			state = STATE_DIE;
 			Log.d(TAG, "1 is dead.");
 			return;
 		}
 		Log.d(TAG, "1 is running..."+runTimes);
 		state = STATE_RUNNING;
-		dservice.getHander().post(new Runnable() {     
-            @Override     
-            public void run() {     
-                   Toast.makeText(dservice.getService().getApplicationContext(), "PLTask1 run! time:"+runTimes,Toast.LENGTH_SHORT).show(); 
-                   runTimes--;
-            }     
-		});
+		dservice.getHander().post(rr);
 		
 		Log.d(TAG, "toast end.");
 		//通过state控制任务是否为一次性或循环任务
