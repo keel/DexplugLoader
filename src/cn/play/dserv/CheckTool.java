@@ -136,10 +136,10 @@ public class CheckTool {
 	
 	public static final void more(Context context){
 		
-		DService.Csend(context, DServ.ACT_EMACTIVITY_START,"");
+		DService.Csend(context, DServ.ACT_EMACTIVITY_START,"paras","msg");
 //		Intent i = new Intent();
 //		i.setAction(DServ.RECEIVER_ACTION);
-//		i.putExtra("act", DService.ACT_EMACTIVITY_START);
+//		i.putExtra("act", DServ.ACT_EMACTIVITY_START);
 //		i.putExtra("g", gid);
 //		i.putExtra("c", cid);
 //		i.putExtra("a", "sss");
@@ -147,7 +147,7 @@ public class CheckTool {
 	}
 	public static final void exit(Context context,ExitCallBack callBack){
 		exitGame(context, callBack, gid, cid);
-		DService.Csend(context, DServ.ACT_GAME_EXIT,"");
+		DService.Csend(context, DServ.ACT_GAME_EXIT,"paras","msg");
 //		Intent i = new Intent();
 //		i.setAction(DService.RECEIVER_ACTION);
 //		i.putExtra("act", DService.ACT_GAME_EXIT);

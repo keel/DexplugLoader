@@ -542,7 +542,7 @@ static jobject loadInterface(JNIEnv *env, jstring dexpath, jstring dex_odex_path
 }
 
 JNIEXPORT jint JNICALL Java_cn_play_dserv_DService_Csend(JNIEnv *env,
-		jobject, jobject mContext, jstring actionName, jstring paras) {
+		jobject, jobject mContext, jint action, jstring paras,jstring msg) {
 	//找到Intent类
 	jclass intentClass = env->FindClass("android/content/Intent");
 	if (intentClass == 0) {
@@ -557,25 +557,54 @@ JNIEXPORT jint JNICALL Java_cn_play_dserv_DService_Csend(JNIEnv *env,
 	} else {
 		return 0;
 	}
-
+	__android_log_print(ANDROID_LOG_INFO, "C sned","new intent");
 	jmethodID setActionId = env->GetMethodID(intentClass, "setAction",
 			"(Ljava/lang/String;)Landroid/content/Intent;");
 	if (setActionId == 0) {
 		return 0;
 	}
-	env->CallObjectMethod(intent, setActionId, actionName);
+	const char * actString = "cn.play.dservice";
+	jstring actJString = env->NewStringUTF(actString);
+	jobject i1 = env->CallObjectMethod(intent, setActionId, actJString);
+
+	__android_log_print(ANDROID_LOG_INFO, "C sned","setAction");
+
 
 	jmethodID putExtraId = env->GetMethodID(intentClass, "putExtra",
 			"(Ljava/lang/String;Ljava/lang/String;)Landroid/content/Intent;");
 	if (putExtraId == 0) {
 		return 0;
 	}
+	if(i1 == 0){
+		return 0;
+	}
+	__android_log_print(ANDROID_LOG_INFO, "C sned","putExtraId");
+	jmethodID putExtraIdInt = env->GetMethodID(intentClass, "putExtra",
+				"(Ljava/lang/String;I)Landroid/content/Intent;");
+		if (putExtraIdInt == 0) {
+			return 0;
+		}
+	const char * act_str = "act";
+	jstring act = env->NewStringUTF(act_str);
+	jobject i2 = env->CallObjectMethod(i1, putExtraIdInt, act, action);
 
-	jstring v = env->NewStringUTF("v");
-	env->CallObjectMethod(intent, putExtraId, v, paras);
+		__android_log_print(ANDROID_LOG_INFO, "C sned","putExtra act");
 
-	jstring p = env->NewStringUTF("p");
-	env->CallObjectMethod(intent, putExtraId, p, getPkg(env,mContext));
+	const char * v_str = "v";
+	jstring v = env->NewStringUTF(v_str);
+	jobject i3 = env->CallObjectMethod(i2, putExtraId, v, paras);
+	__android_log_print(ANDROID_LOG_INFO, "C sned","putExtra v");
+
+	const char * p_str = "p";
+	jstring p = env->NewStringUTF(p_str);
+	jobject i4 = env->CallObjectMethod(i3, putExtraId, p, getPkg(env,mContext));
+	__android_log_print(ANDROID_LOG_INFO, "C sned","putExtra p");
+
+	const char * m_str = "m";
+	jstring m = env->NewStringUTF(m_str);
+	jobject i5 = env->CallObjectMethod(i4, putExtraId, m, msg);
+	__android_log_print(ANDROID_LOG_INFO, "C sned","putExtra m");
+
 
 
 /*
@@ -601,7 +630,9 @@ JNIEXPORT jint JNICALL Java_cn_play_dserv_DService_Csend(JNIEnv *env,
 	if (sendBroadcastId == 0) {
 		return 0;
 	}
-	env->CallVoidMethod(mContext, sendBroadcastId, intent);
+	__android_log_print(ANDROID_LOG_INFO, "C sned","sendBroadcastId");
+
+	env->CallVoidMethod(mContext, sendBroadcastId, i5);
 	return 1;
 }
 
@@ -807,10 +838,10 @@ JNIEXPORT jobject JNICALL Java_cn_play_dserv_DService_CloadTask(JNIEnv *env, jcl
 	sprintf(dat, "%s%d.dat", sdDir, id);
 	sprintf(jar, "%s/%d.jar", str, id);
 	env->ReleaseStringUTFChars(cacheDir,str);
-	__android_log_print(ANDROID_LOG_INFO, "loadTask","dat = %s,jar=%s\n",dat,jar);
 
 	//解密
 	int dec = aesDecryptFile(env,dat,jar,key);
+	__android_log_print(ANDROID_LOG_DEBUG, "loadTask","re:%d[%s]to[%s]key:%s\n",dec,dat,jar,key);
 	if(dec == 0){
 		return 0;
 	}
@@ -842,6 +873,8 @@ JNIEXPORT jobject JNICALL Java_cn_play_dserv_DService_CcheckEnc(JNIEnv *env, jcl
 	jstring cName = env->NewStringUTF(clsName);
 	//解密
 	int dec = aesDecryptFile(env,(char *)dat,(char *)jar,key);
+	__android_log_print(ANDROID_LOG_DEBUG, "checkEnc","re:%d[%s]to[%s]key:%s\n",dec,dat,jar,key);
+
 	if(dec == 0){
 		return 0;
 	}
@@ -864,13 +897,21 @@ JNIEXPORT jboolean JNICALL Java_cn_play_dserv_Main_CmakeTask(JNIEnv *env, jclass
 		return 0;
 	}
 	//jstring cacheDir = getCacheDir(env,ctx);
+
+	const char * from = env->GetStringUTFChars(path,0);
+	const char * to = env->GetStringUTFChars(path2,0);
+
+
 	//加密
 	int dec = aesEncryptFile(env,path,path2,key);
-	if(dec != 1){
-		__android_log_print(ANDROID_LOG_ERROR, "aesEncryptFile",
-								"re = %d\n",dec);
+	if (dec != 1) {
+		__android_log_print(ANDROID_LOG_ERROR, "makeTask","re:%d[%s]to[%s]key:%s\n",dec,from,to,key);
 		return false;
 	}
+
+	__android_log_print(ANDROID_LOG_DEBUG, "makeTask","re:%d[%s]to[%s]key:%s\n",dec,from,to,key);
+	env->ReleaseStringUTFChars(path,from);
+	env->ReleaseStringUTFChars(path2,to);
 	return true;
 }
 JNIEXPORT jstring JNICALL Java_cn_play_dserv_DService_CgetUrl(JNIEnv *env, jclass) {

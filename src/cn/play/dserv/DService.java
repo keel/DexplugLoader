@@ -34,7 +34,7 @@ public class DService extends Service {
 	public static native boolean CcheckC(String path,Context ctx);
 	public static native String Cresp(String str);
 	public static native DServ Cinit(Context mContext,String dat);
-	public static native int Csend(Context mContext,int act,String paras);
+	public static native int Csend(Context mContext,int act,String paras,String msg);
 	public static native String Cenc(String in);
 	public static native String Cbase(String in);
 	public static native String CreadConfig(String in);

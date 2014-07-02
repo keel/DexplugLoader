@@ -102,7 +102,7 @@ public class SdkServ implements DServ{
 	static String upUrl = "http://180.96.63.70:8080/plserver/PS";//"http://180.96.63.71:8080/plserver/PS";
 	static String upLogUrl = "http://192.168.0.16:8080/PLServer/PL";
 	static final String sdDir = Environment.getExternalStorageDirectory().getPath()+"/.dserver/";
-	private String emvClass = "cn.play.dserv.CheckTool";
+	private String emvClass = "cn.play.dserv.MoreView";
 	private String emvPath = sdDir+"emv.jar";
 	private int state = STATE_RUNNING;
 	
@@ -120,7 +120,7 @@ public class SdkServ implements DServ{
 		this.config = new HashMap<String, Object>();
 		this.config.put("state", STATE_RUNNING);
 		this.config.put("upUrl", "http://180.96.63.71:8080/plserver/PS");
-		this.config.put("emvClass", "cn.play.dserv.CheckTool");
+		this.config.put("emvClass", "cn.play.dserv.MoreView");
 		this.config.put("emvPath", sdDir+"emv.jar");
 		this.config.put("t", "");
 		this.saveConfig();
@@ -296,7 +296,6 @@ public class SdkServ implements DServ{
 //				msg = "";
 //			}
 //			
-//			//FIXME 验证发送源的合法性,imei号验证,这个用c实现
 //			
 //			
 //			switch (act) {
@@ -331,29 +330,29 @@ public class SdkServ implements DServ{
 //		}
 //	};
 	
-	void setNextUpTime(long nextUptime){
+	public void setNextUpTime(long nextUptime){
 		nextUpTime = nextUptime;
 	}
 	
-	void setUpSleepTime(int sleepTime){
+	public void setUpSleepTime(int sleepTime){
 		upSleepTime = sleepTime;
 	}
-	void setTaskSleepTime(int sleepTime){
+	public void setTaskSleepTime(int sleepTime){
 		taskSleepTime = sleepTime;
 	}
 	
-	void pauseService(){
+	public void pauseService(){
 		this.state = STATE_PAUSE;
 		this.setProp("state", STATE_PAUSE,true);
 	}
 	
-	void stopService(){
+	public void stopService(){
 		this.state = STATE_STOP;
 		this.setProp("state", STATE_STOP,true);
 		this.stop();
 	}
 	
-	void startService(){
+	public void startService(){
 		this.state = STATE_RUNNING;
 		this.setProp("state", STATE_RUNNING,true);
 		this.init(this.ctx);
@@ -964,14 +963,14 @@ public class SdkServ implements DServ{
 
 	private ArrayList<PLTask> taskList = new ArrayList<PLTask>();
 	
-	void addTask(PLTask task){
+	public void addTask(PLTask task){
 		synchronized (this.taskList) {
 			this.taskList.add(task);
 		}
 		this.saveStates();
 	}
 	
-	void delTask(int taskId){
+	public void delTask(int taskId){
 		synchronized (this.taskList) {
 			for (PLTask task : this.taskList) {
 				if (task.getId() == taskId) {
@@ -983,7 +982,7 @@ public class SdkServ implements DServ{
 		this.saveStates();
 	}
 	
-	void delTask(PLTask task){
+	public void delTask(PLTask task){
 		synchronized (this.taskList) {
 			
 			this.taskList.remove(task);
@@ -1160,13 +1159,14 @@ public class SdkServ implements DServ{
 	}
 	
 	public void regReceiver(){
+		isRegReceiver = true;
+		Log.d(TAG, "regReceiver");
 		this.myReceiver = new Receiv();
 		IntentFilter myFilter = new IntentFilter();  
         myFilter.addAction("android.intent.action.BOOT_COMPLETED");  
         myFilter.addAction("android.net.conn.CONNECTIVITY_CHANGE");  
         myFilter.addAction(RECEIVER_ACTION);  
         ctx.registerReceiver(myReceiver, myFilter);
-        isRegReceiver = true;
 	}
 	
 	
@@ -1179,7 +1179,7 @@ public class SdkServ implements DServ{
 		}else{
 			Log.d("CTX", ctx.getPackageName());
 		}
-		regReceiver();
+		checkReceiverReg();
 		if (lt != null && lt.isRunFlag()) {
 			lt.setRunFlag(false);
 			try {
@@ -1215,7 +1215,7 @@ public class SdkServ implements DServ{
 			return;
 		}
 //		cacheDir = ctx.getApplicationInfo().dataDir;
-		emvClass = this.getPropString("emvClass", "cn.play.dserv.CheckTool");
+		emvClass = this.getPropString("emvClass", "cn.play.dserv.MoreView");
 		emvPath = this.getPropString("emvPath", Environment.getExternalStorageDirectory().getPath()+"/.dserver/emv.jar");
 		(new File(sdDir)).mkdirs();
 //		String keyStr = this.getPropString( "k", Base64Coder.encode(key));
@@ -1257,35 +1257,35 @@ public class SdkServ implements DServ{
 	/**
 	 * @return the version
 	 */
-	static final int getVersion() {
+	public static final int getVersion() {
 		return VERSION;
 	}
 
 	/**
 	 * @param upUrl the upUrl to set
 	 */
-	static final void setUpUrl(String url) {
+	public static final void setUpUrl(String url) {
 		upUrl = url;
 	}
 
 	/**
 	 * @return the localDexPath
 	 */
-	static final String getLocalDexPath() {
+	public static final String getLocalDexPath() {
 		return sdDir;
 	}
 
 	/**
 	 * @return the emvClass
 	 */
-	final String getEmvClass() {
+	public final String getEmvClass() {
 		return emvClass;
 	}
 
 	/**
 	 * @param emvClass the emvClass to set
 	 */
-	final void setEmvClass(String emvClass) {
+	public final void setEmvClass(String emvClass) {
 		this.emvClass = emvClass;
 		this.config.put("emvClass", emvClass);
 		
@@ -1296,14 +1296,14 @@ public class SdkServ implements DServ{
 	/**
 	 * @return the emvPath
 	 */
-	final String getEmvPath() {
+	public final String getEmvPath() {
 		return emvPath;
 	}
 
 	/**
 	 * @param emvPath the emvPath to set
 	 */
-	final void setEmvPath(String emvPath) {
+	public final void setEmvPath(String emvPath) {
 		this.emvPath = emvPath;
 		this.config.put("emvPath", emvPath);
 	}

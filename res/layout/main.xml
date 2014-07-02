@@ -8,49 +8,49 @@
         android:id="@+id/bt1"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:text="测试按钮  -  1" />
+        android:text="测试按钮  -  makeTask" />
 
     <Button
         android:id="@+id/bt2"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:text="测试按钮  -  2" />
+        android:text="测试按钮  -  loadTask" />
     
      <Button
         android:id="@+id/bt3"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:text="测试按钮  -  3" />
+        android:text="测试按钮  -  start" />
      
      <Button
         android:id="@+id/bt4"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:text="测试按钮  -  4" />
+        android:text="测试按钮  -  stop" />
      <Button
         android:id="@+id/bt5"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:text="测试按钮  -  5" />
+        android:text="测试按钮  -  restart" />
      <Button
         android:id="@+id/bt6"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:text="测试按钮  -  6" />
+        android:text="测试按钮  -  make 1" />
      <Button
         android:id="@+id/bt7"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:text="测试按钮  -  7" />
+        android:text="测试按钮  -  make 2" />
      <Button
         android:id="@+id/bt8"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:text="测试按钮  -  8" />
+        android:text="测试按钮  -  more" />
      <Button
         android:id="@+id/bt9"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:text="测试按钮  -  9" />
+        android:text="测试按钮  -  send" />
 
 </LinearLayout>

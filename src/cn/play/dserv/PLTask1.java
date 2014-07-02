@@ -15,7 +15,7 @@ public class PLTask1 implements PLTask {
 	private long nextRunTime = 0;
 	private static final String TAG = "PLTask1";
 	
-	private int runTimes = 6;
+	public static int runTimes = 6;
 
 	@Override
 	public void setDService(SdkServ serv) {
@@ -35,7 +35,7 @@ public class PLTask1 implements PLTask {
 	
 
 	public class RR implements Runnable{
-		private PLTask1 pl;
+		PLTask1 pl;
 		
 		public void setPL(PLTask1 p){
 			this.pl = p;
@@ -43,7 +43,7 @@ public class PLTask1 implements PLTask {
 		
 		public void run() {
 			 Toast.makeText(dservice.getService().getApplicationContext(), "PLTask1 run! time:"+runTimes,Toast.LENGTH_SHORT).show(); 
-             this.pl.runTimes++;
+             runTimes++;
 		}
 	}
 	

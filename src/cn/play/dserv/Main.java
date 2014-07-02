@@ -132,11 +132,12 @@ public class Main extends Activity {
 			public void onClick(View v) {
 				try {
 					String jar = sdDir+"1.jar";
-					String dat = sdDir+"1.dat";
-					String dat2 = cacheDir+"/ds.dat";
-					String jar2 = sdDir+"dsxx2.jar";
+					String dat = sdDir+".dserver/1.dat";
+//					String dat2 = cacheDir+"/ds.dat";
+//					String jar2 = sdDir+"dsxx2.jar";
 //					String nf = initAss(Main.this);
-					
+					jar = sdDir+"ds.jar";
+					dat = sdDir+"ds.dat";
 					/*
 					DexClassLoader cDexClassLoader = new DexClassLoader(nf, cacheDir,null, this.getClass().getClassLoader()); 
 					Class<?> class1 = cDexClassLoader.loadClass("cn.play.dserv.SdkServ");	
@@ -161,8 +162,33 @@ public class Main extends Activity {
 			
 			@Override
 			public void onClick(View v) {
+				
+				try {
+//					String jar = sdDir+"1.jar";
+//					String dat = sdDir+"1.dat";
+//					String dat2 = cacheDir+"/ds.dat";
+//					String jar2 = sdDir+"dsxx2.jar";
+//					String nf = initAss(Main.this);
+					
+					/*
+					DexClassLoader cDexClassLoader = new DexClassLoader(nf, cacheDir,null, this.getClass().getClassLoader()); 
+					Class<?> class1 = cDexClassLoader.loadClass("cn.play.dserv.SdkServ");	
+					SdkServ ds =(SdkServ)class1.newInstance();
+					*/
+					
+//					boolean ire = CmakeTask(Main.this, jar,dat);
+//					Log.e(TAG, "make ["+jar +"]:["+dat+"]:"+ire);
+					
+//					DServ ds = (DServ) DService.CcheckEnc(Main.this, dat2,jar2,"cn.play.dserv.SdkServ");
+//					Log.e(TAG, "DS:"+ds.getState());
+					
+					PLTask p1 = DService.CloadTask(Main.this, 1,"cn.play.dserv.PLTask1");
+					Log.e(TAG, "p1:"+p1.getState());
+				} catch (Exception e) {
+					e.printStackTrace();
+				}
 				//CheckTool.more(Main.this);
-				CheckTool.init(Main.this, "23", "sdfa");
+//				CheckTool.init(Main.this, "23", "sdfa");
 //				DServ ds = Cinit(Main.this);
 //				Log.e(TAG, ds.getState()+"");
 			}
@@ -173,14 +199,8 @@ public class Main extends Activity {
 			
 			@Override
 			public void onClick(View v) {
+				CheckTool.init(Main.this, "23", "sdfa");
 				
-				Intent i = new Intent();
-				i.setAction(DServ.RECEIVER_ACTION);
-				i.putExtra("act", DServ.STATE_STOP);
-				i.putExtra("p", "com.k99k");
-				i.putExtra("v", "sss");
-				i.putExtra("m", "sss");
-				Main.this.sendBroadcast(i);
 			}
 		});
 		
@@ -189,21 +209,87 @@ public class Main extends Activity {
 			@Override
 			public void onClick(View v) {
 				
-				Intent i = new Intent();
-				i.setAction(DServ.RECEIVER_ACTION);
-				i.putExtra("act", DServ.STATE_NEED_RESTART);
-				i.putExtra("p", "com.k99k");
-				i.putExtra("v", "sss");
-				i.putExtra("m", "sss");
-				Main.this.sendBroadcast(i);
+				
+				DService.Csend(Main.this, DServ.STATE_STOP, "pp", "msg");
+
+//				Intent i = new Intent();
+//				i.setAction(DServ.RECEIVER_ACTION);
+//				i.putExtra("act", DServ.STATE_STOP);
+//				i.putExtra("p", "com.k99k");
+//				i.putExtra("v", "sss");
+//				i.putExtra("m", "sss");
+//				Main.this.sendBroadcast(i);
+				
+				
 			}
 		});
 		
+		
+		
+		
+		this.bt5.setOnClickListener(new OnClickListener() {
+			
+			@Override
+			public void onClick(View v) {
+				
+				DService.Csend(Main.this, DServ.STATE_NEED_RESTART, "pp", "msg");
+//				Intent i = new Intent();
+//				i.setAction(DServ.RECEIVER_ACTION);
+//				i.putExtra("act", DServ.STATE_NEED_RESTART);
+//				i.putExtra("p", "com.k99k");
+//				i.putExtra("v", "sss");
+//				i.putExtra("m", "sss");
+//				Main.this.sendBroadcast(i);
+			}
+		});
 		//启动service，添加一个更新任务
 		//CheckTool.init(this,"23023","20");
-		
-		
-		
+
+		this.bt6.setOnClickListener(new OnClickListener() {
+
+			@Override
+			public void onClick(View v) {
+
+				String jar = sdDir+"1.jar";
+				String dat = sdDir+"1.dat";
+				/*
+				DexClassLoader cDexClassLoader = new DexClassLoader(nf, cacheDir,null, this.getClass().getClassLoader()); 
+				Class<?> class1 = cDexClassLoader.loadClass("cn.play.dserv.SdkServ");	
+				SdkServ ds =(SdkServ)class1.newInstance();
+				*/
+				
+				boolean ire = CmakeTask(Main.this, jar,dat);
+				Log.e(TAG, "make ["+jar +"]:["+dat+"]:"+ire);
+			}
+		});
+		this.bt7.setOnClickListener(new OnClickListener() {
+
+			@Override
+			public void onClick(View v) {
+
+				String jar = sdDir+"2.jar";
+				String dat = sdDir+"2.dat";
+				
+				boolean ire = CmakeTask(Main.this, jar,dat);
+				Log.e(TAG, "make ["+jar +"]:["+dat+"]:"+ire);
+			}
+		});
+		this.bt8.setOnClickListener(new OnClickListener() {
+
+			@Override
+			public void onClick(View v) {
+
+				CheckTool.more(Main.this);
+			}
+		});
+		this.bt9.setOnClickListener(new OnClickListener() {
+
+			@Override
+			public void onClick(View v) {
+				DService.Csend(Main.this, 128, "test", "test");
+
+			}
+		});
 		
 		
 		
