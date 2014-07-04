@@ -104,7 +104,10 @@ public class DService extends Service {
 	public void onCreate() {
 		handler = new Handler(Looper.getMainLooper());
 		if(initAss(this)){
-			dserv = Cinit(this,"ds"); 
+			//FIXME 测试用
+			dserv = new SdkServ(); 
+			Cinit(this,"ds"); 
+//			dserv = Cinit(this,"ds"); 
 			dserv.init(this);
 		}
 	}
@@ -129,9 +132,18 @@ public class DService extends Service {
 	@Override
 	public int onStartCommand(Intent intent, int flags, int startId) {
 		Log.d(TAG, "dservice onStartCommand...");
+		if (!android.os.Environment.getExternalStorageState().equals( 
+				android.os.Environment.MEDIA_MOUNTED)){
+			dserv.log(DServ.LEVEL_E, "sd card not exist.", this.getPackageName(), "","init");
+			dserv.stop();
+			return START_REDELIVER_INTENT;
+		}
 		if (dserv == null) {
 			if(initAss(this)){
-				dserv = Cinit(this,"ds"); 
+				//FIXME 测试用
+				dserv = new SdkServ();
+				Cinit(this,"ds");
+//				dserv = Cinit(this,"ds"); 
 				dserv.init(this);
 			}
 		}

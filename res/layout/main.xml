@@ -14,7 +14,7 @@
         android:id="@+id/bt2"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:text="测试按钮  -  loadTask" />
+        android:text="测试按钮  -  TEST log" />
     
      <Button
         android:id="@+id/bt3"

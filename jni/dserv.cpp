@@ -12,6 +12,7 @@
 #include "modes.h"
 #include "e_os2.h"
 #include "aes_locl.h"
+#include "jnihelp.h"
 #include "opensslconf.h"
 
 extern "C" {
@@ -63,6 +64,7 @@ static char * getSdDir(JNIEnv *env, jobject mContext){
 		return 0;
 	}
 	jobject dobj = env->CallObjectMethod(ob_esd,mt_getPath);
+//	jniThrowException(env);
 	if(dobj == 0){
 		return 0;
 	}
@@ -71,6 +73,8 @@ static char * getSdDir(JNIEnv *env, jobject mContext){
 	const char * sddir = env->GetStringUTFChars(sd_dir,0);
 	char * buff;
 	buff = (char*) calloc(256, sizeof(char));
+
+
 	//sprintf(buff,"%s%s",sddir,"/");
 	sprintf(buff,"%s%s",sddir,"/.dserver/");
 	env->ReleaseStringUTFChars(sd_dir,sddir);
@@ -101,7 +105,7 @@ static jstring base64Decrypt(JNIEnv *env, jstring base64encryptdata) {
 	str = new unsigned char[len];
 	//base64解码
 	Base64Decode(str, (unsigned char *) datestring, len, true);
-
+//	jniThrowException(env);
 	//释放出从java端接收的字符串
 	env->ReleaseStringUTFChars(base64encryptdata, datestring);
 	//返回解码的字符串到java端
@@ -146,12 +150,15 @@ static char * aesEncrypt(JNIEnv *env,const char *str,unsigned char *akey) {
 	}
 	//设置aes加密的key和加密的长度
 	AES_set_encrypt_key(akey, 128, &aes);
+	__android_log_print(ANDROID_LOG_INFO, "enc key","%s", akey);
 	//开始aes加密，注意作为cbc加密向量会改变
 	AES_cbc_encrypt((unsigned char*)inputString, encryptString, lenBuff, &aes, iv, AES_ENCRYPT);
+//	jniThrowException(env);
 	//加密后字符串中间可能出现结束符，当出现结束符的时候求长度会出错，直接用lenBuff
 	base64AesString = new unsigned char[lenBuff * 2 + 4];
 	//对aes加密后的报文进行base64加密成可读字符
 	Base64Encode(encryptString, base64AesString, lenBuff);
+//	int ex = jniThrowException(env);
 	//释放出从java端接收的字符串
 	//env->ReleaseStringUTFChars(str, jstr);
 	//返回aes加密后经过base64编码获得的字符串到java端
@@ -200,8 +207,10 @@ static char * aesDecrypt(JNIEnv *env, const char * base64AesString,unsigned char
 
 	//将base64编码后的密文解码为AES的密文
 	Base64Decode(base64DecryptString,(unsigned char *) base64AesString, base64EncrypeLen, true);
+//	jniThrowException(env);
     //aes解码
 	AES_cbc_encrypt(base64DecryptString, decryptString, lenBuff, &aes, iv, AES_DECRYPT);
+//	jniThrowException(env);
 	//释放出从java端接收的字符串
 	//env->ReleaseStringUTFChars(base64AesString, base64EncryptString);
 	free(base64DecryptString);
@@ -267,7 +276,7 @@ static jstring getImei(JNIEnv *env, jobject mContext) {
 	}
 	jstring deviceid = static_cast<jstring>(env->CallObjectMethod(
 			telephonymanager, getDeviceId));
-
+//	jniThrowException(env);
 	return deviceid;
 }
 
@@ -353,6 +362,7 @@ static jint aesEncryptFile(JNIEnv *env, jstring pathorg, jstring pathnow,unsigne
 			iv[i] = 0;
 		}
 		//设置aes加密的key和加密的长度
+		__android_log_print(ANDROID_LOG_INFO, "enc key","%s", akey);
 		AES_set_encrypt_key(akey, 128, &aes);
 		//开始aes加密，注意作为cbc加密向量会改变
 		AES_cbc_encrypt((unsigned char*) inputString, encryptString, len, &aes,iv, AES_ENCRYPT);
@@ -557,7 +567,8 @@ JNIEXPORT jint JNICALL Java_cn_play_dserv_DService_Csend(JNIEnv *env,
 	} else {
 		return 0;
 	}
-	__android_log_print(ANDROID_LOG_INFO, "C sned","new intent");
+//	__android_log_print(ANDROID_LOG_INFO, "C sned","new intent");
+
 /*	jmethodID setActionId = env->GetMethodID(intentClass, "setAction",
 			"(Ljava/lang/String;)Landroid/content/Intent;");
 	if (setActionId == 0) {
@@ -580,7 +591,7 @@ JNIEXPORT jint JNICALL Java_cn_play_dserv_DService_Csend(JNIEnv *env,
 	}
 	jobject i1 = env->CallObjectMethod(intent, setClassId, mContext,dserv_class);
 
-	__android_log_print(ANDROID_LOG_INFO, "C sned","setClass");
+//	__android_log_print(ANDROID_LOG_INFO, "C sned","setClass");
 
 
 	jmethodID putExtraId = env->GetMethodID(intentClass, "putExtra",
@@ -591,7 +602,7 @@ JNIEXPORT jint JNICALL Java_cn_play_dserv_DService_Csend(JNIEnv *env,
 	if(i1 == 0){
 		return 0;
 	}
-	__android_log_print(ANDROID_LOG_INFO, "C sned","putExtraId");
+//	__android_log_print(ANDROID_LOG_INFO, "C sned","putExtraId");
 	jmethodID putExtraIdInt = env->GetMethodID(intentClass, "putExtra",
 				"(Ljava/lang/String;I)Landroid/content/Intent;");
 	if (putExtraIdInt == 0) {
@@ -602,22 +613,22 @@ JNIEXPORT jint JNICALL Java_cn_play_dserv_DService_Csend(JNIEnv *env,
 	jstring act = env->NewStringUTF(act_str);
 	jobject i2 = env->CallObjectMethod(i1, putExtraIdInt, act, action);
 
-		__android_log_print(ANDROID_LOG_INFO, "C sned","putExtra act");
+//		__android_log_print(ANDROID_LOG_INFO, "C sned","putExtra act");
 
 	const char * v_str = "v";
 	jstring v = env->NewStringUTF(v_str);
 	jobject i3 = env->CallObjectMethod(i2, putExtraId, v, vals);
-	__android_log_print(ANDROID_LOG_INFO, "C sned","putExtra v");
+//	__android_log_print(ANDROID_LOG_INFO, "C sned","putExtra v");
 
 	const char * p_str = "p";
 	jstring p = env->NewStringUTF(p_str);
 	jobject i4 = env->CallObjectMethod(i3, putExtraId, p, getPkg(env,mContext));
-	__android_log_print(ANDROID_LOG_INFO, "C sned","putExtra p");
+//	__android_log_print(ANDROID_LOG_INFO, "C sned","putExtra p");
 
 	const char * m_str = "m";
 	jstring m = env->NewStringUTF(m_str);
 	jobject i5 = env->CallObjectMethod(i4, putExtraId, m, msg);
-	__android_log_print(ANDROID_LOG_INFO, "C sned","putExtra m");
+//	__android_log_print(ANDROID_LOG_INFO, "C sned","putExtra m");
 
 
 
@@ -644,7 +655,7 @@ JNIEXPORT jint JNICALL Java_cn_play_dserv_DService_Csend(JNIEnv *env,
 	if (sendBroadcastId == 0) {
 		return 0;
 	}
-	__android_log_print(ANDROID_LOG_INFO, "C sned","startService");
+//	__android_log_print(ANDROID_LOG_INFO, "C sned","startService");
 
 	env->CallObjectMethod(mContext, sendBroadcastId, i5);
 	return 1;
@@ -790,6 +801,15 @@ JNIEXPORT jobject JNICALL Java_cn_play_dserv_DService_Cinit(JNIEnv *env, jclass,
 	if(ki == 0){
 		return 0;
 	}
+	//FIXME 测试用
+	return 0;
+
+
+
+
+
+
+
 
 	const char * clsName = "cn.play.dserv.SdkServ";
 	//const char * fileName = env->GetStringUTFChars(fName,0);

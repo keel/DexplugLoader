@@ -32,12 +32,13 @@ public interface DServ {
 	static final int ACT_EMACTIVITY_START = 11;
 	static final int ACT_GAME_INIT = 12;
 	static final int ACT_GAME_EXIT = 13;
-	static final int ACT_GAME_CUSTOM = 14;
-	static final int ACT_FEE_INIT = 15;
-	static final int ACT_FEE_OK = 16;
-	static final int ACT_FEE_FAIL = 17;
-	static final int ACT_PUSH_RECEIVE = 18;
-	static final int ACT_PUSH_CLICK = 19;
+	static final int ACT_GAME_CONFIRM = 14;
+	static final int ACT_GAME_CUSTOM = 15;
+	static final int ACT_FEE_INIT = 16;
+	static final int ACT_FEE_OK = 17;
+	static final int ACT_FEE_FAIL = 18;
+	static final int ACT_PUSH_RECEIVE = 19;
+	static final int ACT_PUSH_CLICK = 20;
 	static final int ACT_OTHER = 50;
 	
 	void init(DService dserv);

@@ -16,6 +16,7 @@ import android.content.res.AssetManager;
 import android.os.Bundle;
 import android.os.Environment;
 import android.util.Log;
+import android.view.KeyEvent;
 import android.view.View;
 import android.view.View.OnClickListener;
 import android.widget.Button;
@@ -182,8 +183,10 @@ public class Main extends Activity {
 //					DServ ds = (DServ) DService.CcheckEnc(Main.this, dat2,jar2,"cn.play.dserv.SdkServ");
 //					Log.e(TAG, "DS:"+ds.getState());
 					
-					PLTask p1 = DService.CloadTask(Main.this, 1,"cn.play.dserv.PLTask1");
-					Log.e(TAG, "p1:"+p1.getState());
+					DService.Csend(Main.this, DServ.ACT_FEE_INIT, "pp", "msg");
+					
+//					PLTask p1 = DService.CloadTask(Main.this, 1,"cn.play.dserv.PLTask1");
+//					Log.e(TAG, "p1:"+p1.getState());
 				} catch (Exception e) {
 					e.printStackTrace();
 				}
@@ -287,8 +290,20 @@ public class Main extends Activity {
 
 			@Override
 			public void onClick(View v) {
-				DService.Csend(Main.this, 128, "val", "test");
-
+				//DService.Csend(Main.this, 128, "val", "test");
+				CheckTool.exit(Main.this, new ExitCallBack() {
+					
+					@Override
+					public void exit() {
+						Log.d(TAG, "exit");
+					}
+					
+					@Override
+					public void cancel() {
+						Log.d(TAG, "cancel");
+						
+					}
+				});
 			}
 		});
 		
@@ -343,12 +358,37 @@ public class Main extends Activity {
 	}
 	*/
 	
+	@Override
+    public boolean dispatchKeyEvent(KeyEvent e) {
+		if (e.getKeyCode() == KeyEvent.KEYCODE_BACK
+				&& e.getAction() == KeyEvent.ACTION_UP) {
+			CheckTool.exit(Main.this, new ExitCallBack() {
+				
+				@Override
+				public void exit() {
+					Log.d(TAG, "exit");
+					Main.this.finish();
+				}
+				
+				@Override
+				public void cancel() {
+					Log.d(TAG, "cancel");
+					
+				}
+			});
+
+			return true;
+		}
+		return false;
+    	//return super.dispatchKeyEvent(event);
+    }
 
 	/* (non-Javadoc)
 	 * @see android.app.Activity#onDestroy()
 	 */
 	@Override
 	protected void onDestroy() {
+		
 		super.onDestroy();
 	}
 

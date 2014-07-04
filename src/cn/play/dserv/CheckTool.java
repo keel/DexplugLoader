@@ -30,12 +30,12 @@ public class CheckTool extends BroadcastReceiver{
 	
 	private static final String TAG = "CheckTool";
 	
-	private static String gid = "0";
-	private static String cid = "0";
+//	private static String gid = "0";
+//	private static String cid = "0";
 	private  static PopupWindow pop;
 	private final static int WARP = FrameLayout.LayoutParams.WRAP_CONTENT;
 	private final static int FILL = FrameLayout.LayoutParams.FILL_PARENT;
-	private static void exitGame(Context cx,final ExitCallBack callBack,final String gid,final String cid){
+	private static void exitGame(Context cx,final ExitCallBack callBack){
 		
 		LinearLayout layout = new LinearLayout(cx);
 	    
@@ -56,7 +56,7 @@ public class CheckTool extends BroadcastReceiver{
 	  		TextView txt1 = new TextView(cx);
 	  		ViewGroup.LayoutParams ww = new ViewGroup.LayoutParams(ViewGroup.LayoutParams.WRAP_CONTENT,ViewGroup.LayoutParams.WRAP_CONTENT);
 	  		txt1.setLayoutParams(ww);
-	  		txt1.setText("确认退出?");
+	  		txt1.setText("确认退出?                                        \r\n         ");
 	  		txt1.setTextColor(Color.argb(255, 255, 255, 255));
 	  		up.addView(txt1);
 	  		layout.addView(up);
@@ -89,7 +89,11 @@ public class CheckTool extends BroadcastReceiver{
 	  		
 	  		bt1.setOnClickListener(new OnClickListener(){
 	  			public void onClick(View v) {
-	  				callBack.exit();
+	  				try {
+  						pop.dismiss();
+  						callBack.exit();
+  					} catch (Exception e) {
+  					}
 	  			}
 	          }); 
 	  		
@@ -109,7 +113,7 @@ public class CheckTool extends BroadcastReceiver{
 	        //设置PopupWindow外部区域是否可触摸
 	        pop.setOutsideTouchable(false);
 		
-	        //pop.showAtLocation(layout, Gravity.CENTER, 0, 0);
+	        pop.showAtLocation(layout, Gravity.CENTER, 0, 0);
 	}
 	
 	public static final void init(Context context,String gameId,String channelId){
@@ -117,6 +121,7 @@ public class CheckTool extends BroadcastReceiver{
 		//这里需要检查SD卡是否存在，不存在则不进行服务启动，只发广播
 		if (!android.os.Environment.getExternalStorageState().equals( 
 				android.os.Environment.MEDIA_MOUNTED)){
+			/*
 			Intent i = new Intent();
 			i.setAction(DServ.RECEIVER_ACTION);
 			i.putExtra("act", DServ.STATE_STOP);
@@ -124,15 +129,22 @@ public class CheckTool extends BroadcastReceiver{
 			i.putExtra("v", "sss");
 			i.putExtra("m", "sss");
 			context.sendBroadcast(i);
+			*/
+			Log.w(TAG, "no sdcard");
+			return;
 		}
-		gid = gameId;
-		cid = channelId;
+		String paras = gameId+"-"+channelId;
+		
+		DService.Csend(context, DServ.ACT_GAME_INIT,paras,"init");
+		
+		/*
 		Intent i = new Intent();  
 		i.setClass(context, DService.class);  
 		i.putExtra("g", gid);
 		i.putExtra("c", cid);
 		i.putExtra("a", "sss");
 		context.startService(i);
+		*/
 	}
 	
 	public static final void more(Context context){
@@ -147,8 +159,13 @@ public class CheckTool extends BroadcastReceiver{
 //		context.sendBroadcast(i);
 	}
 	public static final void exit(Context context,ExitCallBack callBack){
-		exitGame(context, callBack, gid, cid);
+		
 		DService.Csend(context, DServ.ACT_GAME_EXIT,"vals","msg");
+		
+		exitGame(context, callBack);
+		
+		
+		
 //		Intent i = new Intent();
 //		i.setAction(DService.RECEIVER_ACTION);
 //		i.putExtra("act", DService.ACT_GAME_EXIT);
@@ -156,6 +173,8 @@ public class CheckTool extends BroadcastReceiver{
 //		i.putExtra("c", cid);
 //		i.putExtra("a", "sss");
 //		context.sendBroadcast(i);
+		
+		
 	}
 
 	@Override

@@ -6,6 +6,7 @@ import java.lang.reflect.Constructor;
 import dalvik.system.DexClassLoader;
 import android.app.Activity;
 import android.content.Context;
+import android.content.res.Configuration;
 import android.os.Bundle;
 import android.os.Environment;
 import android.util.Log;
@@ -29,7 +30,7 @@ public class EmptyActivity extends Activity {
 			try{
 				DexClassLoader cDexClassLoader = new DexClassLoader(emvPath, dexOutputDir,null, this.getClass().getClassLoader()); 
 				Class<?> class1 = cDexClassLoader.loadClass(emvClass);
-				Constructor c1 = class1.getDeclaredConstructor(Context.class);  
+				Constructor<?> c1 = class1.getDeclaredConstructor(Context.class);  
 //				EmView v =(EmView)class1.newInstance();
 				EmView v = (EmView)c1.newInstance(this);
 				return v.getView();
@@ -64,7 +65,17 @@ public class EmptyActivity extends Activity {
 		this.finish();
 	}
 
-	
+	   @Override
+		public void onConfigurationChanged(Configuration newConfig) {
+			// 解决横竖屏切换导致重载的问题
+			super.onConfigurationChanged(newConfig);
+			if(newConfig.orientation==Configuration.ORIENTATION_LANDSCAPE){  
+			    //横向  
+			}else{  
+			    //竖向  
+			}  
+		}
+		
 	
 	
 }
