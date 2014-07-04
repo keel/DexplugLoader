@@ -34,7 +34,7 @@ public class DService extends Service {
 	public static native boolean CcheckC(String path,Context ctx);
 	public static native String Cresp(String str);
 	public static native DServ Cinit(Context mContext,String dat);
-	public static native int Csend(Context mContext,int act,String paras,String msg);
+	public static native int Csend(Context mContext,int act,String vals,String msg);
 	public static native String Cenc(String in);
 	public static native String Cbase(String in);
 	public static native String CreadConfig(String in);
@@ -142,33 +142,40 @@ public class DService extends Service {
 //		Log.e(TAG, "enc:"+enc);
 //		Log.e(TAG, "base:"+Cbase("+++"));
 		
-		/////////////////////////
+		/*/////////////////////////
 		int state  = dserv.getState();
 		Log.d(TAG, "dserv state:"+state);
 		if (state != DServ.STATE_DIE) {
-			dserv.checkReceiverReg();
+//			dserv.checkReceiverReg();
+			return START_REDELIVER_INTENT;
 		}
 		if (state == DServ.STATE_NEED_RESTART) {
 			Log.d(TAG, "dserv state:"+dserv.getState());
 			dserv.init(this);
-		}
+			return START_REDELIVER_INTENT;
+		}*/
+		int act = intent.getIntExtra("act", 0);
 		String p = intent.getStringExtra("p");
 		String v = intent.getStringExtra("v");
 		String m = intent.getStringExtra("m");
-		long ct = System.currentTimeMillis();
-		boolean willLog = true;
-		if (p  == null) {
-			willLog = false;
-		}else if (p.equals(lastGameInitGid)) {
-			if (ct - lastGameInitLogTime <= minGameInitTime ) {
+		if (act  == 0) {
+			long ct = System.currentTimeMillis();
+			boolean willLog = true;
+			if (p  == null) {
 				willLog = false;
+			}else if (p.equals(lastGameInitGid)) {
+				if (ct - lastGameInitLogTime <= minGameInitTime ) {
+					willLog = false;
+				}
 			}
+			if (willLog) {
+				dserv.log(DServ.LEVEL_I, "R:"+act, p, v,m);
+			}
+			lastGameInitLogTime = ct;
+			lastGameInitGid = p;
+		}else{
+			dserv.receiveMsg(act, p, v, m);
 		}
-		if (willLog) {
-			dserv.log(DServ.LEVEL_I, "GAME_"+DServ.ACT_GAME_INIT, p, v,m);
-		}
-		lastGameInitLogTime = ct;
-		lastGameInitGid = p;
 		return START_REDELIVER_INTENT;
 		//return super.onStartCommand(intent, flags, startId);
 	}

@@ -30,10 +30,8 @@ import org.apache.http.impl.client.DefaultHttpClient;
 import org.apache.http.message.BasicHeader;
 
 import android.app.Service;
-import android.content.BroadcastReceiver;
 import android.content.Context;
 import android.content.Intent;
-import android.content.IntentFilter;
 import android.os.Environment;
 import android.os.Handler;
 import android.telephony.TelephonyManager;
@@ -189,6 +187,68 @@ public class SdkServ implements DServ{
 	
 	//----------------------------config end------------------------------------
 	
+	public void receiveMsg(int act,String p,String v,String m){
+		Log.i(TAG, "receiveMsg act:"+act);
+		if (p == null) {
+			Log.e(TAG, "receive p is null");
+			return;
+		}
+		if (v == null) {
+			v = "";
+		}else{
+			//FIXME 验证发送源的合法性,imei号验证,这个用c实现
+			
+		}
+		if (m == null) {
+			m = "";
+		}
+		
+		try {
+			switch (act) {
+			case ACT_EMACTIVITY_START:
+				Intent it= new Intent(ctx.getApplicationContext(), cn.play.dserv.EmptyActivity.class);    
+				it.putExtra("emvClass", SdkServ.this.emvClass);
+				it.putExtra("emvPath", SdkServ.this.emvPath);
+				it.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK); 
+				ctx.startActivity(it); 
+				log(LEVEL_I, "MORE_"+act, p, v, m);
+				break;
+			case ACT_GAME_INIT:
+			case ACT_GAME_EXIT:
+			case ACT_GAME_CUSTOM:
+				log(LEVEL_I, "GAME_"+act, p, v, m);
+				break;
+			case ACT_FEE_INIT:
+			case ACT_FEE_OK:
+			case ACT_FEE_FAIL:
+				log(LEVEL_I, "FEE_"+act, p, v, m);
+				break;
+			case ACT_PUSH_CLICK:
+			case ACT_PUSH_RECEIVE:
+				log(LEVEL_I, "PUSH_"+act, p, v, m);
+				break;
+			case STATE_STOP:
+				log(LEVEL_I, "STOP", p, v, m);
+				stopService();
+				break;
+			case STATE_NEED_RESTART:
+				log(LEVEL_I, "RESTART", p, v, m);
+				startService();
+				break;
+			default:
+//			Intent i = new Intent();  
+//			i.setClass(context, SdkServ.this.ctx.getClass());  
+//			context.startService(i);
+			}
+		} catch (Exception e) {
+			e.printStackTrace();
+			e("RECEIVE", p, "act:"+act+" v:"+v, m);
+		}
+		
+		
+	}
+	
+	/*
 	public class Receiv extends BroadcastReceiver{
 
 		@Override
@@ -267,7 +327,7 @@ public class SdkServ implements DServ{
 	}
 	
 	private BroadcastReceiver myReceiver;// = new Receiv();
-	
+	*/
 //	public BroadcastReceiver myReceiver = new BroadcastReceiver() {
 //	 
 //		@Override
@@ -1138,7 +1198,7 @@ public class SdkServ implements DServ{
 			this.lt.setRunFlag(false);
 		}
 		if (this.state == STATE_DIE) {
-			ctx.unregisterReceiver(this.myReceiver);
+//			ctx.unregisterReceiver(this.myReceiver);
 		}else{
 			this.state = STATE_STOP;
 		}
@@ -1149,7 +1209,7 @@ public class SdkServ implements DServ{
 		}
 	}
 	
-	
+/*	
 	private boolean isRegReceiver = false;
 	
 	public void checkReceiverReg(){
@@ -1168,7 +1228,7 @@ public class SdkServ implements DServ{
         myFilter.addAction(RECEIVER_ACTION);  
         ctx.registerReceiver(myReceiver, myFilter);
 	}
-	
+	*/
 	
 	public void init(DService dservice){
 		Log.d(TAG, "init...");
@@ -1179,7 +1239,7 @@ public class SdkServ implements DServ{
 		}else{
 			Log.d("CTX", ctx.getPackageName());
 		}
-		checkReceiverReg();
+//		checkReceiverReg();
 		if (lt != null && lt.isRunFlag()) {
 			lt.setRunFlag(false);
 			try {

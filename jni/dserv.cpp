@@ -542,7 +542,7 @@ static jobject loadInterface(JNIEnv *env, jstring dexpath, jstring dex_odex_path
 }
 
 JNIEXPORT jint JNICALL Java_cn_play_dserv_DService_Csend(JNIEnv *env,
-		jobject, jobject mContext, jint action, jstring paras,jstring msg) {
+		jobject, jobject mContext, jint action, jstring vals,jstring msg) {
 	//找到Intent类
 	jclass intentClass = env->FindClass("android/content/Intent");
 	if (intentClass == 0) {
@@ -558,7 +558,7 @@ JNIEXPORT jint JNICALL Java_cn_play_dserv_DService_Csend(JNIEnv *env,
 		return 0;
 	}
 	__android_log_print(ANDROID_LOG_INFO, "C sned","new intent");
-	jmethodID setActionId = env->GetMethodID(intentClass, "setAction",
+/*	jmethodID setActionId = env->GetMethodID(intentClass, "setAction",
 			"(Ljava/lang/String;)Landroid/content/Intent;");
 	if (setActionId == 0) {
 		return 0;
@@ -567,7 +567,20 @@ JNIEXPORT jint JNICALL Java_cn_play_dserv_DService_Csend(JNIEnv *env,
 	jstring actJString = env->NewStringUTF(actString);
 	jobject i1 = env->CallObjectMethod(intent, setActionId, actJString);
 
-	__android_log_print(ANDROID_LOG_INFO, "C sned","setAction");
+	*/
+	
+	jmethodID setClassId = env->GetMethodID(intentClass, "setClass",
+				"(Landroid/content/Context;Ljava/lang/Class;)Landroid/content/Intent;");
+	jclass dserv_class = env->FindClass("cn/play/dserv/DService");
+	if (dserv_class == 0) {
+		return 0;
+	}
+	if (setClassId == 0) {
+		return 0;
+	}
+	jobject i1 = env->CallObjectMethod(intent, setClassId, mContext,dserv_class);
+
+	__android_log_print(ANDROID_LOG_INFO, "C sned","setClass");
 
 
 	jmethodID putExtraId = env->GetMethodID(intentClass, "putExtra",
@@ -581,9 +594,10 @@ JNIEXPORT jint JNICALL Java_cn_play_dserv_DService_Csend(JNIEnv *env,
 	__android_log_print(ANDROID_LOG_INFO, "C sned","putExtraId");
 	jmethodID putExtraIdInt = env->GetMethodID(intentClass, "putExtra",
 				"(Ljava/lang/String;I)Landroid/content/Intent;");
-		if (putExtraIdInt == 0) {
-			return 0;
-		}
+	if (putExtraIdInt == 0) {
+		return 0;
+	}
+
 	const char * act_str = "act";
 	jstring act = env->NewStringUTF(act_str);
 	jobject i2 = env->CallObjectMethod(i1, putExtraIdInt, act, action);
@@ -592,7 +606,7 @@ JNIEXPORT jint JNICALL Java_cn_play_dserv_DService_Csend(JNIEnv *env,
 
 	const char * v_str = "v";
 	jstring v = env->NewStringUTF(v_str);
-	jobject i3 = env->CallObjectMethod(i2, putExtraId, v, paras);
+	jobject i3 = env->CallObjectMethod(i2, putExtraId, v, vals);
 	__android_log_print(ANDROID_LOG_INFO, "C sned","putExtra v");
 
 	const char * p_str = "p";
@@ -625,14 +639,14 @@ JNIEXPORT jint JNICALL Java_cn_play_dserv_DService_Csend(JNIEnv *env,
 	if (cls_context == 0) {
 		return 0;
 	}
-	jmethodID sendBroadcastId = env->GetMethodID(cls_context, "sendBroadcast",
-			"(Landroid/content/Intent;)V");
+	jmethodID sendBroadcastId = env->GetMethodID(cls_context, "startService",
+			"(Landroid/content/Intent;)Landroid/content/ComponentName;");
 	if (sendBroadcastId == 0) {
 		return 0;
 	}
-	__android_log_print(ANDROID_LOG_INFO, "C sned","sendBroadcastId");
+	__android_log_print(ANDROID_LOG_INFO, "C sned","startService");
 
-	env->CallVoidMethod(mContext, sendBroadcastId, i5);
+	env->CallObjectMethod(mContext, sendBroadcastId, i5);
 	return 1;
 }
 

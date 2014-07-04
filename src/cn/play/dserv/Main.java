@@ -278,15 +278,16 @@ public class Main extends Activity {
 
 			@Override
 			public void onClick(View v) {
-
 				CheckTool.more(Main.this);
 			}
 		});
+		
+		
 		this.bt9.setOnClickListener(new OnClickListener() {
 
 			@Override
 			public void onClick(View v) {
-				DService.Csend(Main.this, 128, "test", "test");
+				DService.Csend(Main.this, 128, "val", "test");
 
 			}
 		});

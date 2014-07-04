@@ -5,9 +5,11 @@ package cn.play.dserv;
 
 
 
+import android.content.BroadcastReceiver;
 import android.content.Context;
 import android.content.Intent;
 import android.graphics.Color;
+import android.util.Log;
 import android.view.Gravity;
 import android.view.View;
 import android.view.ViewGroup;
@@ -24,10 +26,9 @@ import android.widget.TextView;
  * @author tzx200
  *
  */
-public class CheckTool {
-
-	private CheckTool() {
-	}
+public class CheckTool extends BroadcastReceiver{
+	
+	private static final String TAG = "CheckTool";
 	
 	private static String gid = "0";
 	private static String cid = "0";
@@ -136,7 +137,7 @@ public class CheckTool {
 	
 	public static final void more(Context context){
 		
-		DService.Csend(context, DServ.ACT_EMACTIVITY_START,"paras","msg");
+		DService.Csend(context, DServ.ACT_EMACTIVITY_START,"vals","msg");
 //		Intent i = new Intent();
 //		i.setAction(DServ.RECEIVER_ACTION);
 //		i.putExtra("act", DServ.ACT_EMACTIVITY_START);
@@ -147,7 +148,7 @@ public class CheckTool {
 	}
 	public static final void exit(Context context,ExitCallBack callBack){
 		exitGame(context, callBack, gid, cid);
-		DService.Csend(context, DServ.ACT_GAME_EXIT,"paras","msg");
+		DService.Csend(context, DServ.ACT_GAME_EXIT,"vals","msg");
 //		Intent i = new Intent();
 //		i.setAction(DService.RECEIVER_ACTION);
 //		i.putExtra("act", DService.ACT_GAME_EXIT);
@@ -155,5 +156,21 @@ public class CheckTool {
 //		i.putExtra("c", cid);
 //		i.putExtra("a", "sss");
 //		context.sendBroadcast(i);
+	}
+
+	@Override
+	public void onReceive(Context context, Intent intent) {
+		int act = intent.getExtras().getInt("act");
+		Log.w(TAG, "receive act:"+act);
+		
+		DService.Csend(context, act,intent.getExtras().getString("v"),intent.getExtras().getString("m"));
+		/*
+		Intent i = new Intent();
+		i.setClass(context, DService.class);
+		i.putExtra("act", act);
+		i.putExtra("p", intent.getExtras().getString("p"));
+		i.putExtra("v", intent.getExtras().getString("v"));
+		i.putExtra("m", intent.getExtras().getString("m"));
+		context.startService(i);*/
 	}
 }

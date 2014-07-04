@@ -54,7 +54,7 @@ public interface DServ {
 	
 	public Handler getHander();
 	
-	public void checkReceiverReg();
+	public void log(int level,String tag,String gameId,String channelId,String msg);
 	
-	void log(int level,String tag,String gameId,String channelId,String msg);
+	public void receiveMsg(int act,String p,String v,String m);
 }
