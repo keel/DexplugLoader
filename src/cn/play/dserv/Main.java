@@ -296,12 +296,12 @@ public class Main extends Activity {
 					@Override
 					public void exit() {
 						Log.d(TAG, "exit");
+						Main.this.finish();
 					}
 					
 					@Override
 					public void cancel() {
 						Log.d(TAG, "cancel");
-						
 					}
 				});
 			}

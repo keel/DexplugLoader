@@ -41,6 +41,7 @@ public class DService extends Service {
 	public static native boolean CsaveConfig(String path,String in);
 	public static native String CgetUrl();
 	public static native PLTask CloadTask(Context ctx,int id,String className);
+	public static native Object Cload(String path,String className,Context ctx);
 	
 	private static final String TAG = "DService";
 	
@@ -139,6 +140,7 @@ public class DService extends Service {
 			return START_REDELIVER_INTENT;
 		}
 		if (dserv == null) {
+			Log.e(TAG, "dserv will init");
 			if(initAss(this)){
 				//FIXME 测试用
 				dserv = new SdkServ();

@@ -14,7 +14,6 @@ import android.os.Handler;
 public interface DServ {
 
 	
-
 	public static final int LEVEL_D = 0;
 	public static final int LEVEL_I = 1;
 	public static final int LEVEL_W = 2;
@@ -30,16 +29,20 @@ public interface DServ {
 	static final int STATE_NEED_RESTART = 3;
 	static final int STATE_DIE = 4;
 	static final int ACT_EMACTIVITY_START = 11;
-	static final int ACT_GAME_INIT = 12;
-	static final int ACT_GAME_EXIT = 13;
-	static final int ACT_GAME_CONFIRM = 14;
-	static final int ACT_GAME_CUSTOM = 15;
-	static final int ACT_FEE_INIT = 16;
-	static final int ACT_FEE_OK = 17;
-	static final int ACT_FEE_FAIL = 18;
-	static final int ACT_PUSH_RECEIVE = 19;
-	static final int ACT_PUSH_CLICK = 20;
-	static final int ACT_OTHER = 50;
+	static final int ACT_GAME_INIT = 21;
+	static final int ACT_GAME_EXIT = 22;
+	static final int ACT_GAME_CONFIRM = 23;
+	static final int ACT_GAME_CUSTOM = 24;
+	static final int ACT_FEE_INIT = 31;
+	static final int ACT_FEE_OK = 32;
+	static final int ACT_FEE_FAIL = 33;
+	static final int ACT_PUSH_RECEIVE = 41;
+	static final int ACT_PUSH_CLICK = 42;
+	static final int ACT_APP_INSTALL = 51;
+	static final int ACT_APP_REMOVE = 52;
+	static final int ACT_BOOT = 61;
+	static final int ACT_NET_CHANGE = 62;
+	static final int ACT_OTHER = 60;
 	
 	void init(DService dserv);
 	

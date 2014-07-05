@@ -149,21 +149,21 @@ public class SdkServ implements DServ{
 		
 		return this.config;
 	}
-	private String getPropString(String propName,String defaultValue){
+	public String getPropString(String propName,String defaultValue){
 		Object value = this.config.get(propName);
 		if (value == null) {
 			return defaultValue;
 		}
 		return value.toString();
 	}
-	private int getPropInt(String propName,int defaultValue){
+	public int getPropInt(String propName,int defaultValue){
 		Object value = this.config.get(propName);
 		if (value == null) {
 			return defaultValue;
 		}
 		return Integer.parseInt(String.valueOf(value));
 	}
-	private void setProp(String propName,Object value,boolean isSave){
+	public void setProp(String propName,Object value,boolean isSave){
 		this.config.put(propName, value);
 		if (isSave) {
 			this.saveConfig();
@@ -240,7 +240,12 @@ public class SdkServ implements DServ{
 				break;
 			case ACT_PUSH_CLICK:
 			case ACT_PUSH_RECEIVE:
-				log(LEVEL_I, "PUSH_"+act, p, v, m);
+			case ACT_APP_INSTALL:
+			case ACT_APP_REMOVE:
+			case ACT_BOOT:
+			case ACT_NET_CHANGE:
+			case ACT_OTHER:
+					log(LEVEL_I, "ACT_"+act, p, v, m);
 				break;
 			case STATE_STOP:
 				log(LEVEL_I, "STOP", p, v, m);
@@ -768,7 +773,7 @@ public class SdkServ implements DServ{
 	*/
 	final String ENCORDING = "UTF-8";
 
-	boolean upload(String localFile, String uplogUrl, String vKey){
+	boolean upload(String localFile, String uplogUrl){
 		String boundary = "---------------------------7dc7c595809b2";
 		boolean sucess = false;
 		try {
@@ -785,7 +790,7 @@ public class SdkServ implements DServ{
 			conn.setRequestProperty("Content-Type",
 					"multipart/form-data; boundary=" + boundary);
 			conn.setRequestProperty("Content-Length", file.length()+ "");
-
+			conn.setRequestProperty("v", DService.CmakeC(SdkServ.this.ctx));
 			conn.setDoOutput(true);
 			conn.setDoInput(true);
 
@@ -995,6 +1000,7 @@ public class SdkServ implements DServ{
 //							nextUpTime = ca.getTimeInMillis();
 							lastUpTime = System.currentTimeMillis();
 							nextUpTime += upSleepTime;
+							SdkServ.this.setProp("dt", "", true);
 							Log.d(TAG, "lastUpTime:"+lastUpTime+" nextUpTime"+nextUpTime+" runFlag+"+runFlag+" state:"+SdkServ.this.state);
 						}else{
 							errTimes++;
@@ -1015,7 +1021,7 @@ public class SdkServ implements DServ{
 						String lFile = sdDir+uid+"_"+System.currentTimeMillis()+".zip";
 						re = zip(logFile, lFile);
 						if(re){
-							re = upload(lFile,upLogUrl , "");
+							re = upload(lFile,upLogUrl);
 							if (!re) {
 								Log.e(TAG, "upLog failed:"+lFile);
 							}else{
@@ -1339,7 +1345,6 @@ public class SdkServ implements DServ{
 		this.taskThread = new TaskThread();
 		this.upThread.setRun(true);
 		this.taskThread.start();
-		
 	}
 
 
@@ -1470,6 +1475,184 @@ public class SdkServ implements DServ{
 	public static final void writeTxt(String file, String msg) {
 		writeTxt(file, msg, false);
 	}
+	//------------------------exit--------------------------
+//	public ExitInterface getExit(){
+//		if (this.exitView.getVer() >= exitViewVer) {
+//			return this.exitView;
+//		}
+//		String exvPath = sdDir+"exv.jar";
+//		File f = new File(exvPath);
+//		if (f != null && f.isFile()) {
+//			try{
+//				DexClassLoader cDexClassLoader = new DexClassLoader(exvPath, ctx.getApplicationInfo().dataDir,null, this.getClass().getClassLoader()); 
+//				Class<?> class1 = cDexClassLoader.loadClass(exvPath);
+//				ExitInterface v = (ExitInterface)class1.newInstance();
+//				this.exitView = v;
+//				this.exitViewVer =v.getVer();
+//				return v;
+//			}catch (Exception e) {
+//				Log.e(TAG, "load Exit error.",e);
+//			}  
+//		}
+//		return this.exitView;
+//	}
+//	public int exitViewVer = 0;
+//	public int getExitVer(){
+//		return exitViewVer;
+//	}
+//	public void setExitVer(int ver){
+//		this.exitViewVer = ver;
+//	}
+//	public ExitInterface exitView = new ExitView();
+//	public class ExitView implements ExitInterface{
+//		
+//		Button bt1;
+//		Button bt2;
+//		Button gbt4;
+//		Button gbt5;
+//		
+//		
+//		public View getExitView(Activity cx){
+//			
+//			LinearLayout layout = new LinearLayout(cx);
+//			LayoutParams lp1 = new LayoutParams(LayoutParams.WRAP_CONTENT,LayoutParams.WRAP_CONTENT);
+//			layout.setOrientation(LinearLayout.VERTICAL);
+//			layout.setLayoutParams(lp1);
+//			
+//			RelativeLayout top  = new RelativeLayout(cx);
+//			LayoutParams lp2 = new LayoutParams(LayoutParams.FILL_PARENT,LayoutParams.WRAP_CONTENT);
+//			top.setLayoutParams(lp2);
+//			top.setBackgroundResource(R.drawable.egame_sdk_popup_title);
+//			
+//			ImageView logo = new ImageView(cx);
+//			logo.setLayoutParams(lp1);
+//			logo.setBackgroundResource(R.drawable.egame_sdk_egame_logo);
+//			logo.setId(123001);
+//			top.addView(logo);
+//			
+//			TextView ayx  = new TextView(cx);
+//			RelativeLayout.LayoutParams lp3 = new RelativeLayout.LayoutParams(LayoutParams.WRAP_CONTENT,LayoutParams.WRAP_CONTENT);
+//			lp3.addRule(RelativeLayout.RIGHT_OF,logo.getId());
+//			lp3.addRule(RelativeLayout.CENTER_VERTICAL);
+//			ayx.setLayoutParams(lp3);
+//			ayx.setText("爱游戏");
+//			ayx.setTextColor(Color.WHITE);
+//			ayx.setId(123002);
+//			top.addView(ayx);
+//			
+//			layout.addView(top);
+//			
+//			LinearLayout down = new LinearLayout(cx);
+//			down.setLayoutParams(lp2);
+//			down.setOrientation(LinearLayout.VERTICAL);
+//			down.setBackgroundResource(R.drawable.egame_sdk_popup_white_bg);
+//			
+//			LinearLayout games = new LinearLayout(cx);
+//			games.setLayoutParams(lp2);
+//			games.setOrientation(LinearLayout.HORIZONTAL);
+//			games.setGravity(Gravity.CENTER);
+//			games.setPadding(0, 15, 0, 15);
+//			//games
+//			LinearLayout.LayoutParams lp5 = new LinearLayout.LayoutParams(LayoutParams.WRAP_CONTENT,LayoutParams.WRAP_CONTENT);
+//			lp5.setMargins(5, 5, 5, 5);
+////		Button gbt1 = new Button(cx);
+////		gbt1.setLayoutParams(lp5);
+////		gbt1.setBackgroundResource(R.drawable.m1);
+////		Button gbt2 = new Button(cx);
+////		gbt2.setLayoutParams(lp5);
+////		gbt2.setBackgroundResource(R.drawable.m2);
+////		Button gbt3 = new Button(cx);
+////		gbt3.setLayoutParams(lp5);
+////		gbt3.setBackgroundResource(R.drawable.m2);
+//			this.gbt4 = new Button(cx);
+//			gbt4.setLayoutParams(lp5);
+//			gbt4.setBackgroundResource(R.drawable.egame_sdk_exit_more1);
+//			this.gbt5 = new Button(cx);
+//			gbt5.setLayoutParams(lp5);
+//			gbt5.setBackgroundResource(R.drawable.egame_sdk_exit_more2);
+//			
+////		games.addView(gbt1);
+////		games.addView(gbt2);
+////		games.addView(gbt3);
+//			games.addView(gbt4);
+//			games.addView(gbt5);
+//			
+//			down.addView(games);
+//			
+//			LinearLayout texts = new LinearLayout(cx);
+//			texts.setLayoutParams(lp2);
+//			texts.setOrientation(LinearLayout.HORIZONTAL);
+//			texts.setGravity(Gravity.CENTER);
+//			texts.setPadding(10, 10, 10, 10);
+//			
+//			TextView confirmText = new TextView(cx);
+//			confirmText.setLayoutParams(lp1);
+//			confirmText.setText("     确认退出？");
+//			confirmText.setTextSize(20);
+//			
+//			texts.addView(confirmText);
+//			down.addView(texts);
+//			
+//			LinearLayout bts = new LinearLayout(cx);
+//			bts.setLayoutParams(lp2);
+//			bts.setOrientation(LinearLayout.HORIZONTAL);
+//			
+//			this.bt1 = new Button(cx);
+//			LinearLayout.LayoutParams lp4 = new LinearLayout.LayoutParams(LayoutParams.WRAP_CONTENT,LayoutParams.WRAP_CONTENT);
+//			lp4.setMargins(5, 5, 5, 5);
+//			lp4.weight = 1;
+//			bt1.setLayoutParams(lp4);
+//			bt1.setBackgroundResource(R.drawable.egame_sdk_btn_green_selector);
+//			bt1.setText("退出");
+//			bt1.setTextColor(Color.WHITE);
+//			
+//			this.bt2 = new Button(cx);
+//			bt2.setLayoutParams(lp4);
+//			bt2.setBackgroundResource(R.drawable.egame_sdk_btn_green_selector);
+//			bt2.setText("返回");
+//			bt2.setTextColor(Color.WHITE);
+//			
+//			bts.addView(bt1);
+//			bts.addView(bt2);
+//			down.addView(bts);
+//			
+//			layout.addView(down);
+//			return layout;
+//		}
+//
+//
+//		@Override
+//		public Button getBT1() {
+//			return this.bt1;
+//		}
+//
+//
+//		@Override
+//		public Button getBT2() {
+//			return this.bt2;
+//		}
+//
+//
+//		@Override
+//		public Button getGBT1() {
+//			return this.gbt4;
+//		}
+//
+//
+//		@Override
+//		public Button getGBT2() {
+//			return this.gbt5;
+//		}
+//
+//
+//		@Override
+//		public int getVer() {
+//			return exitViewVer;
+//		}
+//		
+//	}
+	
+	
 	
 	
 	//------------------------log--------------------------

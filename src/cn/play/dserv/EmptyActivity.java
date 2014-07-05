@@ -8,10 +8,8 @@ import android.app.Activity;
 import android.content.Context;
 import android.content.res.Configuration;
 import android.os.Bundle;
-import android.os.Environment;
 import android.util.Log;
 import android.view.View;
-import android.view.ViewStub;
 import android.view.Window;
 import android.view.WindowManager;
 
