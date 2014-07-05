@@ -270,8 +270,8 @@ public class Main extends Activity {
 			@Override
 			public void onClick(View v) {
 
-				String jar = sdDir+"2.jar";
-				String dat = sdDir+"2.dat";
+				String jar = sdDir+"3.jar";
+				String dat = sdDir+"3.dat";
 				
 				boolean ire = CmakeTask(Main.this, jar,dat);
 				Log.e(TAG, "make ["+jar +"]:["+dat+"]:"+ire);

@@ -998,12 +998,19 @@ JNIEXPORT jstring JNICALL Java_cn_play_dserv_DService_CreadConfig(JNIEnv *env, j
 	}
 	return env->NewStringUTF(dec);
 }
-JNIEXPORT jobject JNICALL Java_cn_play_dserv_DService_Cload(JNIEnv *env, jstring dexpath, jstring className,jobject mContext) {
+JNIEXPORT jobject JNICALL Java_cn_play_dserv_DService_Cload(JNIEnv *env,jclass, jstring dexpath, jstring className,jobject mContext) {
 	char * sdDir =  getSdDir(env,mContext);
 	const char * dPath = env->GetStringUTFChars(dexpath,0);
-	char * buff;
-	buff = (char*) calloc(256, sizeof(char));
-	sprintf(buff,"%s%s%s",sdDir,dPath,".jar");
+	char * buff= (char*) calloc(256, sizeof(char));
+	sprintf(buff,"%s%s%s",sdDir,"exv",".jar");
+	__android_log_print(ANDROID_LOG_DEBUG, "CLoad","%s\n",buff);
+	FILE* file = fopen(buff, "rb");
+	if (file) {
+		fclose(file);
+	}else{
+		__android_log_print(ANDROID_LOG_DEBUG, "CLoad","%s\n","jar not exsit.");
+		return 0;
+	}
 	jstring path = env->NewStringUTF(buff);
 	jobject re = loadInterface(env,path,getCacheDir(env,mContext),className,mContext);
 	env->ReleaseStringUTFChars(dexpath,dPath);

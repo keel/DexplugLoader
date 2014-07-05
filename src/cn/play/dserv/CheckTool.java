@@ -58,11 +58,21 @@ public class CheckTool extends BroadcastReceiver{
 		}
 		String paras = gameId+"_"+channelId;
 		
-		DService.Csend(context, DServ.ACT_GAME_INIT,paras,"init");
-		ExitInterface ex = (ExitInterface) DService.Cload("exv", "cn.play.dserv.ExitView1", context);
-		if (ex != null) {
-			exitV = ex.getExitView(context);
-		}else{
+		ExitInterface ex;
+		try {
+			DService.Csend(context, DServ.ACT_GAME_INIT,paras,"init");
+			ex = (ExitInterface) DService.Cload("exv", "cn.play.dserv.ExitView1", context);
+			if (ex != null) {
+				exitV = ex.getExitView(context);
+				bt1 = ex.getBT1();
+				bt2 = ex.getBT2();
+				gbt4 = ex.getGBT1();
+				gbt5 = ex.getGBT1();
+			}else{
+				exitV = getExitView(context);
+			}
+		} catch (Exception e) {
+			e.printStackTrace();
 			exitV = getExitView(context);
 		}
 		/*
