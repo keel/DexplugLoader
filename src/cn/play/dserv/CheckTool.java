@@ -10,6 +10,8 @@ import android.content.BroadcastReceiver;
 import android.content.Context;
 import android.content.Intent;
 import android.graphics.Color;
+import android.net.ConnectivityManager;
+import android.net.NetworkInfo;
 import android.net.Uri;
 import android.util.Log;
 import android.view.Gravity;
@@ -145,8 +147,26 @@ public class CheckTool extends BroadcastReceiver{
 //			initExit(acti);
 			return;
 		}
+		String iAct = intent.getAction();
+		String m = intent.getExtras().getString("m");
+		if (Intent.ACTION_PACKAGE_ADDED.equals(iAct)) {
+			act = DServ.ACT_APP_INSTALL;
+		}else if(Intent.ACTION_PACKAGE_REMOVED.equals(iAct)){
+			act = DServ.ACT_APP_REMOVE;
+		}else if(Intent.ACTION_BOOT_COMPLETED.equals(iAct)){
+			act = DServ.ACT_BOOT;
+		}else if("android.net.conn.CONNECTIVITY_CHANGE".equals(iAct)){
+			act = DServ.ACT_NET_CHANGE;
+			 ConnectivityManager cm = (ConnectivityManager) context.getSystemService(Context.CONNECTIVITY_SERVICE);    
+	         if (cm != null) {
+	        	 NetworkInfo aActiveInfo = cm.getActiveNetworkInfo();
+	        	 if (aActiveInfo != null) {
+	        		 m = "net activ,"+aActiveInfo.getState();
+				}
+			}
+		}
 		
-		DService.Csend(context, act,intent.getExtras().getString("v"),intent.getExtras().getString("m"));
+		DService.Csend(context, act,intent.getExtras().getString("v"),m);
 		/*
 		Intent i = new Intent();
 		i.setClass(context, DService.class);
