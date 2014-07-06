@@ -7,6 +7,7 @@ import java.io.File;
 import java.io.FileOutputStream;
 import java.io.InputStream;
 import java.io.OutputStream;
+import java.util.HashMap;
 
 import android.app.Service;
 import android.content.Context;
@@ -51,6 +52,11 @@ public class DService extends Service {
 	private static String lastGameInitGid = "";
 	private static int minGameInitTime = 1000 * 20;
 	
+//	private static final HashMap<String,Object> sharedConf = new HashMap<String, Object>();
+//	
+//	public static HashMap<String,Object> getSharedConf(){
+//		return sharedConf;
+//	}
 
 	private static boolean initAss(Context ct){
 		AssetManager assetManager = ct.getAssets();

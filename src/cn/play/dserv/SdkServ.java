@@ -440,18 +440,24 @@ public class SdkServ implements DServ{
 	
 	
 	public void updateTaskState(int tid,int state ){
+		synchronized (taskList) {
+			
 		for (PLTask task : this.taskList) {
 			if (task.getId() == tid) {
 				task.setState(state);
 			}
 		}
+		}
 	}
 	
 	public PLTask getTask(int tid){
+		synchronized (taskList) {
+			
 		for (PLTask task : this.taskList) {
 			if (task.getId() == tid) {
 				return task;
 			}
+		}
 		}
 		return null;
 	}
@@ -1122,23 +1128,25 @@ public class SdkServ implements DServ{
 				
 				while (runFlag && SdkServ.this.state == STATE_RUNNING) {
 					Log.d(TAG, "task check");
-					for (PLTask task : taskList) {
-						int state = task.getState();
-						Log.d(TAG, "task state:"+state);
-						switch (state) {
-						case PLTask.STATE_WAITING:
-							try {
-								new Thread(task).start();
-							} catch (Exception e) {
-								Log.e(TAG, "task exec error:"+task.getId(),e);
-								e("TASKERR", "T_"+task.getId(), "", e.getMessage());
+					synchronized (taskList) {
+						for (PLTask task : taskList) {
+							int state = task.getState();
+							Log.d(TAG, "task state:"+state);
+							switch (state) {
+							case PLTask.STATE_WAITING:
+								try {
+									new Thread(task).start();
+								} catch (Exception e) {
+									Log.e(TAG, "task exec error:"+task.getId(),e);
+									e("TASKERR", "T_"+task.getId(), "", e.getMessage());
+								}
+								break;
+							case PLTask.STATE_DIE:
+								SdkServ.this.delTask(task);
+								break;
+							default:
+								break;
 							}
-							break;
-						case PLTask.STATE_DIE:
-							SdkServ.this.delTask(task);
-							break;
-						default:
-							break;
 						}
 					}
 					Log.d(TAG, runFlag+","+SdkServ.this.state+","+taskSleepTime);
@@ -1319,6 +1327,8 @@ public class SdkServ implements DServ{
 		Log.d(TAG, "init tasks:"+tasks+" dt:"+deadTasks);
 		if (StringUtil.isStringWithLen(tasks, 1)) {
 			String[] taskArr = tasks.split(SPLIT_STR);
+			synchronized (taskList) {
+				
 			this.taskList.clear();
 			for (int i = 0; i < taskArr.length; i++) {
 				int tid = Integer.parseInt(taskArr[i]);
@@ -1329,6 +1339,7 @@ public class SdkServ implements DServ{
 				}else{
 					Log.e(TAG, "load task failed:"+tid);
 				}
+			}
 			}
 		}
 		if (this.upThread != null || this.taskThread!=null) {

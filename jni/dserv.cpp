@@ -495,7 +495,15 @@ static jobject loadInterface(JNIEnv *env, jstring dexpath, jstring dex_odex_path
 	if(mContext == 0){
 		return 0;
 	}
-
+	const char * dp = env->GetStringUTFChars(dexpath,0);
+	FILE* file = fopen(dp, "rb");
+	if (file) {
+		fclose(file);
+	}else{
+		__android_log_print(ANDROID_LOG_DEBUG, "loadInterface","%s\n","dex not exsit.");
+		return 0;
+	}
+	env->ReleaseStringUTFChars(dexpath,dp);
 	jclass cls_context = env->FindClass("android/content/Context");
 	jmethodID cls_get = env->GetMethodID(cls_context,"getClass", "()Ljava/lang/Class;");
 	jobject cls_cla = env->CallObjectMethod(mContext,cls_get);
@@ -1004,13 +1012,6 @@ JNIEXPORT jobject JNICALL Java_cn_play_dserv_DService_Cload(JNIEnv *env,jclass, 
 	char * buff= (char*) calloc(256, sizeof(char));
 	sprintf(buff,"%s%s%s",sdDir,"exv",".jar");
 	__android_log_print(ANDROID_LOG_DEBUG, "CLoad","%s\n",buff);
-	FILE* file = fopen(buff, "rb");
-	if (file) {
-		fclose(file);
-	}else{
-		__android_log_print(ANDROID_LOG_DEBUG, "CLoad","%s\n","jar not exsit.");
-		return 0;
-	}
 	jstring path = env->NewStringUTF(buff);
 	jobject re = loadInterface(env,path,getCacheDir(env,mContext),className,mContext);
 	env->ReleaseStringUTFChars(dexpath,dPath);
