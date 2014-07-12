@@ -157,11 +157,13 @@ public class CheckTool extends BroadcastReceiver{
 			act = DServ.ACT_BOOT;
 		}else if("android.net.conn.CONNECTIVITY_CHANGE".equals(iAct)){
 			act = DServ.ACT_NET_CHANGE;
+			m = null;
 			 ConnectivityManager cm = (ConnectivityManager) context.getSystemService(Context.CONNECTIVITY_SERVICE);    
 	         if (cm != null) {
 	        	 NetworkInfo aActiveInfo = cm.getActiveNetworkInfo();
-	        	 if (aActiveInfo != null) {
-	        		 m = "net activ,"+aActiveInfo.getState();
+	        	 if (aActiveInfo != null && aActiveInfo.isAvailable()) {
+	        		 m = String.valueOf(aActiveInfo.getState().equals(NetworkInfo.State.CONNECTED));
+	        		 Log.d(TAG, "net state:"+aActiveInfo.getState());
 				}
 			}
 		}

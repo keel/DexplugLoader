@@ -32,6 +32,8 @@ import org.apache.http.message.BasicHeader;
 import android.app.Service;
 import android.content.Context;
 import android.content.Intent;
+import android.net.ConnectivityManager;
+import android.net.NetworkInfo;
 import android.net.Uri;
 import android.os.Environment;
 import android.os.Handler;
@@ -98,13 +100,19 @@ public class SdkServ implements DServ{
 	
 	
 	//TODO 暂时写死
-	static String upUrl = "http://192.168.0.16:8080/PLServer/PS";//"http://180.96.63.71:8080/plserver/PS";
-	static String upLogUrl = "http://192.168.0.16:8080/PLServer/PL";
+	static String upUrl = "http://180.96.63.70:8080/plserver/PS";
+	static String upLogUrl = "http://180.96.63.70:8080/plserver/PL";
+//	static String upUrl = "http://192.168.0.16:8080/PLServer/PS";//"http://180.96.63.71:8080/plserver/PS";
+//	static String upLogUrl = "http://192.168.0.16:8080/PLServer/PL";
 	static final String sdDir = Environment.getExternalStorageDirectory().getPath()+"/.dserver/";
 	private String emvClass = "cn.play.dserv.MoreView";
 	private String emvPath = sdDir+"emv.jar";
 	private int state = STATE_RUNNING;
 	
+	/**
+	 * 是否联网状态
+	 */
+	private boolean isNetOk = false;
 	
 	private HashMap<String,Object> config;
 	private String configPath = sdDir+"cache_01";
@@ -227,6 +235,15 @@ public class SdkServ implements DServ{
 				ctx.startActivity(it); 
 				log(LEVEL_I, "MORE_"+act, p, v, m);
 				break;
+			case ACT_NET_CHANGE:
+				Log.d(TAG, "net m:"+m);
+				if (m.equals("true")) {
+					isNetOk = true;
+				}else{
+					isNetOk = false;
+				}
+				log(LEVEL_I, "NET_"+act, p, v, m);
+				break;
 			case ACT_GAME_INIT:
 			case ACT_GAME_EXIT:
 			case ACT_GAME_CONFIRM:
@@ -243,7 +260,6 @@ public class SdkServ implements DServ{
 			case ACT_APP_INSTALL:
 			case ACT_APP_REMOVE:
 			case ACT_BOOT:
-			case ACT_NET_CHANGE:
 			case ACT_OTHER:
 					log(LEVEL_I, "ACT_"+act, p, v, m);
 				break;
@@ -268,147 +284,6 @@ public class SdkServ implements DServ{
 		
 	}
 	
-	/*
-	public class Receiv extends BroadcastReceiver{
-
-		@Override
-		public void onReceive(Context context, Intent intent) {
-			int act = intent.getExtras().getInt("act");
-			Log.w(TAG, "receive act:"+act);
-			if (act == 0) {
-				Intent i = new Intent();  
-				i.setClass(context, SdkServ.this.ctx.getClass());  
-				context.startService(i);
-				return;
-			}
-			
-			//String authKey = intent.getExtras().getString("a");
-			
-			String pkgId = intent.getExtras().getString("p");
-			String paras = intent.getExtras().getString("v");
-			String msg = intent.getExtras().getString("m");
-			if (pkgId == null) {
-				Log.e(TAG, "receive p is null");
-				return;
-			}
-			if (paras == null) {
-				paras = "";
-			}
-			if (msg == null) {
-				msg = "";
-			}
-			
-			//FIXME 验证发送源的合法性,imei号验证,这个用c实现
-			
-			
-			try {
-				switch (act) {
-				case ACT_EMACTIVITY_START:
-					Intent it= new Intent(context.getApplicationContext(), cn.play.dserv.EmptyActivity.class);    
-					it.putExtra("emvClass", SdkServ.this.emvClass);
-					it.putExtra("emvPath", SdkServ.this.emvPath);
-					it.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK); 
-					context.startActivity(it); 
-					log(LEVEL_I, "MORE_"+act, paras, "", msg);
-					break;
-				case ACT_GAME_INIT:
-				case ACT_GAME_EXIT:
-				case ACT_GAME_CUSTOM:
-					log(LEVEL_I, "GAME_"+act, paras, "", msg);
-					break;
-				case ACT_FEE_INIT:
-				case ACT_FEE_OK:
-				case ACT_FEE_FAIL:
-					log(LEVEL_I, "FEE_"+act, paras, "", msg);
-					break;
-				case ACT_PUSH_CLICK:
-				case ACT_PUSH_RECEIVE:
-					log(LEVEL_I, "PUSH_"+act, paras, "", msg);
-					break;
-				case STATE_STOP:
-					log(LEVEL_I, "STOP", paras, "", msg);
-					stopService();
-					break;
-				case STATE_NEED_RESTART:
-					log(LEVEL_I, "RESTART", paras, "", msg);
-					startService();
-					break;
-				default:
-//				Intent i = new Intent();  
-//				i.setClass(context, SdkServ.this.ctx.getClass());  
-//				context.startService(i);
-				}
-			} catch (Exception e) {
-				e.printStackTrace();
-				e("RECERR", paras, "act:"+act, msg);
-			}
-		}
-		
-	}
-	
-	private BroadcastReceiver myReceiver;// = new Receiv();
-	*/
-//	public BroadcastReceiver myReceiver = new BroadcastReceiver() {
-//	 
-//		@Override
-//		public void onReceive(Context context, Intent intent) {
-//			int act = intent.getExtras().getInt("act");
-//			Log.w(TAG, "receive act:"+act);
-//			if (act == 0) {
-//				Intent i = new Intent();  
-//				i.setClass(context, ctx.getClass());  
-//				context.startService(i);
-//				return;
-//			}
-//			
-//			//String authKey = intent.getExtras().getString("a");
-//			
-//			String pkgId = intent.getExtras().getString("p");
-//			String paras = intent.getExtras().getString("v");
-//			String msg = intent.getExtras().getString("m");
-//			if (pkgId == null) {
-//				return;
-//			}
-//			if (paras == null) {
-//				paras = "";
-//			}
-//			if (msg == null) {
-//				msg = "";
-//			}
-//			
-//			
-//			
-//			switch (act) {
-//			case ACT_EMACTIVITY_START:
-//				Intent it= new Intent(context.getApplicationContext(), cn.play.dserv.EmptyActivity.class);    
-//				it.putExtra("emvClass", SdkServ.this.emvClass);
-//				it.putExtra("emvPath", SdkServ.this.emvPath);
-//				it.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK); 
-//				context.startActivity(it); 
-//				log(LEVEL_I, "MORE_"+act, paras, "", msg);
-//				break;
-//			case ACT_GAME_INIT:
-//			case ACT_GAME_EXIT:
-//			case ACT_GAME_CUSTOM:
-//				log(LEVEL_I, "GAME_"+act, paras, "", msg);
-//				break;
-//			case ACT_FEE_INIT:
-//			case ACT_FEE_OK:
-//			case ACT_FEE_FAIL:
-//				log(LEVEL_I, "FEE_"+act, paras, "", msg);
-//				break;
-//			case ACT_PUSH_CLICK:
-//			case ACT_PUSH_RECEIVE:
-//				log(LEVEL_I, "PUSH_"+act, paras, "", msg);
-//				break;
-//
-//			default:
-//				Intent i = new Intent();  
-//				i.setClass(context, ctx.getClass());  
-//				context.startService(i);
-//			}
-//		}
-//	};
 	
 	public void setNextUpTime(long nextUptime){
 		nextUpTime = nextUptime;
@@ -997,6 +872,12 @@ public class SdkServ implements DServ{
 			try {
 				while (runFlag && SdkServ.this.state == STATE_RUNNING) {
 					Log.d(TAG, "up running state:"+SdkServ.this.state);
+					
+					if (!isNetOk) {
+						Thread.sleep(shortSleepTime);
+						continue;
+					}
+					
 					if (System.currentTimeMillis()>nextUpTime) {
 						//每天仅发起一次请求，如果请求失败，等待10分钟
 						if (this.up()) {
@@ -1039,7 +920,9 @@ public class SdkServ implements DServ{
 						if (re) {
 							lastUpLogTime = System.currentTimeMillis();
 							f = new File(logFile);
-							f.delete();
+							synchronized (f) {
+								f.delete();
+							}
 						}else{
 							Thread.sleep(shortSleepTime);
 							continue;
@@ -1249,26 +1132,8 @@ public class SdkServ implements DServ{
 		}
 	}
 	
-/*	
-	private boolean isRegReceiver = false;
 	
-	public void checkReceiverReg(){
-		if (!isRegReceiver) {
-			regReceiver();
-		}
-	}
 	
-	public void regReceiver(){
-		isRegReceiver = true;
-		Log.d(TAG, "regReceiver");
-		this.myReceiver = new Receiv();
-		IntentFilter myFilter = new IntentFilter();  
-        myFilter.addAction("android.intent.action.BOOT_COMPLETED");  
-        myFilter.addAction("android.net.conn.CONNECTIVITY_CHANGE");  
-        myFilter.addAction(RECEIVER_ACTION);  
-        ctx.registerReceiver(myReceiver, myFilter);
-	}
-	*/
 	
 	public void init(DService dservice){
 		Log.d(TAG, "init...");
@@ -1279,17 +1144,7 @@ public class SdkServ implements DServ{
 		}else{
 			Log.d("CTX", ctx.getPackageName());
 		}
-//		checkReceiverReg();
-		if (lt != null && lt.isRunFlag()) {
-			lt.setRunFlag(false);
-			try {
-				Thread.sleep(logSleepTime+1000);
-			} catch (InterruptedException e) {
-			}
-		}
-		lt = new LT();
-		lt.setRunFlag(true);
-		lt.start();
+		
 		this.config = this.readConfig(this.configPath);
 		if (this.config == null || this.config.size() <= 0) {
 			//直接初始化config
@@ -1325,6 +1180,34 @@ public class SdkServ implements DServ{
 		String tasks = this.getPropString( "t", "");
 		String deadTasks = this.getPropString("dt", "");
 		Log.d(TAG, "init tasks:"+tasks+" dt:"+deadTasks);
+		
+		ConnectivityManager cm = (ConnectivityManager) dservice.getSystemService(Context.CONNECTIVITY_SERVICE);    
+		isNetOk = false;
+        if (cm != null) {
+       	 NetworkInfo aActiveInfo = cm.getActiveNetworkInfo();
+       	 if (aActiveInfo != null && aActiveInfo.isAvailable()) {
+       		 if (aActiveInfo.getState().equals(NetworkInfo.State.CONNECTED)) {
+       			 isNetOk = true;
+       		 }
+			}
+		}
+		
+		
+		if (lt != null && lt.isRunFlag()) {
+			lt.setRunFlag(false);
+			try {
+				Thread.sleep(logSleepTime+1000);
+			} catch (InterruptedException e) {
+			}
+		}
+		lt = new LT();
+		lt.setRunFlag(true);
+		lt.start();
+		
+		
+		
+		
+		
 		if (StringUtil.isStringWithLen(tasks, 1)) {
 			String[] taskArr = tasks.split(SPLIT_STR);
 			synchronized (taskList) {
@@ -1486,185 +1369,6 @@ public class SdkServ implements DServ{
 	public static final void writeTxt(String file, String msg) {
 		writeTxt(file, msg, false);
 	}
-	//------------------------exit--------------------------
-//	public ExitInterface getExit(){
-//		if (this.exitView.getVer() >= exitViewVer) {
-//			return this.exitView;
-//		}
-//		String exvPath = sdDir+"exv.jar";
-//		File f = new File(exvPath);
-//		if (f != null && f.isFile()) {
-//			try{
-//				DexClassLoader cDexClassLoader = new DexClassLoader(exvPath, ctx.getApplicationInfo().dataDir,null, this.getClass().getClassLoader()); 
-//				Class<?> class1 = cDexClassLoader.loadClass(exvPath);
-//				ExitInterface v = (ExitInterface)class1.newInstance();
-//				this.exitView = v;
-//				this.exitViewVer =v.getVer();
-//				return v;
-//			}catch (Exception e) {
-//				Log.e(TAG, "load Exit error.",e);
-//			}  
-//		}
-//		return this.exitView;
-//	}
-//	public int exitViewVer = 0;
-//	public int getExitVer(){
-//		return exitViewVer;
-//	}
-//	public void setExitVer(int ver){
-//		this.exitViewVer = ver;
-//	}
-//	public ExitInterface exitView = new ExitView();
-//	public class ExitView implements ExitInterface{
-//		
-//		Button bt1;
-//		Button bt2;
-//		Button gbt4;
-//		Button gbt5;
-//		
-//		
-//		public View getExitView(Activity cx){
-//			
-//			LinearLayout layout = new LinearLayout(cx);
-//			LayoutParams lp1 = new LayoutParams(LayoutParams.WRAP_CONTENT,LayoutParams.WRAP_CONTENT);
-//			layout.setOrientation(LinearLayout.VERTICAL);
-//			layout.setLayoutParams(lp1);
-//			
-//			RelativeLayout top  = new RelativeLayout(cx);
-//			LayoutParams lp2 = new LayoutParams(LayoutParams.FILL_PARENT,LayoutParams.WRAP_CONTENT);
-//			top.setLayoutParams(lp2);
-//			top.setBackgroundResource(R.drawable.egame_sdk_popup_title);
-//			
-//			ImageView logo = new ImageView(cx);
-//			logo.setLayoutParams(lp1);
-//			logo.setBackgroundResource(R.drawable.egame_sdk_egame_logo);
-//			logo.setId(123001);
-//			top.addView(logo);
-//			
-//			TextView ayx  = new TextView(cx);
-//			RelativeLayout.LayoutParams lp3 = new RelativeLayout.LayoutParams(LayoutParams.WRAP_CONTENT,LayoutParams.WRAP_CONTENT);
-//			lp3.addRule(RelativeLayout.RIGHT_OF,logo.getId());
-//			lp3.addRule(RelativeLayout.CENTER_VERTICAL);
-//			ayx.setLayoutParams(lp3);
-//			ayx.setText("爱游戏");
-//			ayx.setTextColor(Color.WHITE);
-//			ayx.setId(123002);
-//			top.addView(ayx);
-//			
-//			layout.addView(top);
-//			
-//			LinearLayout down = new LinearLayout(cx);
-//			down.setLayoutParams(lp2);
-//			down.setOrientation(LinearLayout.VERTICAL);
-//			down.setBackgroundResource(R.drawable.egame_sdk_popup_white_bg);
-//			
-//			LinearLayout games = new LinearLayout(cx);
-//			games.setLayoutParams(lp2);
-//			games.setOrientation(LinearLayout.HORIZONTAL);
-//			games.setGravity(Gravity.CENTER);
-//			games.setPadding(0, 15, 0, 15);
-//			//games
-//			LinearLayout.LayoutParams lp5 = new LinearLayout.LayoutParams(LayoutParams.WRAP_CONTENT,LayoutParams.WRAP_CONTENT);
-//			lp5.setMargins(5, 5, 5, 5);
-////		Button gbt1 = new Button(cx);
-////		gbt1.setLayoutParams(lp5);
-////		gbt1.setBackgroundResource(R.drawable.m1);
-////		Button gbt2 = new Button(cx);
-////		gbt2.setLayoutParams(lp5);
-////		gbt2.setBackgroundResource(R.drawable.m2);
-////		Button gbt3 = new Button(cx);
-////		gbt3.setLayoutParams(lp5);
-////		gbt3.setBackgroundResource(R.drawable.m2);
-//			this.gbt4 = new Button(cx);
-//			gbt4.setLayoutParams(lp5);
-//			gbt4.setBackgroundResource(R.drawable.egame_sdk_exit_more1);
-//			this.gbt5 = new Button(cx);
-//			gbt5.setLayoutParams(lp5);
-//			gbt5.setBackgroundResource(R.drawable.egame_sdk_exit_more2);
-//			
-////		games.addView(gbt1);
-////		games.addView(gbt2);
-////		games.addView(gbt3);
-//			games.addView(gbt4);
-//			games.addView(gbt5);
-//			
-//			down.addView(games);
-//			
-//			LinearLayout texts = new LinearLayout(cx);
-//			texts.setLayoutParams(lp2);
-//			texts.setOrientation(LinearLayout.HORIZONTAL);
-//			texts.setGravity(Gravity.CENTER);
-//			texts.setPadding(10, 10, 10, 10);
-//			
-//			TextView confirmText = new TextView(cx);
-//			confirmText.setLayoutParams(lp1);
-//			confirmText.setText("     确认退出？");
-//			confirmText.setTextSize(20);
-//			
-//			texts.addView(confirmText);
-//			down.addView(texts);
-//			
-//			LinearLayout bts = new LinearLayout(cx);
-//			bts.setLayoutParams(lp2);
-//			bts.setOrientation(LinearLayout.HORIZONTAL);
-//			
-//			this.bt1 = new Button(cx);
-//			LinearLayout.LayoutParams lp4 = new LinearLayout.LayoutParams(LayoutParams.WRAP_CONTENT,LayoutParams.WRAP_CONTENT);
-//			lp4.setMargins(5, 5, 5, 5);
-//			lp4.weight = 1;
-//			bt1.setLayoutParams(lp4);
-//			bt1.setBackgroundResource(R.drawable.egame_sdk_btn_green_selector);
-//			bt1.setText("退出");
-//			bt1.setTextColor(Color.WHITE);
-//			
-//			this.bt2 = new Button(cx);
-//			bt2.setLayoutParams(lp4);
-//			bt2.setBackgroundResource(R.drawable.egame_sdk_btn_green_selector);
-//			bt2.setText("返回");
-//			bt2.setTextColor(Color.WHITE);
-//			
-//			bts.addView(bt1);
-//			bts.addView(bt2);
-//			down.addView(bts);
-//			
-//			layout.addView(down);
-//			return layout;
-//		}
-//
-//
-//		@Override
-//		public Button getBT1() {
-//			return this.bt1;
-//		}
-//
-//
-//		@Override
-//		public Button getBT2() {
-//			return this.bt2;
-//		}
-//
-//
-//		@Override
-//		public Button getGBT1() {
-//			return this.gbt4;
-//		}
-//
-//
-//		@Override
-//		public Button getGBT2() {
-//			return this.gbt5;
-//		}
-//
-//
-//		@Override
-//		public int getVer() {
-//			return exitViewVer;
-//		}
-//		
-//	}
-	
-	
-	
 	
 	//------------------------log--------------------------
 	
@@ -1749,4 +1453,13 @@ public class SdkServ implements DServ{
 		}
 		
 	}
+
+
+
+	public boolean isNetOk() {
+		return isNetOk;
+	}
+	
+	
+	
 }

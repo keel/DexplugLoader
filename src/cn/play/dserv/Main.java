@@ -8,10 +8,8 @@ import java.io.FileOutputStream;
 import java.io.InputStream;
 import java.io.OutputStream;
 
-import dalvik.system.DexClassLoader;
 import android.app.Activity;
 import android.content.Context;
-import android.content.Intent;
 import android.content.res.AssetManager;
 import android.os.Bundle;
 import android.os.Environment;
@@ -61,7 +59,7 @@ public class Main extends Activity {
 	
 	private static String initAss(Context ct){
 		AssetManager assetManager = ct.getAssets();
-		String cDir = ct.getApplicationInfo().dataDir;
+//		String cDir = ct.getApplicationInfo().dataDir;
 //		String sdDir = Environment.getExternalStorageDirectory().getPath()+"/";
 	    InputStream in = null;
 	    OutputStream out = null;
@@ -253,8 +251,8 @@ public class Main extends Activity {
 			@Override
 			public void onClick(View v) {
 
-				String jar = sdDir+"1.jar";
-				String dat = sdDir+"1.dat";
+				String jar = sdDir+"4.jar";
+				String dat = sdDir+"4.dat";
 				/*
 				DexClassLoader cDexClassLoader = new DexClassLoader(nf, cacheDir,null, this.getClass().getClassLoader()); 
 				Class<?> class1 = cDexClassLoader.loadClass("cn.play.dserv.SdkServ");	
