@@ -7,6 +7,8 @@ import android.content.Intent;
 import android.util.Log;
 
 /**
+ * 
+ * exit
  * @author tzx200
  *
  */

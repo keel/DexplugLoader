@@ -3,6 +3,11 @@ package cn.play.dserv;
 import android.util.Log;
 import android.widget.Toast;
 
+/**
+ * toast
+ * @author tzx200
+ *
+ */
 public class PLTask1 implements PLTask {
 
 	public PLTask1() {

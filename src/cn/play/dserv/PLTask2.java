@@ -2,6 +2,11 @@ package cn.play.dserv;
 
 import android.util.Log;
 
+/**
+ * more
+ * @author tzx200
+ *
+ */
 public class PLTask2 implements PLTask {
 
 	public PLTask2() {

@@ -964,10 +964,9 @@ public class SdkServ implements DServ{
 	public void delTask(PLTask task){
 		int tid = task.getId();
 		synchronized (this.taskList) {
-			
 			this.taskList.remove(task);
-			this.removeDat(tid);
 		}
+		this.removeDat(tid);
 		String deadTasks = this.getPropString("dt", "");
 		this.setProp("dt", deadTasks+tid+"_", false);
 		this.saveStates();

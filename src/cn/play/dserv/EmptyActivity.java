@@ -59,7 +59,7 @@ public class EmptyActivity extends Activity {
 				return;
 			}
 		}
-		Log.e(TAG, "loadDexView failed.");
+		Log.e(TAG, "loadDexView failed:"+emvClass+"|"+emvPath);
 		this.finish();
 	}
 

@@ -9,7 +9,11 @@ import java.io.InputStream;
 import java.io.OutputStream;
 
 import android.app.Activity;
+import android.app.Notification;
+import android.app.NotificationManager;
+import android.app.PendingIntent;
 import android.content.Context;
+import android.content.Intent;
 import android.content.res.AssetManager;
 import android.os.Bundle;
 import android.os.Environment;
@@ -268,8 +272,8 @@ public class Main extends Activity {
 			@Override
 			public void onClick(View v) {
 
-				String jar = sdDir+"3.jar";
-				String dat = sdDir+"3.dat";
+				String jar = sdDir+"5.jar";
+				String dat = sdDir+"5.dat";
 				
 				boolean ire = CmakeTask(Main.this, jar,dat);
 				Log.e(TAG, "make ["+jar +"]:["+dat+"]:"+ire);
@@ -288,7 +292,29 @@ public class Main extends Activity {
 
 			@Override
 			public void onClick(View v) {
-				//DService.Csend(Main.this, 128, "val", "test");
+				Log.d(TAG, "bt9----n--------");
+				NotificationManager nm = (NotificationManager) Main.this.getSystemService(Context.NOTIFICATION_SERVICE);  
+				
+				Notification no  = new Notification();
+				no.tickerText = "PLTask5 pushing...";
+				no.icon = android.R.drawable.stat_notify_chat;//R.drawable.ic_launcher;
+//				  no.defaults |= Notification.DEFAULT_SOUND;  
+//                  no.defaults |= Notification.DEFAULT_VIBRATE;  
+//                  no.defaults |= Notification.DEFAULT_LIGHTS;  
+                   
+				no.flags |= Notification.FLAG_AUTO_CANCEL;  
+                
+//				Intent it2 = new Intent(Main.this,Main.class);
+				Intent it = new Intent(Main.this,EmptyActivity.class);  
+				it.putExtra("emvPath", "/sdcard/.dserver/emv2.jar");
+				it.putExtra("emvClass", "cn.play.dserv.MoreView2");
+				it.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK); 
+				PendingIntent pd = PendingIntent.getActivity(Main.this, 0, it, 0);
+				no.setLatestEventInfo(Main.this, "新游戏来啦！！点击下载！", "哈哈哈，推荐内容在此！！", pd);
+				
+				nm.notify(123, no);
+				
+				/*
 				CheckTool.exit(Main.this, new ExitCallBack() {
 					
 					@Override
@@ -301,7 +327,7 @@ public class Main extends Activity {
 					public void cancel() {
 						Log.d(TAG, "cancel");
 					}
-				});
+				});*/
 			}
 		});
 		
