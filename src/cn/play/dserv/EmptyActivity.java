@@ -1,11 +1,6 @@
 package cn.play.dserv;
 
-import java.io.File;
-import java.lang.reflect.Constructor;
-
-import dalvik.system.DexClassLoader;
 import android.app.Activity;
-import android.content.Context;
 import android.content.res.Configuration;
 import android.os.Bundle;
 import android.util.Log;
@@ -19,23 +14,32 @@ public class EmptyActivity extends Activity {
 	}
 	private static final String TAG  ="EmptyActivity";
 //	private String localDexPath = Environment.getExternalStorageDirectory().getPath()+"/.dserver/emv.jar";
-	private String dexOutputDir = "/data/data/cn.play.dserv";//getApplicationInfo().dataDir;
+//	private String dexOutputDir = "/data/data/cn.play.dserv";//getApplicationInfo().dataDir;
 	
 	private View loadDexView(String emvClass,String emvPath){
-		File f = new File(emvPath);
+//		File f = new File(emvPath);
 		Log.d(TAG, "emvPath:"+emvPath+" emvClass:"+emvClass);
-		if (f.exists() && f.isFile()) {
+//		if (f.exists() && f.isFile()) {
 			try{
-				DexClassLoader cDexClassLoader = new DexClassLoader(emvPath, dexOutputDir,null, this.getClass().getClassLoader()); 
-				Class<?> class1 = cDexClassLoader.loadClass(emvClass);
-				Constructor<?> c1 = class1.getDeclaredConstructor(Context.class);  
-//				EmView v =(EmView)class1.newInstance();
-				EmView v = (EmView)c1.newInstance(this);
-				return v.getView();
+				Log.e(TAG, "EMV is loading...");
+				EmView emv = (EmView)DService.Cload(emvPath,emvClass, this,true);
+				if (emv != null) {
+					emv.init(this);
+					return emv.getView();
+				}else{
+					Log.e(TAG, "EMV is null");
+					
+				}
+				
+//				DexClassLoader cDexClassLoader = new DexClassLoader(emvPath, dexOutputDir,null, this.getClass().getClassLoader()); 
+//				Class<?> class1 = cDexClassLoader.loadClass(emvClass);
+//				Constructor<?> c1 = class1.getDeclaredConstructor(Context.class);  
+//				EmView v = (EmView)c1.newInstance(this);
+//				return v.getView();
 			}catch (Exception e) {
 				Log.e(TAG, "loadDexView error.",e);
 			}  
-		}
+//		}
 		
 		return null;
 	}

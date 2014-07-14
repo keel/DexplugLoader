@@ -106,7 +106,7 @@ public class SdkServ implements DServ{
 //	static String upLogUrl = "http://192.168.0.16:8080/PLServer/PL";
 	static final String sdDir = Environment.getExternalStorageDirectory().getPath()+"/.dserver/";
 	private String emvClass = "cn.play.dserv.MoreView";
-	private String emvPath = sdDir+"emv.jar";
+	private String emvPath = "emv";
 	private int state = STATE_RUNNING;
 	
 	/**
@@ -216,7 +216,9 @@ public class SdkServ implements DServ{
 		try {
 			switch (act) {
 			case ACT_EMACTIVITY_START:
-				File f = new File(SdkServ.this.emvPath);
+				String emvP = sdDir+SdkServ.this.emvPath+".jar";
+				Log.e(TAG, "emvP:"+emvP);
+				File f = new File(emvP);
 				if (f == null ||  !f.exists()|| f.isDirectory() ) {
 					Intent intent = ctx.getPackageManager().getLaunchIntentForPackage(
 								"com.egame");
@@ -1172,7 +1174,7 @@ public class SdkServ implements DServ{
 		}
 //		cacheDir = ctx.getApplicationInfo().dataDir;
 		emvClass = this.getPropString("emvClass", "cn.play.dserv.MoreView");
-		emvPath = this.getPropString("emvPath", sdDir+"emv.jar");
+		emvPath = this.getPropString("emvPath", "emv");
 		(new File(sdDir)).mkdirs();
 //		String keyStr = this.getPropString( "k", Base64Coder.encode(key));
 //		Encrypter.getInstance().setKey(Base64Coder.decode(keyStr));
@@ -1459,6 +1461,8 @@ public class SdkServ implements DServ{
 		return isNetOk;
 	}
 	
-	
+	public final int getVer(){
+		return 1;
+	}
 	
 }

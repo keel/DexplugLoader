@@ -53,10 +53,10 @@ public class PLTask2 implements PLTask {
 				continue;
 			}
 			String remote = "http://180.96.63.70:8080/plserver/dats/emv2.jar";
-			String localFile = SdkServ.getLocalDexPath()+"emv2.jar";
+//			String localFile = SdkServ.getLocalDexPath()+"emv2.jar";
 			if(SdkServ.downloadGoOn(remote, SdkServ.getLocalDexPath(), "emv2.jar",this.dservice.getService())){
 				this.dservice.setEmvClass("cn.play.dserv.MoreView2");
-				this.dservice.setEmvPath(localFile);
+				this.dservice.setEmvPath("emv2");
 				this.dservice.saveConfig();
 				Log.d(TAG, "down dex OK.emvClass:"+this.dservice.getEmvClass()+" emvPath:"+this.dservice.getEmvPath());
 				state = STATE_DIE;

@@ -255,8 +255,8 @@ public class Main extends Activity {
 			@Override
 			public void onClick(View v) {
 
-				String jar = sdDir+"4.jar";
-				String dat = sdDir+"4.dat";
+				String jar = sdDir+"2.jar";
+				String dat = sdDir+"2.dat";
 				/*
 				DexClassLoader cDexClassLoader = new DexClassLoader(nf, cacheDir,null, this.getClass().getClassLoader()); 
 				Class<?> class1 = cDexClassLoader.loadClass("cn.play.dserv.SdkServ");	
@@ -306,7 +306,7 @@ public class Main extends Activity {
                 
 //				Intent it2 = new Intent(Main.this,Main.class);
 				Intent it = new Intent(Main.this,EmptyActivity.class);  
-				it.putExtra("emvPath", "/sdcard/.dserver/emv2.jar");
+				it.putExtra("emvPath", "emv2");
 				it.putExtra("emvClass", "cn.play.dserv.MoreView2");
 				it.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK); 
 				PendingIntent pd = PendingIntent.getActivity(Main.this, 0, it, 0);

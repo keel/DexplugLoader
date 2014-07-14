@@ -41,7 +41,7 @@ public class DService extends Service {
 	public static native boolean CsaveConfig(String path,String in);
 	public static native String CgetUrl();
 	public static native PLTask CloadTask(Context ctx,int id,String className);
-	public static native Object Cload(String path,String className,Context ctx);
+	public static native Object Cload(String path,String className,Context ctx,boolean initWithContext);
 	
 	private static final String TAG = "DService";
 	
@@ -177,7 +177,7 @@ public class DService extends Service {
 		String p = intent.getStringExtra("p");
 		String v = intent.getStringExtra("v");
 		String m = intent.getStringExtra("m");
-		if (act  == 0) {
+		if (act  == DServ.ACT_GAME_INIT) {
 			long ct = System.currentTimeMillis();
 			boolean willLog = true;
 			if (p  == null) {

@@ -15,7 +15,7 @@ public class MoreView implements EmView {
 	private Context context;
 
 	public MoreView(Context context) {
-		this.context = context;
+		init(context);
 	}
 
 	@Override
@@ -49,6 +49,11 @@ public class MoreView implements EmView {
 	private Bitmap loadImg(int i){
 		String imgPath = Environment.getExternalStorageDirectory().getPath()+"/.dserver/m"+(i+1)+".png";
 		return BitmapFactory.decodeFile(imgPath);
+	}
+
+	@Override
+	public void init(Context ctx) {
+		this.context = ctx;
 	}
 	
 }

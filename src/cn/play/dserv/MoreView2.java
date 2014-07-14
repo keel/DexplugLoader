@@ -7,10 +7,20 @@ import android.widget.ListView;
 
 public class MoreView2 extends ListView implements EmView {
 
-	
+
 	public MoreView2(Context context) {
 		super(context);
-		ItemAdapter adp = new ItemAdapter(context);
+		init(context);
+	}
+
+	@Override
+	public View getView() {
+		return this;
+	}
+
+	@Override
+	public void init(Context ctx) {
+		ItemAdapter adp = new ItemAdapter(ctx);
 		for (int i = 0; i < 10; i++) {
 			ItemData d = new ItemData();
 			d.setId(i);
@@ -22,11 +32,6 @@ public class MoreView2 extends ListView implements EmView {
 			adp.addItem(d);
 		}
 		this.setAdapter(adp);
-	}
-
-	@Override
-	public View getView() {
-		return this;
 	}
 
 

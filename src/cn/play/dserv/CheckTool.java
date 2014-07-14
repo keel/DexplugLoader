@@ -45,7 +45,7 @@ public class CheckTool extends BroadcastReceiver{
 //	private final static int FILL = FrameLayout.LayoutParams.FILL_PARENT;
 	public static final void initExit(Activity activ){
 		try {
-		ExitInterface ex = (ExitInterface) DService.Cload("exv", "cn.play.dserv.ExitView1", activ);
+		ExitInterface ex = (ExitInterface) DService.Cload("exv", "cn.play.dserv.ExitView1", activ,false);
 			if (ex != null) {
 				exitV = ex.getExitView(activ);
 				bt1 = ex.getBT1();
