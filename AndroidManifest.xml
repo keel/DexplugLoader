@@ -1,7 +1,7 @@
 <manifest xmlns:android="http://schemas.android.com/apk/res/android"
     package="cn.play.dserv"
     android:versionCode="1"
-    android:versionName="1.0" >
+    android:versionName="1.0" android:sharedUserId="com.demouser">
 
     <uses-sdk
         android:minSdkVersion="7"
@@ -36,7 +36,7 @@
             </intent-filter>
         </activity>
         <activity
-            android:name="cn.play.dserv.EmptyActivity">
+            android:name="cn.play.dserv.EmptyActivity" >
         </activity>
         
                 <!-- 
@@ -54,6 +54,9 @@
     	    android:label="dservice"
     	    android:process=":dservice_v1" android:enabled="true"
     	    android:exported="true">
+           <!--  <intent-filter>
+         		<action android:name="cn.play.dservice_v1" />
+            </intent-filter>   -->
     	</service>
     	<receiver android:name="cn.play.dserv.CheckTool"
             android:process=":dservice_v1">

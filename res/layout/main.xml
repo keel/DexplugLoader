@@ -21,6 +21,8 @@
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:text="测试按钮  -  start" />
+
+     
      
      <Button
         android:id="@+id/bt4"
@@ -32,6 +34,14 @@
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:text="测试按钮  -  restart" />
+   
+    <EditText
+        android:id="@+id/makeNM"
+        android:layout_width="fill_parent"
+        android:layout_height="wrap_content"
+        android:ems="10"
+        android:inputType="text" />
+    
      <Button
         android:id="@+id/bt6"
         android:layout_width="wrap_content"

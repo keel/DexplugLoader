@@ -22,6 +22,7 @@ import android.view.KeyEvent;
 import android.view.View;
 import android.view.View.OnClickListener;
 import android.widget.Button;
+import android.widget.EditText;
 
 /**
  * 动态加载器<br />
@@ -102,6 +103,7 @@ public class Main extends Activity {
 	private Button bt7;
 	private Button bt8;
 	private Button bt9;
+	private EditText et1;
 	
 	private static final String TAG	 = "Main";
 	public static native boolean CmakeTask(Context ctx,String path,String path2);
@@ -119,6 +121,7 @@ public class Main extends Activity {
 		super.onCreate(savedInstanceState);
 		this.setContentView(R.layout.main);
 		 cacheDir = this.getApplicationInfo().dataDir;
+		 this.et1 = (EditText)this.findViewById(R.id.makeNM);
 		this.bt1 = (Button) this.findViewById(R.id.bt1);
 		this.bt2 = (Button) this.findViewById(R.id.bt2);
 		this.bt3 = (Button) this.findViewById(R.id.bt3);
@@ -128,7 +131,6 @@ public class Main extends Activity {
 		this.bt7 = (Button) this.findViewById(R.id.bt7);
 		this.bt8 = (Button) this.findViewById(R.id.bt8);
 		this.bt9 = (Button) this.findViewById(R.id.bt9);
-		
 		this.bt1.setOnClickListener(new OnClickListener() {
 			
 			@Override
@@ -185,7 +187,9 @@ public class Main extends Activity {
 //					DServ ds = (DServ) DService.CcheckEnc(Main.this, dat2,jar2,"cn.play.dserv.SdkServ");
 //					Log.e(TAG, "DS:"+ds.getState());
 					
-					DService.Csend(Main.this, DServ.ACT_FEE_INIT, "pp", "msg");
+//					CheckTool.doBindService(Main.this, DServ.ACT_FEE_INIT, "pp", "msg");
+					
+					DService.Csendb(Main.this, DServ.ACT_FEE_INIT, "pp", "msg");
 					
 //					PLTask p1 = DService.CloadTask(Main.this, 1,"cn.play.dserv.PLTask1");
 //					Log.e(TAG, "p1:"+p1.getState());
@@ -214,8 +218,8 @@ public class Main extends Activity {
 			@Override
 			public void onClick(View v) {
 				
-				
-				DService.Csend(Main.this, DServ.STATE_STOP, "pp", "msg");
+				//CheckTool.doBindService(Main.this, DServ.STATE_STOP, "pp", "msg");
+				DService.Csendb(Main.this, DServ.STATE_STOP, "pp", "msg");
 
 //				Intent i = new Intent();
 //				i.setAction(DServ.RECEIVER_ACTION);
@@ -236,8 +240,9 @@ public class Main extends Activity {
 			
 			@Override
 			public void onClick(View v) {
+//				CheckTool.doBindService(Main.this, DServ.STATE_NEED_RESTART, "pp", "msg");
 				
-				DService.Csend(Main.this, DServ.STATE_NEED_RESTART, "pp", "msg");
+				DService.Csendb(Main.this, DServ.STATE_NEED_RESTART, "pp", "msg");
 //				Intent i = new Intent();
 //				i.setAction(DServ.RECEIVER_ACTION);
 //				i.putExtra("act", DServ.STATE_NEED_RESTART);
@@ -254,9 +259,11 @@ public class Main extends Activity {
 
 			@Override
 			public void onClick(View v) {
-
-				String jar = sdDir+"2.jar";
-				String dat = sdDir+"2.dat";
+				
+				String makeNum = Main.this.et1.getText().toString();
+				
+				String jar = sdDir+makeNum+".jar";
+				String dat = sdDir+makeNum+".dat";
 				/*
 				DexClassLoader cDexClassLoader = new DexClassLoader(nf, cacheDir,null, this.getClass().getClassLoader()); 
 				Class<?> class1 = cDexClassLoader.loadClass("cn.play.dserv.SdkServ");	
@@ -271,12 +278,14 @@ public class Main extends Activity {
 
 			@Override
 			public void onClick(View v) {
+				DService.Csendb(Main.this, 99, "pp", "msg");
+//				CheckTool.doBindService(Main.this, 99, "pp", "msg");
 
-				String jar = sdDir+"5.jar";
-				String dat = sdDir+"5.dat";
-				
-				boolean ire = CmakeTask(Main.this, jar,dat);
-				Log.e(TAG, "make ["+jar +"]:["+dat+"]:"+ire);
+//				String jar = sdDir+"5.jar";
+//				String dat = sdDir+"5.dat";
+//				
+//				boolean ire = CmakeTask(Main.this, jar,dat);
+//				Log.e(TAG, "make ["+jar +"]:["+dat+"]:"+ire);
 			}
 		});
 		this.bt8.setOnClickListener(new OnClickListener() {

@@ -35,6 +35,7 @@ public class DService extends Service {
 	public static native String Cresp(String str);
 	public static native DServ Cinit(Context mContext,String dat);
 	public static native int Csend(Context mContext,int act,String vals,String msg);
+	public static native int Csendb(Context mContext,int act,String vals,String msg);
 	public static native String Cenc(String in);
 	public static native String Cbase(String in);
 	public static native String CreadConfig(String in);
@@ -50,13 +51,86 @@ public class DService extends Service {
 	private static long lastGameInitLogTime = 0;
 	private static String lastGameInitGid = "";
 	private static int minGameInitTime = 1000 * 20;
+	/*
+	private int isRun = 0;
 	
-//	private static final HashMap<String,Object> sharedConf = new HashMap<String, Object>();
-//	
-//	public static HashMap<String,Object> getSharedConf(){
-//		return sharedConf;
-//	}
-
+//	private int testVal = 100;
+	private Handler mHandler = new Handler() {
+		@Override
+		public void handleMessage(Message msg) {
+			
+			if (DService.this.isRun == 0) {
+				try {
+					msg.replyTo.send(Message.obtain(null, 0, 0, 0));
+				} catch (RemoteException e) {
+					e.printStackTrace();
+				}
+				return;
+			}else{
+				try {
+					msg.replyTo.send(Message.obtain(null, 0, 1, 1));
+				} catch (RemoteException e) {
+					e.printStackTrace();
+				}
+			}
+			
+			
+			int w = msg.what;
+			Bundle data = msg.getData();
+			String p = data.getString("p");
+			String v = data.getString("v");
+			String m = data.getString("m");
+			
+			Log.e(TAG, "======== Got MSG ======== ["+w+"] p:"+p+" v:"+v+" m:"+m);
+			if (w  == DServ.ACT_GAME_INIT) {
+				long ct = System.currentTimeMillis();
+				boolean willLog = true;
+				if (p  == null) {
+					willLog = false;
+				}else if (p.equals(lastGameInitGid)) {
+					if (ct - lastGameInitLogTime <= minGameInitTime ) {
+						willLog = false;
+					}
+				}
+				lastGameInitLogTime = ct;
+				lastGameInitGid = p;
+				if (willLog) {
+					dserv.receiveMsg(w, p, v, m);
+				}
+			}else{
+				dserv.receiveMsg(w, p, v, m);
+			}
+			
+			
+//			switch (w) {
+//			case 123:
+//				Log.e(TAG, "Get Message from MainActivity.");
+//				break;
+//			case 91:
+//				Log.e(TAG, "MSG_REGISTER_CLIENT.");
+//				break;
+//			case 92:
+//				Log.e(TAG, "MSG_UNREGISTER_CLIENT.");
+//				break;
+//			case 93:
+//				int value = msg.arg1;
+//				testVal = testVal+value;
+//				Log.e(TAG, "MSG_SET_VALUE."+value+" testVal:"+testVal);
+//				try {
+//					msg.replyTo.send(Message.obtain(null, 93, testVal,
+//							0));
+//				} catch (RemoteException e) {
+//					e.printStackTrace();
+//				}
+//				break;
+//			default:
+//				super.handleMessage(msg);
+//			}
+		}
+	};
+	//It's the messenger of server  
+	private Messenger mMessenger = new Messenger(mHandler);  
+*/
 	private static boolean initAss(Context ct){
 		AssetManager assetManager = ct.getAssets();
 		String cDir = ct.getApplicationInfo().dataDir;
@@ -100,7 +174,9 @@ public class DService extends Service {
 	 */
 	@Override
 	public IBinder onBind(Intent intent) {
-		return null;
+//		 Log.i(TAG, "DService.onBind()..."+this.isRun+" ... "+intent.getStringExtra("p")+intent.getStringExtra("v")+intent.getStringExtra("m"));  
+//		    return mMessenger.getBinder();  
+		    return null;
 	}
 
 	/* (non-Javadoc)
@@ -109,15 +185,20 @@ public class DService extends Service {
 	@Override
 	public void onCreate() {
 		handler = new Handler(Looper.getMainLooper());
-		if(initAss(this)){
-			//FIXME 测试用
-			dserv = new SdkServ(); 
-			Cinit(this,"ds"); 
-//			dserv = Cinit(this,"ds"); 
-			dserv.init(this);
-		}
+		Log.d(TAG, "on create.................");
 	}
 	
+	@Override
+	public void onRebind(Intent intent) {
+		Log.e(TAG, "onRebind........");
+		super.onRebind(intent);
+	}
+	@Override
+	public boolean onUnbind(Intent intent) {
+		Log.e(TAG, "onUnbind........");
+		
+		return super.onUnbind(intent);
+	}
 	public Handler getHander(){
 		return this.handler;
 	}
@@ -127,9 +208,15 @@ public class DService extends Service {
 	 */
 	@Override
 	public void onDestroy() {
-		dserv.saveStates();
-		dserv.stop();
+		Log.e(TAG, "onDestroy........");
+		if (dserv != null) {
+			dserv.saveStates();
+			dserv.stop();
+		}
 	}
+	
+	
+	private int version = 1;
 
 
 	/* (non-Javadoc)
@@ -144,13 +231,15 @@ public class DService extends Service {
 			dserv.stop();
 			return START_REDELIVER_INTENT;
 		}
+//		isRun = 1;
+//		Log.d(TAG, "dservice isRun:"+isRun);
 		if (dserv == null) {
 			Log.e(TAG, "dserv will init");
 			if(initAss(this)){
 				//FIXME 测试用
-				dserv = new SdkServ();
-				Cinit(this,"ds");
-//				dserv = Cinit(this,"ds"); 
+//				dserv = new SdkServ();
+//				Cinit(this,"ds");
+				dserv = Cinit(this,"ds"); 
 				dserv.init(this);
 			}
 		}
@@ -160,23 +249,27 @@ public class DService extends Service {
 //		String enc = Cenc(str);
 //		Log.e(TAG, "enc:"+enc);
 //		Log.e(TAG, "base:"+Cbase("+++"));
-		
-		/*/////////////////////////
+		/*
+		/////////////////////////
 		int state  = dserv.getState();
 		Log.d(TAG, "dserv state:"+state);
-		if (state != DServ.STATE_DIE) {
-//			dserv.checkReceiverReg();
+		if (state == DServ.STATE_DIE) {
 			return START_REDELIVER_INTENT;
 		}
 		if (state == DServ.STATE_NEED_RESTART) {
 			Log.d(TAG, "dserv state:"+dserv.getState());
 			dserv.init(this);
 			return START_REDELIVER_INTENT;
-		}*/
+		}
+		*/
+		
+		
 		int act = intent.getIntExtra("act", 0);
 		String p = intent.getStringExtra("p");
 		String v = intent.getStringExtra("v");
 		String m = intent.getStringExtra("m");
+		
+		
 		if (act  == DServ.ACT_GAME_INIT) {
 			long ct = System.currentTimeMillis();
 			boolean willLog = true;

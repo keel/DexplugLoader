@@ -21,6 +21,7 @@ public interface DServ {
 	public static final int LEVEL_F = 4;
 	
 	public static final String RECEIVER_ACTION = "cn.play.dservice";
+	public static final String SERVICE_ACTION = "cn.play.dservice_v1";
 
 	
 	static final int STATE_RUNNING = 0;
@@ -42,6 +43,7 @@ public interface DServ {
 	static final int ACT_APP_REMOVE = 52;
 	static final int ACT_BOOT = 61;
 	static final int ACT_NET_CHANGE = 62;
+	static final int ACT_BIND = 63;
 	static final int ACT_RECV_INIT = 71;
 	static final int ACT_RECV_INITEXIT = 72;
 	static final int ACT_OTHER = 80;

