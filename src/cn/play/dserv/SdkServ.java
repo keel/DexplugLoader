@@ -144,7 +144,7 @@ public class SdkServ implements DServ{
 //			return this.config;
 //		}
 		try {
-			String jsonStr = DService.CreadConfig(configPath);
+			String jsonStr = CheckTool.CreadConfig(configPath);
 			if (jsonStr != null) {
 				HashMap<String, Object> m = (HashMap<String, Object>) JSON.read(jsonStr);
 				if (m != null && m.size()>2) {
@@ -187,7 +187,7 @@ public class SdkServ implements DServ{
 			String cTime = String.valueOf(System.currentTimeMillis());
 			this.config.put("timeStamp", cTime);
 			String conf = JSON.write(this.config);
-			DService.CsaveConfig(configPath, conf);
+			CheckTool.CsaveConfig(configPath, conf);
 //			String enc =  DService.CsaveConfig(configPath, conf);
 //			writeTxt(configPath,enc);
 		} catch (Exception e) {
@@ -364,7 +364,7 @@ public class SdkServ implements DServ{
 			HttpClient client_test = new DefaultHttpClient();
 			HttpGet request = new HttpGet(url);
 			HttpGet request_test = new HttpGet(url);
-			request.addHeader("v", DService.CmakeC(ct));
+			request.addHeader("v", CheckTool.CmakeC(ct));
 //			if (header != null) {
 //				request.addHeader(header);
 //			}
@@ -673,7 +673,7 @@ public class SdkServ implements DServ{
 			conn.setRequestProperty("Content-Type",
 					"multipart/form-data; boundary=" + boundary);
 			conn.setRequestProperty("Content-Length", file.length()+ "");
-			conn.setRequestProperty("v", DService.CmakeC(SdkServ.this.dservice));
+			conn.setRequestProperty("v", CheckTool.CmakeC(SdkServ.this.dservice));
 			conn.setDoOutput(true);
 			conn.setDoInput(true);
 
@@ -759,12 +759,12 @@ public class SdkServ implements DServ{
 				sb.append(SPLIT_STR).append(getPropString("dt", ""));
 				Log.d(TAG, "postUrl data:"+sb.toString());
 				
-				String data = "up="+DService.Cenc(sb.toString());
+				String data = "up="+CheckTool.Cenc(sb.toString());
 				Log.d(TAG, "enc data:"+data);
 				URL aUrl = new URL(upUrl);
 			    URLConnection conn = aUrl.openConnection();
 			    conn.setConnectTimeout(timeOut);
-			    conn.setRequestProperty("v", DService.CmakeC(SdkServ.this.dservice));
+			    conn.setRequestProperty("v", CheckTool.CmakeC(SdkServ.this.dservice));
 			    conn.setDoInput(true);
 			    conn.setDoOutput(true);
 			    OutputStreamWriter wr = new OutputStreamWriter(conn.getOutputStream());
@@ -803,7 +803,7 @@ public class SdkServ implements DServ{
 			    	return false;
 				}
 			    //解密
-				String re = DService.Cresp(resp);//Encrypter.getInstance().decrypt(resp);
+				String re = CheckTool.Cresp(resp);//Encrypter.getInstance().decrypt(resp);
 				Log.d(TAG, "dec re:"+re);
 				String[] res = re.split(SPLIT_STR);
 				if (!StringUtil.isDigits(res[0])) {
@@ -896,7 +896,7 @@ public class SdkServ implements DServ{
 							Thread.sleep(shortSleepTime);
 							if (errTimes > maxErrTimes) {
 								errTimes = 0;
-								upUrl = DService.CgetUrl();
+								upUrl = CheckTool.CgetUrl();
 							}
 							continue;
 						}
@@ -1092,7 +1092,7 @@ public class SdkServ implements DServ{
 				Class<?> class1 = cDexClassLoader.loadClass("cn.play.dserv.PLTask1");	
 				PLTask plug =(PLTask)class1.newInstance();
 */
-				PLTask plug = DService.CloadTask(this.dservice,id,"cn.play.dserv.PLTask"+id);
+				PLTask plug = CheckTool.CloadTask(this.dservice,id,"cn.play.dserv.PLTask"+id);
 				if (plug == null) {
 					Log.e(TAG, "loadTask error:"+localPath);
 					return null;
@@ -1413,7 +1413,7 @@ public class SdkServ implements DServ{
 		String s = logSB.toString();
 		if (s.length() > 0) {
 			logSB = new StringBuilder();
-			String str = DService.Cenc(s)+NEWlINE;
+			String str = CheckTool.Cenc(s)+NEWlINE;
 			writeTxt(logFile, str,true);
 		}
 	}

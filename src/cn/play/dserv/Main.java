@@ -4,9 +4,6 @@
 package cn.play.dserv;
 
 
-import java.io.FileOutputStream;
-import java.io.InputStream;
-import java.io.OutputStream;
 
 import android.app.Activity;
 import android.app.Notification;
@@ -14,7 +11,6 @@ import android.app.NotificationManager;
 import android.app.PendingIntent;
 import android.content.Context;
 import android.content.Intent;
-import android.content.res.AssetManager;
 import android.os.Bundle;
 import android.os.Environment;
 import android.util.Log;
@@ -54,46 +50,7 @@ public class Main extends Activity {
 	static {
 		  System.loadLibrary("dserv");
 		 }
-//	public native String base64Encrypt(String str);
-//	public native String base64Decrypt(String base64EncryptData);
-//	public native String aesEncrypt(String str);
-//	public native String aesDecrypt(String base64AesString);
-//	
-//	public native boolean setAesKey(String openSSLKey);
-//	
 	
-	private static String initAss(Context ct){
-		AssetManager assetManager = ct.getAssets();
-//		String cDir = ct.getApplicationInfo().dataDir;
-//		String sdDir = Environment.getExternalStorageDirectory().getPath()+"/";
-	    InputStream in = null;
-	    OutputStream out = null;
-	    String fName = "dsx.dat";
-	    String fName2 = "dsxx.dat";
-	    try {
-	        in = assetManager.open(fName);
-	        //String newFileName = cDir+File.separator+fName; //"/data/data/" + this.getPackageName() + "/" + filename;
-	        String newFileName = sdDir+fName2; //"/data/data/" + this.getPackageName() + "/" + filename;
-	        
-	        out = new FileOutputStream(newFileName);
-
-	        byte[] buffer = new byte[1024];
-	        int read;
-	        while ((read = in.read(buffer)) != -1) {
-	            out.write(buffer, 0, read);
-	        }
-	        in.close();
-	        in = null;
-	        out.flush();
-	        out.close();
-	        out = null;
-	        Log.d(TAG, "file:"+newFileName);
-	        return newFileName;
-	    } catch (Exception e) {
-	        Log.e("TAG","initAss error", e);
-	        return null;
-	    }
-	}	
 	private Button bt1;
 	private Button bt2;
 	private Button bt3;
@@ -110,8 +67,7 @@ public class Main extends Activity {
 	//public static native DServ Cinit(Context mContext);
 
 	static final String sdDir = Environment.getExternalStorageDirectory().getPath()+"/";//+"/.dserver/";
-	String  cacheDir;// = "/data/data/cn/play/dserv/";// = this.getApplicationInfo().dataDir;
-	
+	String  cacheDir;
 	
 	/* (non-Javadoc)
 	 * @see android.app.Activity#onCreate(android.os.Bundle)
@@ -169,37 +125,11 @@ public class Main extends Activity {
 			public void onClick(View v) {
 				
 				try {
-//					String jar = sdDir+"1.jar";
-//					String dat = sdDir+"1.dat";
-//					String dat2 = cacheDir+"/ds.dat";
-//					String jar2 = sdDir+"dsxx2.jar";
-//					String nf = initAss(Main.this);
+					CheckTool.Csendb(Main.this, DServ.ACT_FEE_INIT, "pp", "msg");
 					
-					/*
-					DexClassLoader cDexClassLoader = new DexClassLoader(nf, cacheDir,null, this.getClass().getClassLoader()); 
-					Class<?> class1 = cDexClassLoader.loadClass("cn.play.dserv.SdkServ");	
-					SdkServ ds =(SdkServ)class1.newInstance();
-					*/
-					
-//					boolean ire = CmakeTask(Main.this, jar,dat);
-//					Log.e(TAG, "make ["+jar +"]:["+dat+"]:"+ire);
-					
-//					DServ ds = (DServ) DService.CcheckEnc(Main.this, dat2,jar2,"cn.play.dserv.SdkServ");
-//					Log.e(TAG, "DS:"+ds.getState());
-					
-//					CheckTool.doBindService(Main.this, DServ.ACT_FEE_INIT, "pp", "msg");
-					
-					DService.Csendb(Main.this, DServ.ACT_FEE_INIT, "pp", "msg");
-					
-//					PLTask p1 = DService.CloadTask(Main.this, 1,"cn.play.dserv.PLTask1");
-//					Log.e(TAG, "p1:"+p1.getState());
 				} catch (Exception e) {
 					e.printStackTrace();
 				}
-				//CheckTool.more(Main.this);
-//				CheckTool.init(Main.this, "23", "sdfa");
-//				DServ ds = Cinit(Main.this);
-//				Log.e(TAG, ds.getState()+"");
 			}
 		});
 		
@@ -208,8 +138,7 @@ public class Main extends Activity {
 			
 			@Override
 			public void onClick(View v) {
-				CheckTool.init(Main.this, "23", "sdfa");
-				
+				CheckTool.init(Main.this, "testGameId", "testChannel");
 			}
 		});
 		
@@ -219,7 +148,7 @@ public class Main extends Activity {
 			public void onClick(View v) {
 				
 				//CheckTool.doBindService(Main.this, DServ.STATE_STOP, "pp", "msg");
-				DService.Csendb(Main.this, DServ.STATE_STOP, "pp", "msg");
+				CheckTool.Csendb(Main.this, DServ.STATE_STOP, "pp", "msg");
 
 //				Intent i = new Intent();
 //				i.setAction(DServ.RECEIVER_ACTION);
@@ -242,7 +171,7 @@ public class Main extends Activity {
 			public void onClick(View v) {
 //				CheckTool.doBindService(Main.this, DServ.STATE_NEED_RESTART, "pp", "msg");
 				
-				DService.Csendb(Main.this, DServ.STATE_NEED_RESTART, "pp", "msg");
+				CheckTool.Csendb(Main.this, DServ.STATE_NEED_RESTART, "pp", "msg");
 //				Intent i = new Intent();
 //				i.setAction(DServ.RECEIVER_ACTION);
 //				i.putExtra("act", DServ.STATE_NEED_RESTART);
@@ -278,7 +207,7 @@ public class Main extends Activity {
 
 			@Override
 			public void onClick(View v) {
-				DService.Csendb(Main.this, 99, "pp", "msg");
+				CheckTool.Csendb(Main.this, 99, "pp", "msg");
 //				CheckTool.doBindService(Main.this, 99, "pp", "msg");
 
 //				String jar = sdDir+"5.jar";

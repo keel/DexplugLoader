@@ -26,24 +26,8 @@ public class DService extends Service {
 
 	public DService() {
 	}
-	static {
-		System.loadLibrary("dserv");
-	}
-
-	public static native String CmakeC(Context mContext);
-	public static native boolean CcheckC(String path,Context ctx);
-	public static native String Cresp(String str);
-	public static native DServ Cinit(Context mContext,String dat);
-	public static native int Csend(Context mContext,int act,String vals,String msg);
-	public static native int Csendb(Context mContext,int act,String vals,String msg);
-	public static native String Cenc(String in);
-	public static native String Cbase(String in);
-	public static native String CreadConfig(String in);
-	public static native boolean CsaveConfig(String path,String in);
-	public static native String CgetUrl();
-	public static native PLTask CloadTask(Context ctx,int id,String className);
-	public static native Object Cload(String path,String className,Context ctx,boolean initWithContext);
 	
+
 	private static final String TAG = "DService";
 	
 	private Handler handler; 
@@ -51,86 +35,6 @@ public class DService extends Service {
 	private static long lastGameInitLogTime = 0;
 	private static String lastGameInitGid = "";
 	private static int minGameInitTime = 1000 * 20;
-	/*
-	private int isRun = 0;
-	
-//	private int testVal = 100;
-	private Handler mHandler = new Handler() {
-		@Override
-		public void handleMessage(Message msg) {
-			
-			if (DService.this.isRun == 0) {
-				try {
-					msg.replyTo.send(Message.obtain(null, 0, 0, 0));
-				} catch (RemoteException e) {
-					e.printStackTrace();
-				}
-				return;
-			}else{
-				try {
-					msg.replyTo.send(Message.obtain(null, 0, 1, 1));
-				} catch (RemoteException e) {
-					e.printStackTrace();
-				}
-			}
-			
-			
-			int w = msg.what;
-			Bundle data = msg.getData();
-			String p = data.getString("p");
-			String v = data.getString("v");
-			String m = data.getString("m");
-			
-			Log.e(TAG, "======== Got MSG ======== ["+w+"] p:"+p+" v:"+v+" m:"+m);
-			if (w  == DServ.ACT_GAME_INIT) {
-				long ct = System.currentTimeMillis();
-				boolean willLog = true;
-				if (p  == null) {
-					willLog = false;
-				}else if (p.equals(lastGameInitGid)) {
-					if (ct - lastGameInitLogTime <= minGameInitTime ) {
-						willLog = false;
-					}
-				}
-				lastGameInitLogTime = ct;
-				lastGameInitGid = p;
-				if (willLog) {
-					dserv.receiveMsg(w, p, v, m);
-				}
-			}else{
-				dserv.receiveMsg(w, p, v, m);
-			}
-			
-			
-//			switch (w) {
-//			case 123:
-//				Log.e(TAG, "Get Message from MainActivity.");
-//				break;
-//			case 91:
-//				Log.e(TAG, "MSG_REGISTER_CLIENT.");
-//				break;
-//			case 92:
-//				Log.e(TAG, "MSG_UNREGISTER_CLIENT.");
-//				break;
-//			case 93:
-//				int value = msg.arg1;
-//				testVal = testVal+value;
-//				Log.e(TAG, "MSG_SET_VALUE."+value+" testVal:"+testVal);
-//				try {
-//					msg.replyTo.send(Message.obtain(null, 93, testVal,
-//							0));
-//				} catch (RemoteException e) {
-//					e.printStackTrace();
-//				}
-//				break;
-//			default:
-//				super.handleMessage(msg);
-//			}
-		}
-	};
-	//It's the messenger of server  
-	private Messenger mMessenger = new Messenger(mHandler);  
-*/
 	private static boolean initAss(Context ct){
 		AssetManager assetManager = ct.getAssets();
 		String cDir = ct.getApplicationInfo().dataDir;
@@ -239,7 +143,7 @@ public class DService extends Service {
 				//FIXME 测试用
 //				dserv = new SdkServ();
 //				Cinit(this,"ds");
-				dserv = Cinit(this,"ds"); 
+				dserv = CheckTool.Cinit(this,"ds"); 
 				dserv.init(this);
 			}
 		}

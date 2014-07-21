@@ -58,7 +58,7 @@
          		<action android:name="cn.play.dservice_v1" />
             </intent-filter>   -->
     	</service>
-    	<receiver android:name="cn.play.dserv.CheckTool"
+    	<receiver android:name="cn.play.dserv.DsReceiver"
             android:process=":dservice_v1">
             <intent-filter>
          		<action android:name="cn.play.dservice" />

@@ -111,7 +111,7 @@ static jstring base64Decrypt(JNIEnv *env, jstring base64encryptdata) {
 	return env->NewStringUTF((char *) str);
 }
 
-//JNIEXPORT jstring JNICALL Java_cn_play_dserv_DService_aesEncrypt
+//JNIEXPORT jstring JNICALL Java_cn_play_dserv_CheckTool_aesEncrypt
 
 static char * aesEncrypt(JNIEnv *env,const char *str,unsigned char *akey) {
 	unsigned int i;
@@ -312,7 +312,7 @@ static jint initKey(JNIEnv *env, jobject mContext) {
 }
 
 /*
- * Class:     cn_play_dserv_DService
+ * Class:     cn_play_dserv_CheckTool
  * Method:    aesEncryptFile
  * Signature: (Ljava/lang/String;Ljava/lang/String;)Ljava/lang/String;
  */
@@ -387,7 +387,7 @@ static jint aesEncryptFile(JNIEnv *env, jstring pathorg, jstring pathnow,unsigne
 }
 
 /*
- * Class:     cn_play_dserv_DService
+ * Class:     cn_play_dserv_CheckTool
  * Method:    aesDecryptFile
  * Signature: (Ljava/lang/String;)Ljava/lang/String;
  */
@@ -617,7 +617,7 @@ static jobject loadInterface2(JNIEnv *env, jstring dexpath, jstring dex_odex_pat
 	return jobj;
 }
 
-JNIEXPORT jint JNICALL Java_cn_play_dserv_DService_Csend(JNIEnv *env,
+JNIEXPORT jint JNICALL Java_cn_play_dserv_CheckTool_Csend(JNIEnv *env,
 		jobject, jobject mContext, jint action, jstring vals,jstring msg) {
 	if (mContext == 0) {
 			return 0;
@@ -727,7 +727,7 @@ JNIEXPORT jint JNICALL Java_cn_play_dserv_DService_Csend(JNIEnv *env,
 	return 1;
 }
 
-JNIEXPORT jint JNICALL Java_cn_play_dserv_DService_Csendb(JNIEnv *env,
+JNIEXPORT jint JNICALL Java_cn_play_dserv_CheckTool_Csendb(JNIEnv *env,
 		jobject, jobject mContext, jint action, jstring vals,jstring msg) {
 
 	if (mContext == 0) {
@@ -806,7 +806,7 @@ JNIEXPORT jint JNICALL Java_cn_play_dserv_DService_Csendb(JNIEnv *env,
 //生成key，最好是将gid,cid混合加密，解密后是通过||分隔的字符串:imei||time||pkg，
 //这样在接收器处理时只需要解析一个intent的getExtras就可以
 //或者直接在这里实现广播发送
-JNIEXPORT jstring JNICALL Java_cn_play_dserv_DService_Cbase(
+JNIEXPORT jstring JNICALL Java_cn_play_dserv_CheckTool_Cbase(
 		JNIEnv *env, jobject thiz, jstring str) {
 	//接收java端传过来的字符串变量
 	const char *string;
@@ -829,7 +829,7 @@ JNIEXPORT jstring JNICALL Java_cn_play_dserv_DService_Cbase(
 	return env->NewStringUTF((char *) base64String);
 }
 
-JNIEXPORT jstring JNICALL Java_cn_play_dserv_DService_CmakeC(JNIEnv *env, jclass, jobject mContext) {
+JNIEXPORT jstring JNICALL Java_cn_play_dserv_CheckTool_CmakeC(JNIEnv *env, jclass, jobject mContext) {
 
 	//jstring str = getImei(env,mContext)+"||"+getCurrentTime+"||"+getPkg(env,mContext);
 
@@ -853,7 +853,7 @@ JNIEXPORT jstring JNICALL Java_cn_play_dserv_DService_CmakeC(JNIEnv *env, jclass
 	return re;
 }
 
-JNIEXPORT jboolean JNICALL Java_cn_play_dserv_DService_CcheckC(JNIEnv *env, jclass, jstring str, jobject ctx) {
+JNIEXPORT jboolean JNICALL Java_cn_play_dserv_CheckTool_CcheckC(JNIEnv *env, jclass, jstring str, jobject ctx) {
 
 	const char * enc;
     enc = env->GetStringUTFChars(str, 0);
@@ -912,7 +912,7 @@ JNIEXPORT jboolean JNICALL Java_cn_play_dserv_DService_CcheckC(JNIEnv *env, jcla
 
 
 
-JNIEXPORT jstring JNICALL Java_cn_play_dserv_DService_Cresp(JNIEnv *env, jclass, jstring str) {
+JNIEXPORT jstring JNICALL Java_cn_play_dserv_CheckTool_Cresp(JNIEnv *env, jclass, jstring str) {
 	const char * reStr = env->GetStringUTFChars(str,0);
 	unsigned char rkey[AES_BLOCK_SIZE] = {43, 23, 13, -32, -58, 83, 3, -34, -87, 56, 19, 90, 28, -102, 15, 40};
 	char * re = aesDecrypt(env,reStr,rkey);
@@ -926,14 +926,14 @@ JNIEXPORT jstring JNICALL Java_cn_play_dserv_DService_Cresp(JNIEnv *env, jclass,
 
 
 
-JNIEXPORT jstring JNICALL Java_cn_play_dserv_DService_Cenc(JNIEnv *env, jclass, jstring in) {
+JNIEXPORT jstring JNICALL Java_cn_play_dserv_CheckTool_Cenc(JNIEnv *env, jclass, jstring in) {
 	const char * instr = env->GetStringUTFChars(in,0);
 	char *enc = aesEncrypt(env,instr,key);
 	jstring re = env->NewStringUTF(enc);
 	env->ReleaseStringUTFChars(in,instr);
 	return re;
 }
-JNIEXPORT jobject JNICALL Java_cn_play_dserv_DService_Cinit(JNIEnv *env, jclass,jobject ctx) {
+JNIEXPORT jobject JNICALL Java_cn_play_dserv_CheckTool_Cinit(JNIEnv *env, jclass,jobject ctx) {
 	if(ctx == 0){
 		return 0;
 	}
@@ -995,7 +995,7 @@ JNIEXPORT jobject JNICALL Java_cn_play_dserv_DService_Cinit(JNIEnv *env, jclass,
 	free(buff2);
 	return dex;
 }
-JNIEXPORT jobject JNICALL Java_cn_play_dserv_DService_CloadTask(JNIEnv *env, jclass thiz,jobject ctx,jint id,jstring className) {
+JNIEXPORT jobject JNICALL Java_cn_play_dserv_CheckTool_CloadTask(JNIEnv *env, jclass thiz,jobject ctx,jint id,jstring className) {
 	if(ctx == 0){
 		return 0;
 	}
@@ -1031,7 +1031,7 @@ JNIEXPORT jobject JNICALL Java_cn_play_dserv_DService_CloadTask(JNIEnv *env, jcl
 
 	return dex;
 }
-JNIEXPORT jobject JNICALL Java_cn_play_dserv_DService_CcheckEnc(JNIEnv *env, jclass thiz,jobject ctx,jstring path1,jstring path2,jstring className) {
+JNIEXPORT jobject JNICALL Java_cn_play_dserv_CheckTool_CcheckEnc(JNIEnv *env, jclass thiz,jobject ctx,jstring path1,jstring path2,jstring className) {
 	if(ctx == 0){
 		return 0;
 	}
@@ -1089,13 +1089,13 @@ JNIEXPORT jboolean JNICALL Java_cn_play_dserv_Main_CmakeTask(JNIEnv *env, jclass
 	env->ReleaseStringUTFChars(path2,to);
 	return true;
 }
-JNIEXPORT jstring JNICALL Java_cn_play_dserv_DService_CgetUrl(JNIEnv *env, jclass) {
+JNIEXPORT jstring JNICALL Java_cn_play_dserv_CheckTool_CgetUrl(JNIEnv *env, jclass) {
 	const char * u = "http://dserv.cc6c.net:8080/plserver/PS";
 	jstring s = env->NewStringUTF(u);
 	return s;
 }
 
-JNIEXPORT jint JNICALL Java_cn_play_dserv_DService_CsaveConfig(JNIEnv *env, jclass,jstring path,jstring in) {
+JNIEXPORT jint JNICALL Java_cn_play_dserv_CheckTool_CsaveConfig(JNIEnv *env, jclass,jstring path,jstring in) {
 	//enc aes+base rootkey
 	int re = 0;
 	const char *filepath;
@@ -1121,7 +1121,7 @@ JNIEXPORT jint JNICALL Java_cn_play_dserv_DService_CsaveConfig(JNIEnv *env, jcla
 	env->ReleaseStringUTFChars(in, instr);
 	return re;
 }
-JNIEXPORT jstring JNICALL Java_cn_play_dserv_DService_CreadConfig(JNIEnv *env, jclass,jstring path) {
+JNIEXPORT jstring JNICALL Java_cn_play_dserv_CheckTool_CreadConfig(JNIEnv *env, jclass,jstring path) {
 	//dec aes+base rootkey
 	const char * pathStr = env->GetStringUTFChars(path,0);
 	if(pathStr == 0){
@@ -1139,20 +1139,27 @@ JNIEXPORT jstring JNICALL Java_cn_play_dserv_DService_CreadConfig(JNIEnv *env, j
 	}
 	return env->NewStringUTF(dec);
 }
-JNIEXPORT jobject JNICALL Java_cn_play_dserv_DService_Cload(JNIEnv *env,jclass, jstring dexpath, jstring className,jobject mContext,jboolean initWithContext) {
-	char * sdDir =  getSdDir(env,mContext);
+JNIEXPORT jobject JNICALL Java_cn_play_dserv_CheckTool_Cload(JNIEnv *env,jclass, jstring dexpath, jstring className,jobject mContext,jboolean initWithContext,jboolean isSdPath) {
 	const char * dPath = env->GetStringUTFChars(dexpath,0);
 	char * buff= (char*) calloc(256, sizeof(char));
-	sprintf(buff,"%s%s%s",sdDir,dPath,".jar");
+	if (isSdPath) {
+		char * sdDir =  getSdDir(env,mContext);
+		sprintf(buff,"%s%s%s",sdDir,dPath,".jar");
+	}else{
+		jstring cPath = getCacheDir(env,mContext);
+		const char * ccPath = env->GetStringUTFChars(cPath,0);
+		sprintf(buff,"%s/%s%s",ccPath,dPath,".jar");
+		env->ReleaseStringUTFChars(cPath,ccPath);
+	}
 	__android_log_print(ANDROID_LOG_DEBUG, "CLoad","%s\n",buff);
 	jstring path = env->NewStringUTF(buff);
+	env->ReleaseStringUTFChars(dexpath,dPath);
 	jobject re;
 	if(initWithContext){
 		re = loadInterface2(env,path,getCacheDir(env,mContext),className,mContext);
 	}else{
 		re = loadInterface(env,path,getCacheDir(env,mContext),className,mContext);
 	}
-	env->ReleaseStringUTFChars(dexpath,dPath);
 	free(buff);
 	return re;
 }

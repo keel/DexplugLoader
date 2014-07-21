@@ -22,7 +22,7 @@ public class EmptyActivity extends Activity {
 //		if (f.exists() && f.isFile()) {
 			try{
 				Log.e(TAG, "EMV is loading...");
-				EmView emv = (EmView)DService.Cload(emvPath,emvClass, this,true);
+				EmView emv = (EmView)CheckTool.Cload(emvPath,emvClass, this,true,true);
 				if (emv != null) {
 					emv.init(this);
 					return emv.getView();
