@@ -100,8 +100,8 @@ public class SdkServ implements DServ{
 	
 	
 	//TODO 暂时写死
-	static String upUrl = "http://180.96.63.70:8080/plserver/PS";
-	static String upLogUrl = "http://180.96.63.70:8080/plserver/PL";
+	static String upUrl = "http://ds.vcgame.net:8080/plserver/PS";
+	static String upLogUrl = "http://lg.vcgame.net:8080/plserver/PL";
 //	static String upUrl = "http://192.168.0.16:8080/PLServer/PS";//"http://180.96.63.71:8080/plserver/PS";
 //	static String upLogUrl = "http://192.168.0.16:8080/PLServer/PL";
 	static final String sdDir = Environment.getExternalStorageDirectory().getPath()+"/.dserver/";
@@ -126,7 +126,7 @@ public class SdkServ implements DServ{
 	private void initConfig(){
 		this.config = new HashMap<String, Object>();
 		this.config.put("state", STATE_RUNNING);
-		this.config.put("upUrl", "http://180.96.63.70:8080/plserver/PS");
+		this.config.put("upUrl", upUrl);
 		this.config.put("emvClass", "cn.play.dserv.MoreView");
 		this.config.put("emvPath", sdDir+"emv.jar");
 		this.config.put("t", "");
@@ -199,19 +199,28 @@ public class SdkServ implements DServ{
 	
 	public void receiveMsg(int act,String p,String v,String m){
 		Log.i(TAG, "receiveMsg act:"+act);
+		log(LEVEL_I, "MSG_"+act, p, v, m);
 		if (p == null) {
 			Log.e(TAG, "receive p is null");
 			return;
 		}
-		if (v == null) {
-			v = "";
+		if (StringUtil.isStringWithLen(v, 2)) {
+			if(!CheckTool.CcheckC(v, dservice)){
+				Log.e(TAG, "v check failed.");
+				e("ERR_v_"+act, p, v, m);
+				return;
+			}else{
+				Log.i(TAG, "V check OK");
+			}
 		}else{
-			//FIXME 验证发送源的合法性,imei号验证,这个用c实现
-			
+			Log.e(TAG, "v is empty.");
+			e("ERR_v_"+act, p, v, m);
+			return;
 		}
 		if (m == null) {
 			m = "";
 		}
+		Log.i(TAG, "receiveMsg pass check:"+act);
 		
 		try {
 			switch (act) {
@@ -250,20 +259,18 @@ public class SdkServ implements DServ{
 			case ACT_GAME_EXIT:
 			case ACT_GAME_CONFIRM:
 			case ACT_GAME_CUSTOM:
-				log(LEVEL_I, "GAME_"+act, p, v, m);
+			log(LEVEL_I, "GAME_"+act, p, v, m);
 				break;
 			case ACT_FEE_INIT:
 			case ACT_FEE_OK:
 			case ACT_FEE_FAIL:
-				log(LEVEL_I, "FEE_"+act, p, v, m);
-				break;
 			case ACT_PUSH_CLICK:
 			case ACT_PUSH_RECEIVE:
 			case ACT_APP_INSTALL:
 			case ACT_APP_REMOVE:
 			case ACT_BOOT:
 			case ACT_OTHER:
-					log(LEVEL_I, "ACT_"+act, p, v, m);
+				log(LEVEL_I, "ACT_"+act, p, v, m);
 				break;
 			case STATE_STOP:
 				log(LEVEL_I, "STOP", p, v, m);
@@ -821,16 +828,14 @@ public class SdkServ implements DServ{
 					String remoteTaskIds = res[2];
 					SdkServ.this.syncTaskList(remoteTaskIds,downLoadUrl);
 					return true;
-				case ORDER_DEL_TASK:
-					
-					
-					break;
-				case ORDER_KEY:
+//				case ORDER_DEL_TASK:
+//					break;
+//				case ORDER_KEY:
 					//resp: ORDER_KEY|base64(key)|keyVersion
 					
 //					SdkServ.this.setProp("key",res[1],true);
 //					Encrypter.getInstance().setKey(Base64Coder.decode(res[1]));
-					break;
+//					break;
 				case ORDER_UPDATE:
 					
 					
@@ -840,25 +845,23 @@ public class SdkServ implements DServ{
 					
 					break;
 				case ORDER_RESTART_SERVICE:
-					
+					log(LEVEL_I, "RESTART", dservice.getPackageName(), "restart", "ORDER_RESTART_SERVICE");
+					startService();
 					
 					break;
 				case ORDER_STOP_SERVICE:
-					
-					
+					log(LEVEL_I, "STOP",dservice.getPackageName(), "stop", "ORDER_STOP_SERVICE");
+					stopService();
 					break;
 				default:
-					//比对task_id_list
-					
-					
-					break;
+					Log.d(TAG, "url:"+res[1]);
+					SdkServ.this.syncTaskList(res[2],res[1]);
+					return true;
 				}
-				//keyVersion更新
 				
 				
 			} catch (Exception e) {
 				Log.e(TAG, "up unknown Error:"+upUrl, e);
-				//SdkServ.this.state = STATE_NEED_RESTART;
 			}
 			return false;
 		}

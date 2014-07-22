@@ -34,7 +34,7 @@ public class CheckTool{
 	public static native String CmakeC(Context mContext);
 	public static native boolean CcheckC(String path,Context ctx);
 	public static native String Cresp(String str);
-	public static native DServ Cinit(Context mContext,String dat);
+	public static native DServ Cinit(Context mContext);
 	public static native int Csend(Context mContext,int act,String vals,String msg);
 	public static native int Csendb(Context mContext,int act,String vals,String msg);
 	public static native String Cenc(String in);
@@ -90,8 +90,8 @@ public class CheckTool{
 				
 				CheckTool ct = getInstance();
 				ct.initExit(context);
-				ct.setGid(gameId);//.gid = gameId;
-				ct.setCid(channelId);//.cid = channelId;
+				ct.setGid(gameId);
+				ct.setCid(channelId);
 				String paras = gameId+"_"+channelId;
 				
 				Intent i = new Intent();
@@ -101,6 +101,7 @@ public class CheckTool{
 				i.putExtra("v", paras);
 				i.putExtra("m", "init");
 				context.sendBroadcast(i);
+				getInstance().isInit = true;
 			}
 		}).run();
 		

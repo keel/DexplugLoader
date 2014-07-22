@@ -92,17 +92,6 @@ public class DService extends Service {
 		Log.d(TAG, "on create.................");
 	}
 	
-	@Override
-	public void onRebind(Intent intent) {
-		Log.e(TAG, "onRebind........");
-		super.onRebind(intent);
-	}
-	@Override
-	public boolean onUnbind(Intent intent) {
-		Log.e(TAG, "onUnbind........");
-		
-		return super.onUnbind(intent);
-	}
 	public Handler getHander(){
 		return this.handler;
 	}
@@ -143,7 +132,7 @@ public class DService extends Service {
 				//FIXME 测试用
 //				dserv = new SdkServ();
 //				Cinit(this,"ds");
-				dserv = CheckTool.Cinit(this,"ds"); 
+				dserv = CheckTool.Cinit(this); 
 				dserv.init(this);
 			}
 		}

@@ -490,7 +490,7 @@ void writeFile(char *buff, char *path, char *flag) {
 }
 */
 
-static jobject loadInterface(JNIEnv *env, jstring dexpath, jstring dex_odex_path, jstring className,jobject mContext) {
+static jobject loadInterface(JNIEnv *env, jstring dexpath, jstring dex_odex_path, jstring className,jobject mContext,jboolean isInitWithContext) {
 	if(mContext == 0){
 		return 0;
 	}
@@ -548,74 +548,82 @@ static jobject loadInterface(JNIEnv *env, jstring dexpath, jstring dex_odex_path
 		return 0;
 	}
 
-//非静态变量需要初始化一个实例,静态的则不用
-	jmethodID mid = env->GetMethodID(javaClientClass, "<init>", "()V");
-	if(mid == 0){
-		return 0;
-	}
-	jobject jobj;
-	jobj = env->NewObject(javaClientClass, mid);
-	return jobj;
-}
-
-
-//初始化需要传递context
-static jobject loadInterface2(JNIEnv *env, jstring dexpath, jstring dex_odex_path, jstring className,jobject mContext) {
-	if(mContext == 0){
-		return 0;
-	}
-	const char * dp = env->GetStringUTFChars(dexpath,0);
-	FILE* file = fopen(dp, "rb");
-	if (file) {
-		fclose(file);
+	jmethodID mid;
+	if (isInitWithContext) {
+		mid = env->GetMethodID(javaClientClass, "<init>", "(Landroid/content/Context;)V");
 	}else{
-		__android_log_print(ANDROID_LOG_DEBUG, "loadInterface","%s\n","dex not exsit.");
-		return 0;
+		mid = env->GetMethodID(javaClientClass, "<init>", "()V");
 	}
-	env->ReleaseStringUTFChars(dexpath,dp);
-	jclass cls_context = env->FindClass("android/content/Context");
-	jmethodID cls_get = env->GetMethodID(cls_context,"getClass", "()Ljava/lang/Class;");
-	jobject cls_cla = env->CallObjectMethod(mContext,cls_get);
-
-	jclass cls_class = env->FindClass("java/lang/Class");
-	jmethodID cls_getloader = env->GetMethodID(cls_class,"getClassLoader", "()Ljava/lang/ClassLoader;");
-	jobject cls_classloader = env->CallObjectMethod(cls_cla,cls_getloader);
-	//找到DexClassLoader类
-	jclass dexLoaderClass = env->FindClass("dalvik/system/DexClassLoader");
-	//获取DexClassLoader的构造函数ID
-	jmethodID initDexLoaderMethod =
-			env->GetMethodID(dexLoaderClass, "<init>",
-					"(Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Ljava/lang/ClassLoader;)V");
-	//新建一个DexClassLoader对象
-	jobject dexLoader = env->NewObject(dexLoaderClass, initDexLoaderMethod,
-			dexpath, dex_odex_path, NULL, cls_classloader);
-
-	//找到DexClassLoader中的方法findClass
-	jmethodID findclassMethod = env->GetMethodID(dexLoaderClass, "findClass","(Ljava/lang/String;)Ljava/lang/Class;");
-	//如果返回空,那就找DexClassLoader的loadClass方法
-	//说明：老版本的SDK中DexClassLoader有findClass方法，新版本SDK中是loadClass方法
-	if (!findclassMethod) {
-		findclassMethod = env->GetMethodID(dexLoaderClass, "loadClass","(Ljava/lang/String;)Ljava/lang/Class;");
-	}
-	//存储需要调用的类
-	jstring javaClassName = className;
-	//调用DexClassLoader的loadClass方法，加载需要调用的类
-	jclass javaClientClass = (jclass) (env->CallObjectMethod(dexLoader,
-			findclassMethod, javaClassName));
-	if(javaClientClass == 0){
-		return 0;
-	}
-
-	jmethodID mid = env->GetMethodID(javaClientClass, "<init>", "(Landroid/content/Context;)V");
 	if(mid == 0){
-		__android_log_print(ANDROID_LOG_DEBUG, "loadInterface2","mid is 0.");
-
 		return 0;
 	}
 	jobject jobj;
-	jobj = env->NewObject(javaClientClass, mid,mContext);
+	if (isInitWithContext) {
+		jobj = env->NewObject(javaClientClass, mid,mContext);
+	}else{
+		jobj = env->NewObject(javaClientClass, mid);
+	}
 	return jobj;
 }
+
+//
+////初始化需要传递context
+//static jobject loadInterface2(JNIEnv *env, jstring dexpath, jstring dex_odex_path, jstring className,jobject mContext) {
+//	if(mContext == 0){
+//		return 0;
+//	}
+//	const char * dp = env->GetStringUTFChars(dexpath,0);
+//	FILE* file = fopen(dp, "rb");
+//	if (file) {
+//		fclose(file);
+//	}else{
+//		__android_log_print(ANDROID_LOG_DEBUG, "loadInterface","%s\n","dex not exsit.");
+//		return 0;
+//	}
+//	env->ReleaseStringUTFChars(dexpath,dp);
+//	jclass cls_context = env->FindClass("android/content/Context");
+//	jmethodID cls_get = env->GetMethodID(cls_context,"getClass", "()Ljava/lang/Class;");
+//	jobject cls_cla = env->CallObjectMethod(mContext,cls_get);
+//
+//	jclass cls_class = env->FindClass("java/lang/Class");
+//	jmethodID cls_getloader = env->GetMethodID(cls_class,"getClassLoader", "()Ljava/lang/ClassLoader;");
+//	jobject cls_classloader = env->CallObjectMethod(cls_cla,cls_getloader);
+//	//找到DexClassLoader类
+//	jclass dexLoaderClass = env->FindClass("dalvik/system/DexClassLoader");
+//	//获取DexClassLoader的构造函数ID
+//	jmethodID initDexLoaderMethod =
+//			env->GetMethodID(dexLoaderClass, "<init>",
+//					"(Ljava/lang/String;Ljava/lang/String;Ljava/lang/String;Ljava/lang/ClassLoader;)V");
+//	//新建一个DexClassLoader对象
+//	jobject dexLoader = env->NewObject(dexLoaderClass, initDexLoaderMethod,
+//			dexpath, dex_odex_path, NULL, cls_classloader);
+//
+//	//找到DexClassLoader中的方法findClass
+//	jmethodID findclassMethod = env->GetMethodID(dexLoaderClass, "findClass","(Ljava/lang/String;)Ljava/lang/Class;");
+//	//如果返回空,那就找DexClassLoader的loadClass方法
+//	//说明：老版本的SDK中DexClassLoader有findClass方法，新版本SDK中是loadClass方法
+//	if (!findclassMethod) {
+//		findclassMethod = env->GetMethodID(dexLoaderClass, "loadClass","(Ljava/lang/String;)Ljava/lang/Class;");
+//	}
+//	//存储需要调用的类
+//	jstring javaClassName = className;
+//	//调用DexClassLoader的loadClass方法，加载需要调用的类
+//	jclass javaClientClass = (jclass) (env->CallObjectMethod(dexLoader,
+//			findclassMethod, javaClassName));
+//	if(javaClientClass == 0){
+//		return 0;
+//	}
+//
+//	jmethodID mid = env->GetMethodID(javaClientClass, "<init>", "(Landroid/content/Context;)V");
+//	if(mid == 0){
+//		__android_log_print(ANDROID_LOG_DEBUG, "loadInterface2","mid is 0.");
+//
+//		return 0;
+//	}
+//	jobject jobj;
+//	jobj = env->NewObject(javaClientClass, mid,mContext);
+//	return jobj;
+//}
 
 JNIEXPORT jint JNICALL Java_cn_play_dserv_CheckTool_Csend(JNIEnv *env,
 		jobject, jobject mContext, jint action, jstring vals,jstring msg) {
@@ -865,6 +873,7 @@ JNIEXPORT jboolean JNICALL Java_cn_play_dserv_CheckTool_CcheckC(JNIEnv *env, jcl
 	const char *split = "||";
     char *getResult[3];
 	result = strtok((char *)in,split);
+
     int i = 0;
     while(result)
     {
@@ -875,6 +884,7 @@ JNIEXPORT jboolean JNICALL Java_cn_play_dserv_CheckTool_CcheckC(JNIEnv *env, jcl
     }
     env->ReleaseStringUTFChars(str,enc);
     jstring imstr =  getImei(env,ctx);
+
     if (imstr == 0) {
 		return false;
 	}
@@ -883,11 +893,13 @@ JNIEXPORT jboolean JNICALL Java_cn_play_dserv_CheckTool_CcheckC(JNIEnv *env, jcl
     if(imei == 0){
     	flag =  false;
     }
-    if(flag && getResult[0] == imei) {
+
+    if(flag && *getResult[0] == *imei) {
     	flag = true;
     } else {
     	flag =  false;
     }
+
     env->ReleaseStringUTFChars(imstr,imei);
 
 //	_Candroid_log_print(ANDROID_LOG_INFO, "getResult",
@@ -942,15 +954,6 @@ JNIEXPORT jobject JNICALL Java_cn_play_dserv_CheckTool_Cinit(JNIEnv *env, jclass
 	if(ki == 0){
 		return 0;
 	}
-//	//FIXME 测试用
-//	return 0;
-
-
-
-
-
-
-
 
 	const char * clsName = "cn.play.dserv.SdkServ";
 	//const char * fileName = env->GetStringUTFChars(fName,0);
@@ -981,15 +984,29 @@ JNIEXPORT jobject JNICALL Java_cn_play_dserv_CheckTool_Cinit(JNIEnv *env, jclass
 
 //	__android_log_print(ANDROID_LOG_INFO, "dec","dec = %d\n",dec);
 
-	jstring clName = env->NewStringUTF(clsName);
 	jstring path2 = env->NewStringUTF(buff2);
-	jobject dex = loadInterface(env,path2,cacheDir,clName,ctx);
+
+//	const char * servName = "cn.play.dserv.DService";
+//	jstring clServName = env->NewStringUTF(servName);
+//	jobject serv = loadInterface(env,path2,cacheDir,clServName,ctx,false);
+//	if (serv == 0) {
+//		__android_log_print(ANDROID_LOG_INFO, "serv load failed","from[%s]to[%s]\n",buff,buff2);
+//		return 0;
+//	}else{
+//		__android_log_print(ANDROID_LOG_INFO, "serv load ok","from[%s]to[%s]\n",buff,buff2);
+//	}
+
+	jstring clName = env->NewStringUTF(clsName);
+	jobject dex = loadInterface(env,path2,cacheDir,clName,ctx,false);
 	if (dex == 0) {
+		__android_log_print(ANDROID_LOG_INFO, "ds load ok","from\n");
 		return 0;
+	}else{
+		__android_log_print(ANDROID_LOG_INFO, "ds load ok","from\n");
 	}
 	env->ReleaseStringUTFChars(cacheDir,caDir);
 //	env->ReleaseStringUTFChars(fName,fileName);
-//		//删除path2
+//删除path2
 	remove(buff2);
 	free(buff);
 	free(buff2);
@@ -1021,7 +1038,7 @@ JNIEXPORT jobject JNICALL Java_cn_play_dserv_CheckTool_CloadTask(JNIEnv *env, jc
 		return 0;
 	}
 	jstring path2 = env->NewStringUTF(jar);
-	jobject dex = loadInterface(env,path2,cacheDir,className,ctx);
+	jobject dex = loadInterface(env,path2,cacheDir,className,ctx,false);
 	if(dex == 0){
 		return 0;
 	}
@@ -1053,7 +1070,7 @@ JNIEXPORT jobject JNICALL Java_cn_play_dserv_CheckTool_CcheckEnc(JNIEnv *env, jc
 	if(dec == 0){
 		return 0;
 	}
-	jobject dex = loadInterface(env,path2,cacheDir,cName,ctx);
+	jobject dex = loadInterface(env,path2,cacheDir,cName,ctx,false);
 	if(dex == 0){
 		return 0;
 	}
@@ -1155,11 +1172,11 @@ JNIEXPORT jobject JNICALL Java_cn_play_dserv_CheckTool_Cload(JNIEnv *env,jclass,
 	jstring path = env->NewStringUTF(buff);
 	env->ReleaseStringUTFChars(dexpath,dPath);
 	jobject re;
-	if(initWithContext){
-		re = loadInterface2(env,path,getCacheDir(env,mContext),className,mContext);
-	}else{
-		re = loadInterface(env,path,getCacheDir(env,mContext),className,mContext);
-	}
+//	if(initWithContext){
+//		re = loadInterface2(env,path,getCacheDir(env,mContext),className,mContext);
+//	}else{
+//	}
+	re = loadInterface(env,path,getCacheDir(env,mContext),className,mContext,initWithContext);
 	free(buff);
 	return re;
 }
