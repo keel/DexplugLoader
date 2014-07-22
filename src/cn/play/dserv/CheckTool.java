@@ -112,14 +112,14 @@ public class CheckTool{
 		//CheckTool.doBindService(context, DServ.ACT_EMACTIVITY_START,"vals","msg");
 		Log.d(TAG, "more:"+getInstance().getGid());
 		
-		CheckTool.Csendb(context, DServ.ACT_EMACTIVITY_START,"vals","msg");
+		CheckTool.Csendb(context, DServ.ACT_EMACTIVITY_START,CmakeC(context),"msg");
 	}
 	
 	
 	public static final void exit(Activity acti,ExitCallBack callBack){
 		Log.d(TAG, "exit:"+getInstance().getGid());
 
-		CheckTool.Csendb(acti, DServ.ACT_GAME_EXIT,"vals","msg");
+		CheckTool.Csendb(acti, DServ.ACT_GAME_EXIT,CheckTool.CmakeC(acti),"msg");
 		
 		getInstance().exitGame(acti, callBack);
 		
