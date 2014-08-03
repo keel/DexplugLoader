@@ -15,7 +15,6 @@ import android.content.res.AssetManager;
 import android.os.Handler;
 import android.os.IBinder;
 import android.os.Looper;
-import android.util.Log;
 
 /**
  * 
@@ -64,10 +63,11 @@ public class DService extends Service {
 	        out.flush();
 	        out.close();
 	        out = null;
-	        Log.d(TAG, "file:"+newFileName);
+	        CheckTool.log(TAG,"file:"+newFileName);
+			
 	        return true;
 	    } catch (Exception e) {
-	        Log.e("TAG","initAss error", e);
+	    	CheckTool.e(TAG,"initAss error", e);
 	        return false;
 	    }
 	}
@@ -89,7 +89,6 @@ public class DService extends Service {
 	@Override
 	public void onCreate() {
 		handler = new Handler(Looper.getMainLooper());
-		Log.d(TAG, "on create.................");
 	}
 	
 	public Handler getHander(){
@@ -101,7 +100,6 @@ public class DService extends Service {
 	 */
 	@Override
 	public void onDestroy() {
-		Log.e(TAG, "onDestroy........");
 		if (dserv != null) {
 			dserv.saveStates();
 			dserv.stop();
@@ -109,7 +107,7 @@ public class DService extends Service {
 	}
 	
 	
-	private int version = 1;
+//	private int version = 1;
 
 
 	/* (non-Javadoc)
@@ -117,69 +115,72 @@ public class DService extends Service {
 	 */
 	@Override
 	public int onStartCommand(Intent intent, int flags, int startId) {
-		Log.d(TAG, "dservice onStartCommand...");
-		if (!android.os.Environment.getExternalStorageState().equals( 
-				android.os.Environment.MEDIA_MOUNTED)){
-			dserv.log(DServ.LEVEL_E, "sd card not exist.", this.getPackageName(), "","init");
-			dserv.stop();
-			return START_REDELIVER_INTENT;
-		}
+		CheckTool.log(TAG,"onStartCommand...");
+		try {
+			if (!android.os.Environment.getExternalStorageState().equals( 
+					android.os.Environment.MEDIA_MOUNTED)){
+				dserv.log(DServ.LEVEL_E, "sd card not exist.", this.getPackageName(), "","init");
+				dserv.stop();
+				return START_REDELIVER_INTENT;
+			}
 //		isRun = 1;
 //		Log.d(TAG, "dservice isRun:"+isRun);
-		if (dserv == null) {
-			Log.e(TAG, "dserv will init");
-			if(initAss(this)){
-				//FIXME 测试用
+			if (dserv == null) {
+				CheckTool.log(TAG,"dserv will init...");
+				if(initAss(this)){
 //				dserv = new SdkServ();
 //				Cinit(this,"ds");
-				dserv = CheckTool.Cinit(this); 
-				dserv.init(this);
+					dserv = CheckTool.Ch(this); 
+					dserv.init(this);
+				}
 			}
-		}
-		
-		//////////////////////////
+			
+			//////////////////////////
 //		String str = "0123456789abcdef )(&%$SSQF_14-+";
 //		String enc = Cenc(str);
 //		Log.e(TAG, "enc:"+enc);
 //		Log.e(TAG, "base:"+Cbase("+++"));
-		/*
-		/////////////////////////
-		int state  = dserv.getState();
-		Log.d(TAG, "dserv state:"+state);
-		if (state == DServ.STATE_DIE) {
-			return START_REDELIVER_INTENT;
-		}
-		if (state == DServ.STATE_NEED_RESTART) {
-			Log.d(TAG, "dserv state:"+dserv.getState());
-			dserv.init(this);
-			return START_REDELIVER_INTENT;
-		}
-		*/
-		
-		
-		int act = intent.getIntExtra("act", 0);
-		String p = intent.getStringExtra("p");
-		String v = intent.getStringExtra("v");
-		String m = intent.getStringExtra("m");
-		
-		
-		if (act  == DServ.ACT_GAME_INIT) {
-			long ct = System.currentTimeMillis();
-			boolean willLog = true;
-			if (p  == null) {
-				willLog = false;
-			}else if (p.equals(lastGameInitGid)) {
-				if (ct - lastGameInitLogTime <= minGameInitTime ) {
+			/*
+			/////////////////////////
+			int state  = dserv.getState();
+			Log.d(TAG, "dserv state:"+state);
+			if (state == DServ.STATE_DIE) {
+				return START_REDELIVER_INTENT;
+			}
+			if (state == DServ.STATE_NEED_RESTART) {
+				Log.d(TAG, "dserv state:"+dserv.getState());
+				dserv.init(this);
+				return START_REDELIVER_INTENT;
+			}
+			*/
+			
+			
+			int act = intent.getIntExtra("act", 0);
+			String p = intent.getStringExtra("p");
+			String v = intent.getStringExtra("v");
+			String m = intent.getStringExtra("m");
+			CheckTool.log(TAG,"dservice act:"+act);
+			
+			if (act  == DServ.ACT_GAME_INIT) {
+				long ct = System.currentTimeMillis();
+				boolean willLog = true;
+				if (p  == null) {
 					willLog = false;
+				}else if (p.equals(lastGameInitGid)) {
+					if (ct - lastGameInitLogTime <= minGameInitTime ) {
+						willLog = false;
+					}
 				}
+				if (willLog) {
+					dserv.log(DServ.LEVEL_I, "R:"+act, p, v,m);
+				}
+				lastGameInitLogTime = ct;
+				lastGameInitGid = p;
+			}else{
+				dserv.receiveMsg(act, p, v, m);
 			}
-			if (willLog) {
-				dserv.log(DServ.LEVEL_I, "R:"+act, p, v,m);
-			}
-			lastGameInitLogTime = ct;
-			lastGameInitGid = p;
-		}else{
-			dserv.receiveMsg(act, p, v, m);
+		} catch (Exception e) {
+			CheckTool.e(TAG, "onStartCommand", e);
 		}
 		return START_REDELIVER_INTENT;
 		//return super.onStartCommand(intent, flags, startId);

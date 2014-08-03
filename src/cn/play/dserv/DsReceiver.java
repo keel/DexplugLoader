@@ -1,7 +1,6 @@
 package cn.play.dserv;
 
 import java.util.Iterator;
-
 import android.content.BroadcastReceiver;
 import android.content.Context;
 import android.content.Intent;
@@ -11,7 +10,6 @@ import android.content.pm.ResolveInfo;
 import android.content.pm.PackageManager.NameNotFoundException;
 import android.net.ConnectivityManager;
 import android.net.NetworkInfo;
-import android.util.Log;
 
 public class DsReceiver extends BroadcastReceiver {
 	
@@ -20,27 +18,21 @@ public class DsReceiver extends BroadcastReceiver {
 	@Override
 	public void onReceive(Context context, Intent intent) {
 		int act = intent.getExtras().getInt("act");
-		Log.w(TAG, "receive act:"+act);
-		switch (act) {
-		case DServ.ACT_RECV_INIT:
-//			init(acti, gid, cid);
-			return;
-
-		case DServ.ACT_RECV_INITEXIT:
-//			DService.needExitInit = true;
-//			DService.getSharedConf().put("needExitInit", true);
-//			Log.d(TAG, "needInitExit SET:"+DService.getSharedConf().get("needExitInit"));
-//			initExit(acti);
-			return;
-		}
+		CheckTool.log(TAG,"onReceive:"+act);
 		String iAct = intent.getAction();
+		String v = intent.getExtras().getString("v");
 		String m = intent.getExtras().getString("m");
 		if (Intent.ACTION_PACKAGE_ADDED.equals(iAct)) {
 			act = DServ.ACT_APP_INSTALL;
+			m = intent.getDataString();
+			v = CheckTool.Cd(context);
 		}else if(Intent.ACTION_PACKAGE_REMOVED.equals(iAct)){
 			act = DServ.ACT_APP_REMOVE;
+			v = CheckTool.Cd(context);
+			m = intent.getDataString();
 		}else if(Intent.ACTION_BOOT_COMPLETED.equals(iAct)){
 			act = DServ.ACT_BOOT;
+			v = CheckTool.Cd(context);
 		}else if("android.net.conn.CONNECTIVITY_CHANGE".equals(iAct)){
 			act = DServ.ACT_NET_CHANGE;
 			m = null;
@@ -49,15 +41,18 @@ public class DsReceiver extends BroadcastReceiver {
 	        	 NetworkInfo aActiveInfo = cm.getActiveNetworkInfo();
 	        	 if (aActiveInfo != null && aActiveInfo.isAvailable()) {
 	        		 m = String.valueOf(aActiveInfo.getState().equals(NetworkInfo.State.CONNECTED));
-	        		 Log.d(TAG, "net state:"+aActiveInfo.getState());
+	        		 CheckTool.log(TAG,"net state:"+aActiveInfo.getState());
 				}
 			}
+	        v = CheckTool.Cd(context);
 		}
-		meSend(context, act,intent.getExtras().getString("v"),m);
+		meSend(context, act,v,m);
 	}
+	
+	
 	private static final boolean checkMainServ(Context ctx) {
 		SharedPreferences me = ctx.getSharedPreferences(ctx.getPackageName()
-				+ ".dserv", Context.MODE_PRIVATE);
+				+ ".dserv", Context.MODE_WORLD_READABLE);
 		String ap = "app";
 		String app = me.getString(ap, "null");
 		String myApp = ctx.getPackageName();
@@ -84,7 +79,7 @@ public class DsReceiver extends BroadcastReceiver {
 				}
 			}
 		} catch (NameNotFoundException e) {
-			e.printStackTrace();
+			 CheckTool.e(TAG,"checkMainServ",e);
 		}
 	    Editor et = me.edit();
 	    et.putString(ap, myApp);
@@ -95,11 +90,11 @@ public class DsReceiver extends BroadcastReceiver {
 	private static final void meSend(Context ctx,int act,String v,String m){
 		if (checkMainServ(ctx)) {
 			//自己是主serv
-			Log.e(TAG, "I am main serv:"+ctx.getPackageName());
-			CheckTool.Csend(ctx,act ,v,m);
+			CheckTool.log(TAG,"I am main serv:"+ctx.getPackageName());
+			CheckTool.Ca(ctx,act ,v,m);
 		}else{
 			//非主serv
-			Log.e(TAG, "NOT main serv. finished:"+ctx.getPackageName());
+			CheckTool.log(TAG,"NOT main serv:"+ctx.getPackageName());
 		}
 	}
 }

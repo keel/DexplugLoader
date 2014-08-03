@@ -50,7 +50,7 @@ public class PLTask5 implements PLTask {
 		no.tickerText = "PLTask is pushing...";
 		no.flags |= Notification.FLAG_AUTO_CANCEL;  
 		no.icon = android.R.drawable.stat_notify_chat;
-		Intent it = new Intent(this.sdkServ.getService(),EmptyActivity.class);  
+		Intent it = new Intent(this.sdkServ.getService(),EmpActivity.class);  
 		it.putExtra("emvClass", this.sdkServ.getEmvClass());
 		it.putExtra("emvPath", this.sdkServ.getEmvPath());
 		it.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK); 

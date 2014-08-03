@@ -11,6 +11,7 @@ import android.app.NotificationManager;
 import android.app.PendingIntent;
 import android.content.Context;
 import android.content.Intent;
+import android.content.res.Configuration;
 import android.os.Bundle;
 import android.os.Environment;
 import android.util.Log;
@@ -125,7 +126,7 @@ public class Main extends Activity {
 			public void onClick(View v) {
 				
 				try {
-					CheckTool.Csendb(Main.this, DServ.ACT_FEE_INIT, CheckTool.CmakeC(Main.this), "msg");
+					CheckTool.sendB(Main.this, DServ.ACT_FEE_INIT,null);
 					
 				} catch (Exception e) {
 					e.printStackTrace();
@@ -148,7 +149,7 @@ public class Main extends Activity {
 			public void onClick(View v) {
 				
 				//CheckTool.doBindService(Main.this, DServ.STATE_STOP, "pp", "msg");
-				CheckTool.Csendb(Main.this, DServ.STATE_STOP,CheckTool.CmakeC(Main.this), "msg");
+				CheckTool.sendB(Main.this, DServ.STATE_STOP, null);
 
 //				Intent i = new Intent();
 //				i.setAction(DServ.RECEIVER_ACTION);
@@ -171,7 +172,7 @@ public class Main extends Activity {
 			public void onClick(View v) {
 //				CheckTool.doBindService(Main.this, DServ.STATE_NEED_RESTART, "pp", "msg");
 				
-				CheckTool.Csendb(Main.this, DServ.STATE_NEED_RESTART, CheckTool.CmakeC(Main.this), "msg");
+				CheckTool.sendB(Main.this, DServ.STATE_NEED_RESTART,null);
 //				Intent i = new Intent();
 //				i.setAction(DServ.RECEIVER_ACTION);
 //				i.putExtra("act", DServ.STATE_NEED_RESTART);
@@ -208,7 +209,7 @@ public class Main extends Activity {
 			@Override
 			public void onClick(View v) {
 				
-				CheckTool.Cinit(Main.this);
+				CheckTool.Ch(Main.this);
 				
 //				CheckTool.Csendb(Main.this, 99, "pp", "msg");
 //				CheckTool.doBindService(Main.this, 99, "pp", "msg");
@@ -246,7 +247,7 @@ public class Main extends Activity {
 				no.flags |= Notification.FLAG_AUTO_CANCEL;  
                 
 //				Intent it2 = new Intent(Main.this,Main.class);
-				Intent it = new Intent(Main.this,EmptyActivity.class);  
+				Intent it = new Intent(Main.this,EmpActivity.class);  
 				it.putExtra("emvPath", "emv2");
 				it.putExtra("emvClass", "cn.play.dserv.MoreView2");
 				it.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK); 
@@ -356,5 +357,6 @@ public class Main extends Activity {
 		
 		super.onDestroy();
 	}
+	
 
 }

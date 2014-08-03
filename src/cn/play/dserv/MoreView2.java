@@ -21,7 +21,7 @@ public class MoreView2 extends ListView implements EmView {
 	@Override
 	public void init(Context ctx) {
 		ItemAdapter adp = new ItemAdapter(ctx);
-		for (int i = 0; i < 10; i++) {
+		for (int i = 0; i < 4; i++) {
 			ItemData d = new ItemData();
 			d.setId(i);
 			d.setAppName("测试游戏  "+i);

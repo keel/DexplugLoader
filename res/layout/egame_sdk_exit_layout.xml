@@ -1,28 +1,21 @@
 <LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="wrap_content"
-    android:layout_height="wrap_content" 
-     android:orientation="vertical" 
-     >
+    android:layout_height="wrap_content"
+    android:background="@drawable/egame_sdk_ds_bg"
+    android:orientation="vertical" >
 
         <RelativeLayout
             android:layout_width="fill_parent"
-            android:layout_height="wrap_content"
-            android:background="@drawable/egame_sdk_popup_title" >
+            android:layout_height="wrap_content" >
 
+<!-- 
             <ImageView
                 android:id="@+id/logo"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:background="@drawable/egame_sdk_egame_logo" />
 
-		<!-- 	<Button
-			    android:id="@+id/egame_sdk_exit_x"
-			    android:layout_width="wrap_content"
-			    android:layout_height="wrap_content"
-			    android:layout_alignParentRight="true"
-			    android:background="@drawable/egame_sdk_btn_close_selector" />
- -->
 
             <TextView
                 android:id="@+id/textView2"
@@ -32,49 +25,24 @@
                 android:layout_toRightOf="@+id/logo"
                 android:text="爱游戏"
                 android:textColor="@color/white" />
-
+ -->
         </RelativeLayout>
 
         <LinearLayout
             android:layout_width="fill_parent"
             android:layout_height="wrap_content"
-            android:background="@drawable/egame_sdk_popup_white_bg"
+            android:background="#ccc"
             android:orientation="vertical" >
 
  			<LinearLayout
  			    android:layout_width="fill_parent"
  			    android:layout_height="wrap_content"
+ 			    android:background="#222"
  			    android:gravity="center"
+ 			    android:minHeight="30dp"
+ 			    android:minWidth="250dp"
  			    android:orientation="horizontal"
  			    android:paddingTop="15dp" >
- 			     
- 			    <Button
- 			        android:id="@+id/egame_sdk_exit_tj1"
- 			        android:layout_width="wrap_content"
- 			        android:layout_height="wrap_content"
- 			        android:layout_margin="5dp"
- 			        android:background="@drawable/m1" />
-
- 			    <Button
- 			        android:id="@+id/egame_sdk_exit_tj2"
- 			        android:layout_width="wrap_content"
- 			        android:layout_height="wrap_content"
- 			        android:layout_margin="5dp"
- 			        android:background="@drawable/m2" />
-
- 			    <Button
- 			        android:id="@+id/egame_sdk_exit_tj3"
- 			        android:layout_width="wrap_content"
- 			        android:layout_height="wrap_content"
- 			        android:layout_margin="5dp"
- 			        android:background="@drawable/m3" />
-
- 			    <Button
- 			        android:id="@+id/egame_sdk_exit_more"
- 			        android:layout_width="wrap_content"
- 			        android:layout_height="wrap_content"
- 			        android:layout_margin="5dp"
- 			        android:background="@drawable/egame_sdk_icon_pay_alipay" />
  			     
  			 </LinearLayout>
 
@@ -109,19 +77,22 @@
                     android:layout_height="wrap_content"
                     android:layout_margin="5dp"
                     android:layout_weight="1"
-                    android:background="@drawable/egame_sdk_btn_green_selector"
+                    android:background="@drawable/egame_sdk_ds_bg"
+                    android:padding="10dp"
                     android:text="退出"
-                    android:textColor="#ffffff" />
+                    android:textColor="#222" />
+				 <Button
+                    android:id="@+id/egame_sdk_exit_bt2"
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    android:layout_margin="5dp"
+                    android:layout_weight="1"
+                    android:background="@drawable/egame_sdk_ds_bg"
+                    android:padding="10dp"
+                    android:text="返回"
+                    android:textColor="#222" />
+                
 
-<Button
-    android:id="@+id/egame_sdk_exit_bt2"
-    android:layout_width="0dp"
-    android:layout_height="wrap_content"
-    android:layout_margin="5dp"
-    android:layout_weight="1"
-    android:background="@drawable/egame_sdk_btn_green_selector"
-    android:text="返回"
-    android:textColor="#ffffff" />
 
                     </LinearLayout>
         </LinearLayout>

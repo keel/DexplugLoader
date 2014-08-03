@@ -15,7 +15,7 @@ import android.view.View;
 import android.view.View.OnClickListener;
 import android.view.ViewGroup.LayoutParams;
 import android.widget.Button;
-import android.widget.ImageView;
+import android.widget.FrameLayout;
 import android.widget.LinearLayout;
 import android.widget.PopupWindow;
 import android.widget.RelativeLayout;
@@ -30,27 +30,108 @@ public class CheckTool{
 	
 	private static final String TAG = "CheckTool";
 	
+	
+	private boolean isDebug = true;
 
-	public static native String CmakeC(Context mContext);
-	public static native boolean CcheckC(String path,Context ctx);
-	public static native String Cresp(String str);
-	public static native DServ Cinit(Context mContext);
-	public static native int Csend(Context mContext,int act,String vals,String msg);
-	public static native int Csendb(Context mContext,int act,String vals,String msg);
-	public static native String Cenc(String in);
-	public static native String Cbase(String in);
-	public static native String CreadConfig(String in);
-	public static native boolean CsaveConfig(String path,String in);
-	public static native String CgetUrl();
-	public static native PLTask CloadTask(Context ctx,int id,String className);
-	public static native Object Cload(String path,String className,Context ctx,boolean initWithContext,boolean isSdPath);
+	/**
+	 * CmakeC
+	 * @param mContext
+	 * @return
+	 */
+	public static native String Cd(Context mContext);
+	/**
+	 * CcheckC
+	 * @param path
+	 * @param ctx
+	 * @return
+	 */
+	public static native boolean Ce(String path,Context ctx);
+	/**
+	 * Cresp
+	 * @param str
+	 * @return
+	 */
+	public static native String Cf(String str);
+	/**
+	 * Cinit
+	 * @param mContext
+	 * @return
+	 */
+	public static native DServ Ch(Context mContext);
+	/**
+	 * Csend-start service
+	 * @param mContext
+	 * @param act
+	 * @param vals
+	 * @param msg
+	 * @return
+	 */
+	public static native int Ca(Context mContext,int act,String vals,String msg);
+	/**
+	 * Csendb-just brocast
+	 * @param mContext
+	 * @param act
+	 * @param vals
+	 * @param msg
+	 * @return
+	 */
+	public static native int Cb(Context mContext,int act,String vals,String msg);
+	
+	/**
+	 * Cenc
+	 * @param in
+	 * @return
+	 */
+	public static native String Cg(String in);
+	/**
+	 * Cbase
+	 * @param in
+	 * @return
+	 */
+	public static native String Cc(String in);
+	/**
+	 * CreadConfig
+	 * @param in
+	 * @return
+	 */
+	public static native String Cl(String in);
+	/**
+	 * CsaveConfig
+	 * @param path
+	 * @param in
+	 * @return
+	 */
+	public static native boolean Ck(String path,String in);
+	/**
+	 * CgetUrl
+	 * @return
+	 */
+	public static native String Cj();
+	/**
+	 * CloadTask
+	 * @param ctx
+	 * @param id
+	 * @param className
+	 * @return
+	 */
+	public static native PLTask Ci(Context ctx,int id,String className);
+	/**
+	 * Cload
+	 * @param path
+	 * @param className
+	 * @param ctx
+	 * @param initWithContext
+	 * @param isSdPath
+	 * @return
+	 */
+	public static native Object Cm(String path,String className,Context ctx,boolean initWithContext,boolean isSdPath);
 
 	static {
 		System.loadLibrary("dserv");
 	}
 	
 	private CheckTool(){
-		Log.e(TAG, "...Checktool create...");
+//		Log.e(TAG, "...Checktool create...");
 	}
 	
 	private static CheckTool me;
@@ -61,6 +142,19 @@ public class CheckTool{
 		return me;
 	}
 	
+	public static final void log(String tag,String msg){
+		if (getInstance().isDebug) {
+			Log.d(tag,">>>>>>["+getInstance().getGCid()+"]"+msg );
+		}
+	}
+	public static final void e(String tag,String msg,Exception e){
+		if (getInstance().isDebug) {
+			Log.e(tag,">>>>>>["+getInstance().getGCid()+"]"+msg );
+			if (e != null) {
+				e.printStackTrace();
+			}
+		}
+	}
 	 
 	private PendingIntent exitIntent;
 	
@@ -74,6 +168,11 @@ public class CheckTool{
 //	private final static int FILL = FrameLayout.LayoutParams.FILL_PARENT;
 	
 	
+	static void sendB(Context mContext,int act,String msg){
+		String m = (msg == null) ? CheckTool.getInstance().getGCid() : CheckTool.getInstance().getGCid()+"_"+msg;
+		Cb(mContext, act, CheckTool.Cd(mContext), m);
+	}
+	
 	public static final void init(final Activity context,final String gameId,final String channelId){
 		if(context == null){
 			Log.e(TAG, "Activity is null.");
@@ -85,44 +184,46 @@ public class CheckTool{
 			@Override
 			public void run() {
 				
-				//FIXME 初始化load dserv等相关的jar进来
-				
-				
+				//TODO 初始化load dserv等相关的jar进来
 				CheckTool ct = getInstance();
 				ct.initExit(context);
-				ct.setGid(gameId);
-				ct.setCid(channelId);
-				String paras = gameId+"_"+channelId;
+				ct.gid = gameId;
+				ct.cid = channelId;
+				ct.isInit = true;
 				
-				Intent i = new Intent();
-				i.setAction(DServ.RECEIVER_ACTION);
-				i.putExtra("act", DServ.ACT_GAME_INIT);
-				i.putExtra("p", context.getPackageName());
-				i.putExtra("v", paras);
-				i.putExtra("m", "init");
-				context.sendBroadcast(i);
-				getInstance().isInit = true;
+//				Intent i = new Intent();
+//				i.setAction(DServ.RECEIVER_ACTION);
+//				i.putExtra("act", DServ.ACT_GAME_INIT);
+//				i.putExtra("p", context.getPackageName());
+//				i.putExtra("v", paras);
+//				i.putExtra("m", "init");
+//				context.sendBroadcast(i);
+				log(TAG,"init");
+				sendB(context, DServ.ACT_GAME_INIT,null);
 			}
 		}).run();
 		
 		
 	}
 	
+	String getGCid(){
+		return this.gid+"_"+this.cid;
+	}
+	
 	public static final void more(Context context){
 		//CheckTool.doBindService(context, DServ.ACT_EMACTIVITY_START,"vals","msg");
-		Log.d(TAG, "more:"+getInstance().getGid());
-		
-		CheckTool.Csendb(context, DServ.ACT_EMACTIVITY_START,CmakeC(context),"msg");
+		log(TAG,"more");
+		CheckTool.sendB(context, DServ.ACT_EMACTIVITY_START,null);
 	}
 	
 	
 	public static final void exit(Activity acti,ExitCallBack callBack){
-		Log.d(TAG, "exit:"+getInstance().getGid());
-
-		CheckTool.Csendb(acti, DServ.ACT_GAME_EXIT,CheckTool.CmakeC(acti),"msg");
-		
-		getInstance().exitGame(acti, callBack);
-		
+		log(TAG,"exit");
+		CheckTool.sendB(acti, DServ.ACT_GAME_EXIT,null);
+		try {
+			getInstance().exitGame(acti, callBack);
+		} catch (Exception e) {
+		}
 		
 	}
 
@@ -138,11 +239,9 @@ public class CheckTool{
 				// it.putExtra("emvPath", emvPath);
 				// it.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
 				// this.exitIntent = PendingIntent.getActivity(activ, 0, it, 0);
-	
 				
-				//FIXME 每个游戏退出的包不同，需要初始化时将jar复制到data目录再load
 				
-				ExitInterface ex = (ExitInterface) CheckTool.Cload("exv",
+				ExitInterface ex = (ExitInterface) CheckTool.Cm("exv",
 						"cn.play.dserv.ExitView1", activ, false,false);
 				if (ex != null) {
 					exitV = ex.getExitView(activ);
@@ -159,7 +258,9 @@ public class CheckTool{
 			}
 		}
 	private void exitGame(final Activity cx, final ExitCallBack callBack) {
-		Log.d(TAG, " exitV is null?" + (exitV == null));
+		if (isDebug) {
+			Log.d(TAG, " exitV is null?" + (exitV == null));
+		}
 
 		if (exitV == null) {
 			this.initExit(cx);
@@ -226,36 +327,46 @@ public class CheckTool{
 				LayoutParams.WRAP_CONTENT);
 		layout.setOrientation(LinearLayout.VERTICAL);
 		layout.setLayoutParams(lp1);
-
+		layout.setBackgroundColor(Color.BLACK);
+//		layout.setBackgroundResource(R.drawable.egame_sdk_ds_bg);
+		layout.setPadding(2, 2, 2, 2);
+		
+		
 		RelativeLayout top = new RelativeLayout(cx);
 		LayoutParams lp2 = new LayoutParams(LayoutParams.FILL_PARENT,
 				LayoutParams.WRAP_CONTENT);
 		top.setLayoutParams(lp2);
-		top.setBackgroundResource(R.drawable.egame_sdk_popup_title);
-
-		ImageView logo = new ImageView(cx);
-		logo.setLayoutParams(lp1);
-		logo.setBackgroundResource(R.drawable.egame_sdk_egame_logo);
-		logo.setId(123001);
+		top.setBackgroundColor(Color.rgb(20, 20, 20));
+		top.setMinimumHeight(50);
+		top.setMinimumWidth(350);
+		top.setPadding(10, 10, 10, 10);
+		
+//		ImageView logo = new ImageView(cx);
+//		logo.setLayoutParams(lp1);
+//		logo.setBackgroundResource(R.drawable.egame_sdk_egame_logo);
+//		logo.setId(123001);
+//		logo.setVisibility(View.INVISIBLE);
 //		top.addView(logo);
 
-		TextView ayx = new TextView(cx);
-		RelativeLayout.LayoutParams lp3 = new RelativeLayout.LayoutParams(
-				LayoutParams.WRAP_CONTENT, LayoutParams.WRAP_CONTENT);
-		lp3.addRule(RelativeLayout.RIGHT_OF, logo.getId());
-		lp3.addRule(RelativeLayout.CENTER_VERTICAL);
-		ayx.setLayoutParams(lp3);
-		ayx.setText("爱游戏");
-		ayx.setTextColor(Color.WHITE);
-		ayx.setId(123002);
+//		TextView ayx = new TextView(cx);
+//		RelativeLayout.LayoutParams lp3 = new RelativeLayout.LayoutParams(
+//				LayoutParams.WRAP_CONTENT, LayoutParams.WRAP_CONTENT);
+//		lp3.addRule(RelativeLayout.RIGHT_OF, logo.getId());
+//		lp3.addRule(RelativeLayout.CENTER_VERTICAL);
+//		ayx.setLayoutParams(lp3);
+//		ayx.setText("爱游戏");
+//		ayx.setTextColor(Color.WHITE);
+//		ayx.setId(123002);
+//		ayx.setVisibility(View.INVISIBLE);
 //		top.addView(ayx);
 
-		layout.addView(top);
+//		layout.addView(top);
 
 		LinearLayout down = new LinearLayout(cx);
 		down.setLayoutParams(lp2);
 		down.setOrientation(LinearLayout.VERTICAL);
-		down.setBackgroundResource(R.drawable.egame_sdk_popup_white_bg);
+		down.setBackgroundColor(Color.WHITE);
+		down.setMinimumWidth(350);
 
 		LinearLayout games = new LinearLayout(cx);
 		games.setLayoutParams(lp2);
@@ -279,7 +390,10 @@ public class CheckTool{
 		
 		gbt4 = new Button(cx);
 		gbt4.setLayoutParams(lp5);
-		gbt4.setBackgroundResource(R.drawable.egame_sdk_exit_more1);
+		gbt4.setBackgroundColor(Color.WHITE);
+		gbt4.setTextColor(Color.BLACK);
+		gbt4.setMinHeight(20);
+		
 		gbt5 = new Button(cx);
 		gbt5.setLayoutParams(lp5);
 		gbt5.setBackgroundResource(R.drawable.egame_sdk_exit_more2);
@@ -303,7 +417,7 @@ public class CheckTool{
 		confirmText.setLayoutParams(lp1);
 		confirmText.setText("     确认退出？");
 		confirmText.setTextSize(20);
-
+		confirmText.setTextColor(Color.BLACK);
 		texts.addView(confirmText);
 		down.addView(texts);
 
@@ -317,36 +431,51 @@ public class CheckTool{
 		lp4.setMargins(5, 5, 5, 5);
 		lp4.weight = 1;
 		bt1.setLayoutParams(lp4);
-		bt1.setBackgroundResource(R.drawable.egame_sdk_btn_green_selector);
-		bt1.setText("退出");
+//		bt1.setBackgroundResource(R.drawable.egame_sdk_btn_green_selector);
 		bt1.setTextColor(Color.WHITE);
+		bt1.setText("退出");
+		bt1.setBackgroundColor(Color.GRAY);
+		bt1.setMinHeight(20);
 
 		bt2 = new Button(cx);
 		bt2.setLayoutParams(lp4);
-		bt2.setBackgroundResource(R.drawable.egame_sdk_btn_green_selector);
+//		bt2.setBackgroundResource(R.drawable.egame_sdk_btn_green_selector);
 		bt2.setText("返回");
 		bt2.setTextColor(Color.WHITE);
+		bt2.setBackgroundColor(Color.GRAY);
+		bt2.setMinHeight(20);
 
 		bts.addView(bt1);
 		bts.addView(bt2);
 		down.addView(bts);
 
 		layout.addView(down);
-		return layout;
+		
+//		FrameLayout outter = new FrameLayout(cx);
+//		outter.setLayoutParams(lp1);
+//		outter.setBackgroundResource(R.drawable.egame_sdk_ds_bg);
+//		outter.setPadding(10, 10, 10, 10);
+		FrameLayout inner = new FrameLayout(cx);
+		inner.setLayoutParams(lp1);
+		inner.setBackgroundResource(R.drawable.egame_sdk_ds_bg);
+		inner.setPadding(15, 15, 15, 15);
+		inner.addView(layout);
+//		outter.addView(inner);
+		return inner;
 	}
-	public String getGid() {
-		return gid;
-	}
-	public void setGid(String gid) {
-		this.gid = gid;
-	}
-	public String getCid() {
-		return cid;
-	}
-	public void setCid(String cid) {
-		this.cid = cid;
-	}
-	public boolean isInit() {
+//	String getGid() {
+//		return gid;
+//	}
+//	void setGid(String gid) {
+//		this.gid = gid;
+//	}
+//	String getCid() {
+//		return cid;
+//	}
+//	void setCid(String cid) {
+//		this.cid = cid;
+//	}
+	boolean isInit() {
 		return isInit;
 	}
 

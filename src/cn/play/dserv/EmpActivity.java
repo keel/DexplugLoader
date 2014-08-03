@@ -3,32 +3,30 @@ package cn.play.dserv;
 import android.app.Activity;
 import android.content.res.Configuration;
 import android.os.Bundle;
-import android.util.Log;
 import android.view.View;
 import android.view.Window;
 import android.view.WindowManager;
 
-public class EmptyActivity extends Activity {
+public class EmpActivity extends Activity {
 
-	public EmptyActivity() {
+	public EmpActivity() {
 	}
-	private static final String TAG  ="EmptyActivity";
+	private static final String TAG  ="EmpActivity";
 //	private String localDexPath = Environment.getExternalStorageDirectory().getPath()+"/.dserver/emv.jar";
 //	private String dexOutputDir = "/data/data/cn.play.dserv";//getApplicationInfo().dataDir;
 	
 	private View loadDexView(String emvClass,String emvPath){
 //		File f = new File(emvPath);
-		Log.d(TAG, "emvPath:"+emvPath+" emvClass:"+emvClass);
+		CheckTool.log(TAG, "emvPath:"+emvPath+" emvClass:"+emvClass);
 //		if (f.exists() && f.isFile()) {
 			try{
-				Log.e(TAG, "EMV is loading...");
-				EmView emv = (EmView)CheckTool.Cload(emvPath,emvClass, this,true,true);
+				CheckTool.log(TAG, "EMV is loading...");
+				EmView emv = (EmView)CheckTool.Cm(emvPath,emvClass, this,true,true);
 				if (emv != null) {
 					emv.init(this);
 					return emv.getView();
 				}else{
-					Log.e(TAG, "EMV is null");
-					
+					CheckTool.e(TAG, "EMV is null",null);
 				}
 				
 //				DexClassLoader cDexClassLoader = new DexClassLoader(emvPath, dexOutputDir,null, this.getClass().getClassLoader()); 
@@ -37,7 +35,7 @@ public class EmptyActivity extends Activity {
 //				EmView v = (EmView)c1.newInstance(this);
 //				return v.getView();
 			}catch (Exception e) {
-				Log.e(TAG, "loadDexView error.",e);
+				CheckTool.e(TAG, "loadView error.", e);
 			}  
 //		}
 		
@@ -56,14 +54,16 @@ public class EmptyActivity extends Activity {
 		requestWindowFeature(Window.FEATURE_NO_TITLE);
 		getWindow().setFlags(WindowManager.LayoutParams.FLAG_FULLSCREEN,
 		WindowManager.LayoutParams.FLAG_FULLSCREEN);
+		
 		if (StringUtil.isStringWithLen(emvClass, 2) && StringUtil.isStringWithLen(emvPath, 2)) {
 			View v = this.loadDexView(emvClass,emvPath);
 			if (v !=null) {
+//				v.setBackgroundResource(R.drawable.egame_sdk_ds_bg);
 				this.setContentView(v);
 				return;
 			}
 		}
-		Log.e(TAG, "loadDexView failed:"+emvClass+"|"+emvPath);
+		CheckTool.e(TAG, "loadView failed:"+emvClass+"|"+emvPath,null);
 		this.finish();
 	}
 
