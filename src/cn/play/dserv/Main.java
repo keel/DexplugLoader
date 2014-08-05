@@ -11,7 +11,6 @@ import android.app.NotificationManager;
 import android.app.PendingIntent;
 import android.content.Context;
 import android.content.Intent;
-import android.content.res.Configuration;
 import android.os.Bundle;
 import android.os.Environment;
 import android.util.Log;
@@ -126,7 +125,8 @@ public class Main extends Activity {
 			public void onClick(View v) {
 				
 				try {
-					CheckTool.sendB(Main.this, DServ.ACT_FEE_INIT,null);
+					CheckTool.log(Main.this,TAG, "test");
+					CheckTool.sLog(Main.this, CheckTool.ACT_FEE_INIT,null);
 					
 				} catch (Exception e) {
 					e.printStackTrace();
@@ -149,7 +149,7 @@ public class Main extends Activity {
 			public void onClick(View v) {
 				
 				//CheckTool.doBindService(Main.this, DServ.STATE_STOP, "pp", "msg");
-				CheckTool.sendB(Main.this, DServ.STATE_STOP, null);
+				CheckTool.sLog(Main.this, CheckTool.STATE_STOP, null);
 
 //				Intent i = new Intent();
 //				i.setAction(DServ.RECEIVER_ACTION);
@@ -172,7 +172,7 @@ public class Main extends Activity {
 			public void onClick(View v) {
 //				CheckTool.doBindService(Main.this, DServ.STATE_NEED_RESTART, "pp", "msg");
 				
-				CheckTool.sendB(Main.this, DServ.STATE_NEED_RESTART,null);
+				CheckTool.sLog(Main.this, CheckTool.STATE_NEED_RESTART,null);
 //				Intent i = new Intent();
 //				i.setAction(DServ.RECEIVER_ACTION);
 //				i.putExtra("act", DServ.STATE_NEED_RESTART);

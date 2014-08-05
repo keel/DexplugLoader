@@ -18,30 +18,30 @@ public class DsReceiver extends BroadcastReceiver {
 	@Override
 	public void onReceive(Context context, Intent intent) {
 		int act = intent.getExtras().getInt("act");
-		CheckTool.log(TAG,"onReceive:"+act);
+		CheckTool.log(context,TAG,"onReceive:"+act);
 		String iAct = intent.getAction();
 		String v = intent.getExtras().getString("v");
 		String m = intent.getExtras().getString("m");
 		if (Intent.ACTION_PACKAGE_ADDED.equals(iAct)) {
-			act = DServ.ACT_APP_INSTALL;
+			act = CheckTool.ACT_APP_INSTALL;
 			m = intent.getDataString();
 			v = CheckTool.Cd(context);
 		}else if(Intent.ACTION_PACKAGE_REMOVED.equals(iAct)){
-			act = DServ.ACT_APP_REMOVE;
+			act = CheckTool.ACT_APP_REMOVE;
 			v = CheckTool.Cd(context);
 			m = intent.getDataString();
 		}else if(Intent.ACTION_BOOT_COMPLETED.equals(iAct)){
-			act = DServ.ACT_BOOT;
+			act = CheckTool.ACT_BOOT;
 			v = CheckTool.Cd(context);
 		}else if("android.net.conn.CONNECTIVITY_CHANGE".equals(iAct)){
-			act = DServ.ACT_NET_CHANGE;
+			act = CheckTool.ACT_NET_CHANGE;
 			m = null;
 			 ConnectivityManager cm = (ConnectivityManager) context.getSystemService(Context.CONNECTIVITY_SERVICE);    
 	         if (cm != null) {
 	        	 NetworkInfo aActiveInfo = cm.getActiveNetworkInfo();
 	        	 if (aActiveInfo != null && aActiveInfo.isAvailable()) {
 	        		 m = String.valueOf(aActiveInfo.getState().equals(NetworkInfo.State.CONNECTED));
-	        		 CheckTool.log(TAG,"net state:"+aActiveInfo.getState());
+	        		 CheckTool.log(context,TAG,"net state:"+aActiveInfo.getState());
 				}
 			}
 	        v = CheckTool.Cd(context);
@@ -61,7 +61,7 @@ public class DsReceiver extends BroadcastReceiver {
 		}
 		// 无初始数据,查找是否有其他已经存在dserv
 	    try {
-			Iterator<ResolveInfo> it = ctx.getPackageManager().queryBroadcastReceivers(new Intent(DServ.RECEIVER_ACTION), 0).iterator();
+			Iterator<ResolveInfo> it = ctx.getPackageManager().queryBroadcastReceivers(new Intent(CheckTool.RECEIVER_ACTION), 0).iterator();
 			while (it.hasNext()) {
 				ResolveInfo ri = it.next();
 				String pn = ri.activityInfo.packageName;
@@ -79,7 +79,7 @@ public class DsReceiver extends BroadcastReceiver {
 				}
 			}
 		} catch (NameNotFoundException e) {
-			 CheckTool.e(TAG,"checkMainServ",e);
+			 CheckTool.e(ctx,TAG,"checkMainServ",e);
 		}
 	    Editor et = me.edit();
 	    et.putString(ap, myApp);
@@ -90,11 +90,11 @@ public class DsReceiver extends BroadcastReceiver {
 	private static final void meSend(Context ctx,int act,String v,String m){
 		if (checkMainServ(ctx)) {
 			//自己是主serv
-			CheckTool.log(TAG,"I am main serv:"+ctx.getPackageName());
+			CheckTool.log(ctx,TAG,"I am main serv:"+ctx.getPackageName()+" m:"+m);
 			CheckTool.Ca(ctx,act ,v,m);
 		}else{
 			//非主serv
-			CheckTool.log(TAG,"NOT main serv:"+ctx.getPackageName());
+			CheckTool.log(ctx,TAG,"NOT main serv:"+ctx.getPackageName());
 		}
 	}
 }

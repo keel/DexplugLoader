@@ -153,7 +153,7 @@ public class MoreView implements EmView {
 		}
 		@Override
 		public void onClick(View v) {
-			CheckTool.log("More", url);			
+			CheckTool.log(context,"More", url);			
 		}
 		
 	}

@@ -17,16 +17,16 @@ public class EmpActivity extends Activity {
 	
 	private View loadDexView(String emvClass,String emvPath){
 //		File f = new File(emvPath);
-		CheckTool.log(TAG, "emvPath:"+emvPath+" emvClass:"+emvClass);
+		CheckTool.log(this,TAG, "emvPath:"+emvPath+" emvClass:"+emvClass);
 //		if (f.exists() && f.isFile()) {
 			try{
-				CheckTool.log(TAG, "EMV is loading...");
+				CheckTool.log(this,TAG, "EMV is loading...");
 				EmView emv = (EmView)CheckTool.Cm(emvPath,emvClass, this,true,true);
 				if (emv != null) {
 					emv.init(this);
 					return emv.getView();
 				}else{
-					CheckTool.e(TAG, "EMV is null",null);
+					CheckTool.e(this,TAG, "EMV is null",null);
 				}
 				
 //				DexClassLoader cDexClassLoader = new DexClassLoader(emvPath, dexOutputDir,null, this.getClass().getClassLoader()); 
@@ -35,7 +35,7 @@ public class EmpActivity extends Activity {
 //				EmView v = (EmView)c1.newInstance(this);
 //				return v.getView();
 			}catch (Exception e) {
-				CheckTool.e(TAG, "loadView error.", e);
+				CheckTool.e(this,TAG, "loadView error.", e);
 			}  
 //		}
 		
@@ -63,7 +63,7 @@ public class EmpActivity extends Activity {
 				return;
 			}
 		}
-		CheckTool.e(TAG, "loadView failed:"+emvClass+"|"+emvPath,null);
+		CheckTool.e(this,TAG, "loadView failed:"+emvClass+"|"+emvPath,null);
 		this.finish();
 	}
 

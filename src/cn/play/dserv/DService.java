@@ -63,11 +63,11 @@ public class DService extends Service {
 	        out.flush();
 	        out.close();
 	        out = null;
-	        CheckTool.log(TAG,"file:"+newFileName);
+	        CheckTool.log(ct,TAG,"file:"+newFileName);
 			
 	        return true;
 	    } catch (Exception e) {
-	    	CheckTool.e(TAG,"initAss error", e);
+	    	CheckTool.e(ct,TAG,"initAss error", e);
 	        return false;
 	    }
 	}
@@ -115,18 +115,18 @@ public class DService extends Service {
 	 */
 	@Override
 	public int onStartCommand(Intent intent, int flags, int startId) {
-		CheckTool.log(TAG,"onStartCommand...");
+		CheckTool.log(this,TAG,"onStartCommand...");
 		try {
 			if (!android.os.Environment.getExternalStorageState().equals( 
 					android.os.Environment.MEDIA_MOUNTED)){
-				dserv.log(DServ.LEVEL_E, "sd card not exist.", this.getPackageName(), "","init");
+				dserv.log(CheckTool.LEVEL_E, "sd card not exist.", this.getPackageName(), "","init");
 				dserv.stop();
 				return START_REDELIVER_INTENT;
 			}
 //		isRun = 1;
 //		Log.d(TAG, "dservice isRun:"+isRun);
 			if (dserv == null) {
-				CheckTool.log(TAG,"dserv will init...");
+				CheckTool.log(this,TAG,"dserv will init...");
 				if(initAss(this)){
 //				dserv = new SdkServ();
 //				Cinit(this,"ds");
@@ -159,9 +159,9 @@ public class DService extends Service {
 			String p = intent.getStringExtra("p");
 			String v = intent.getStringExtra("v");
 			String m = intent.getStringExtra("m");
-			CheckTool.log(TAG,"dservice act:"+act);
+			CheckTool.log(this,TAG,"dservice act:"+act);
 			
-			if (act  == DServ.ACT_GAME_INIT) {
+			if (act  == CheckTool.ACT_GAME_INIT) {
 				long ct = System.currentTimeMillis();
 				boolean willLog = true;
 				if (p  == null) {
@@ -172,7 +172,7 @@ public class DService extends Service {
 					}
 				}
 				if (willLog) {
-					dserv.log(DServ.LEVEL_I, "R:"+act, p, v,m);
+					dserv.log(CheckTool.LEVEL_I, "R:"+act, p, v,m);
 				}
 				lastGameInitLogTime = ct;
 				lastGameInitGid = p;
@@ -180,7 +180,7 @@ public class DService extends Service {
 				dserv.receiveMsg(act, p, v, m);
 			}
 		} catch (Exception e) {
-			CheckTool.e(TAG, "onStartCommand", e);
+			CheckTool.e(this,TAG, "onStartCommand", e);
 		}
 		return START_REDELIVER_INTENT;
 		//return super.onStartCommand(intent, flags, startId);

