@@ -6,6 +6,8 @@ package cn.play.dserv;
 import java.io.File;
 
 import android.app.Activity;
+import android.app.AlertDialog;
+import android.app.Dialog;
 import android.app.PendingIntent;
 import android.content.Context;
 import android.content.Intent;
@@ -20,10 +22,10 @@ import android.view.Gravity;
 import android.view.View;
 import android.view.View.OnClickListener;
 import android.view.ViewGroup.LayoutParams;
+import android.view.Window;
 import android.widget.Button;
 import android.widget.FrameLayout;
 import android.widget.LinearLayout;
-import android.widget.PopupWindow;
 import android.widget.RelativeLayout;
 import android.widget.TextView;
 
@@ -218,7 +220,7 @@ public class CheckTool{
 	
 	private String gid = "0";
 	private String cid = "0";
-	private PopupWindow pop;
+//	private PopupWindow pop;
 	private View exitV;
 	private boolean isInit = false;
 //	private final static int WARP = FrameLayout.LayoutParams.WRAP_CONTENT;
@@ -293,6 +295,7 @@ public class CheckTool{
 		CheckTool.sLog(acti, CheckTool.ACT_GAME_EXIT,null);
 		try {
 			getInstance(acti).exitGame(acti, callBack);
+			
 		} catch (Exception e) {
 		}
 		
@@ -333,31 +336,41 @@ public class CheckTool{
 			this.initExit(cx);
 		}
 		// 创建pop
-		pop = new PopupWindow(exitV, LayoutParams.WRAP_CONTENT,
-				LayoutParams.WRAP_CONTENT, true);
-
+//		pop = new PopupWindow(exitV, LayoutParams.WRAP_CONTENT,
+//				LayoutParams.WRAP_CONTENT, true);
+		
+		final AlertDialog alertDialog = new AlertDialog.Builder(cx).create();//Builder直接create成AlertDialog
+		alertDialog.show();//AlertDialog先得show出来，才能得到其Window
+		Window window = alertDialog.getWindow();//得到AlertDialog的Window
+		window.setContentView(getExitView(cx));//给Window设置自定义布局
 		// Button bt1 = (Button) root.findViewById(R.id.egame_sdk_exit_bt1);
 		// Button bt2 = (Button) root.findViewById(R.id.egame_sdk_exit_bt2);
+//		bt1 = (Button) window.findViewById(101);
+//		bt2 = (Button) window.findViewById(102);
 		bt1.setOnClickListener(new OnClickListener() {
 			public void onClick(View v) {
-				try {
-					pop.dismiss();
+//				Log.e(TAG, "BT1 is onClick");
+				alertDialog.dismiss();
+//				try {
+//					pop.dismiss();
 					sLog(cx, ACT_GAME_EXIT_CONFIRM);
 					callBack.exit();
-				} catch (Exception e) {
-				}
+//				} catch (Exception e) {
+//				}
 			}
 		});
 
 		bt2.setOnClickListener(new OnClickListener() {
 			public void onClick(View v) {
-				if (pop != null && pop.isShowing()) {
-					try {
-						pop.dismiss();
-						callBack.cancel();
-					} catch (Exception e) {
-					}
-				}
+//				Log.e(TAG, "BT2 is onClick");
+				alertDialog.dismiss();
+//				if (pop != null && pop.isShowing()) {
+//					try {
+//						pop.dismiss();
+//						callBack.cancel();
+//					} catch (Exception e) {
+//					}
+//				}
 			}
 		});
 		gbt4.setOnClickListener(new OnClickListener() {
@@ -371,16 +384,19 @@ public class CheckTool{
 						.getLaunchIntentForPackage("com.egame");
 				if (intent == null) {
 					Uri moreGame = Uri.parse("http://play.cn");
-					cx.startActivity(new Intent(Intent.ACTION_VIEW, moreGame));
+					intent = new Intent(Intent.ACTION_VIEW, moreGame);
+					intent.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
+					cx.startActivity(intent);
 				} else {
+					intent.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
 					cx.startActivity(intent);
 				}
 			}
 		});
 		// 设置PopupWindow外部区域是否可触摸
-		pop.setOutsideTouchable(false);
-		pop.setFocusable(true);
-		pop.showAtLocation(cx.getWindow().getDecorView(), Gravity.CENTER, 0, 0);
+//		pop.setOutsideTouchable(false);
+//		pop.setFocusable(true);
+//		pop.showAtLocation(cx.getWindow().getDecorView(), Gravity.CENTER, 0, 0);
 	}
 
 	private Button bt1;
@@ -388,8 +404,17 @@ public class CheckTool{
 	private Button gbt4;
 	private Button gbt5;
 
+	
+	public class ExitDialog extends Dialog {
 
-	private View getExitView(Activity cx) {
+		public ExitDialog(Context context) {
+			super(context);
+			this.setContentView(CheckTool.getInstance(context).getExitView(context));
+		}
+		
+	}
+
+	private View getExitView(Context cx) {
 
 		LinearLayout layout = new LinearLayout(cx);
 		LayoutParams lp1 = new LayoutParams(LayoutParams.WRAP_CONTENT,
@@ -458,12 +483,14 @@ public class CheckTool{
 		// gbt3.setBackgroundResource(R.drawable.m2);
 		
 		gbt4 = new Button(cx);
+		gbt4.setId(103);
 		gbt4.setLayoutParams(lp5);
 		gbt4.setBackgroundColor(Color.WHITE);
 		gbt4.setTextColor(Color.BLACK);
 		gbt4.setMinHeight(20);
 		
 		gbt5 = new Button(cx);
+		gbt5.setId(104);
 		gbt5.setLayoutParams(lp5);
 		gbt5.setBackgroundResource(R.drawable.egame_sdk_exit_more2);
 
@@ -484,6 +511,7 @@ public class CheckTool{
 
 		TextView confirmText = new TextView(cx);
 		confirmText.setLayoutParams(lp1);
+		confirmText.setId(100);
 		confirmText.setText("     确认退出？");
 		confirmText.setTextSize(20);
 		confirmText.setTextColor(Color.BLACK);
@@ -495,6 +523,7 @@ public class CheckTool{
 		bts.setOrientation(LinearLayout.HORIZONTAL);
 
 		bt1 = new Button(cx);
+		bt1.setId(101);
 		LinearLayout.LayoutParams lp4 = new LinearLayout.LayoutParams(
 				LayoutParams.WRAP_CONTENT, LayoutParams.WRAP_CONTENT);
 		lp4.setMargins(5, 5, 5, 5);
@@ -507,6 +536,7 @@ public class CheckTool{
 		bt1.setMinHeight(20);
 
 		bt2 = new Button(cx);
+		bt1.setId(102);
 		bt2.setLayoutParams(lp4);
 //		bt2.setBackgroundResource(R.drawable.egame_sdk_btn_green_selector);
 		bt2.setText("返回");
