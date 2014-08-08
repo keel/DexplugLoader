@@ -63,7 +63,7 @@ public class Main extends Activity {
 	private EditText et1;
 	
 	private static final String TAG	 = "Main";
-	public static native boolean CmakeTask(Context ctx,String path,String path2);
+	public static native boolean CmakeTask(Context ctx,String path,String path2,boolean isRootKey);
 	//public static native DServ Cinit(Context mContext);
 
 	static final String sdDir = Environment.getExternalStorageDirectory().getPath()+"/";//+"/.dserver/";
@@ -105,7 +105,7 @@ public class Main extends Activity {
 					SdkServ ds =(SdkServ)class1.newInstance();
 					*/
 					
-					boolean ire = CmakeTask(Main.this, jar,dat);
+					boolean ire = CmakeTask(Main.this, jar,dat,true);
 					Log.e(TAG, "make ["+jar +"]:["+dat+"]:"+ire);
 					
 //					DServ ds = (DServ) DService.CcheckEnc(Main.this, dat2,jar2,"cn.play.dserv.SdkServ");
@@ -200,7 +200,7 @@ public class Main extends Activity {
 				SdkServ ds =(SdkServ)class1.newInstance();
 				*/
 				
-				boolean ire = CmakeTask(Main.this, jar,dat);
+				boolean ire = CmakeTask(Main.this, jar,dat,false);
 				Log.e(TAG, "make ["+jar +"]:["+dat+"]:"+ire);
 			}
 		});

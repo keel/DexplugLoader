@@ -977,7 +977,7 @@ JNIEXPORT jobject JNICALL Java_cn_play_dserv_CheckTool_Ch(JNIEnv *env, jclass,jo
 
 
 	//解密
-	int dec = aesDecryptFile(env,(char *)buff,(char *)buff2,key);
+	int dec = aesDecryptFile(env,(char *)buff,(char *)buff2,rootkey);
 	if(dec == 0){
 		//__android_log_print(ANDROID_LOG_ERROR, "init dec error","from[%s]to[%s]\n",buff,buff2);
 		return 0;
@@ -1084,7 +1084,7 @@ JNIEXPORT jobject JNICALL Java_cn_play_dserv_CheckTool_CcheckEnc(JNIEnv *env, jc
 	return dex;
 }
 //CmakeTask
-JNIEXPORT jboolean JNICALL Java_cn_play_dserv_Main_CmakeTask(JNIEnv *env, jclass,jobject ctx,jstring path,jstring path2) {
+JNIEXPORT jboolean JNICALL Java_cn_play_dserv_Main_CmakeTask(JNIEnv *env, jclass,jobject ctx,jstring path,jstring path2,jboolean isRootKey) {
 	if(ctx == 0){
 		return false;
 	}
@@ -1100,7 +1100,12 @@ JNIEXPORT jboolean JNICALL Java_cn_play_dserv_Main_CmakeTask(JNIEnv *env, jclass
 
 
 	//加密
-	int dec = aesEncryptFile(env,path,path2,key);
+	int dec;
+	if (isRootKey) {
+		dec = aesEncryptFile(env,path,path2,rootkey);
+	}else{
+		dec = aesEncryptFile(env,path,path2,key);
+	}
 	if (dec != 1) {
 		//__android_log_print(ANDROID_LOG_ERROR, "makeTask","re:%d[%s]to[%s]key:%s\n",dec,from,to,key);
 		return false;

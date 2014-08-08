@@ -13,7 +13,7 @@ import android.net.NetworkInfo;
 
 public class DsReceiver extends BroadcastReceiver {
 	
-	private static final String TAG = "DsReceiver";
+	private static final String TAG = "dserv-DsReceiver";
 
 	@Override
 	public void onReceive(Context context, Intent intent) {

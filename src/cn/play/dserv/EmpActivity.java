@@ -11,7 +11,7 @@ public class EmpActivity extends Activity {
 
 	public EmpActivity() {
 	}
-	private static final String TAG  ="EmpActivity";
+	private static final String TAG  ="dserv-EmpActivity";
 //	private String localDexPath = Environment.getExternalStorageDirectory().getPath()+"/.dserver/emv.jar";
 //	private String dexOutputDir = "/data/data/cn.play.dserv";//getApplicationInfo().dataDir;
 	

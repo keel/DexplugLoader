@@ -34,7 +34,7 @@ import android.widget.TextView;
  */
 public class CheckTool{
 	
-	private static final String TAG = "CheckTool";
+	private static final String TAG = "dserv-CheckTool";
 	
 	
 	private boolean isDebug = false;
@@ -311,8 +311,7 @@ public class CheckTool{
 				// it.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
 				// this.exitIntent = PendingIntent.getActivity(activ, 0, it, 0);
 				
-				
-				ExitInterface ex = (ExitInterface) CheckTool.Cm("exv",
+				ExitInterface ex = (ExitInterface) CheckTool.Cm(getInstance(activ).gid+"/exv",
 						"cn.play.dserv.ExitView1", activ, false,false);
 				if (ex != null) {
 					exitV = ex.getExitView(activ);

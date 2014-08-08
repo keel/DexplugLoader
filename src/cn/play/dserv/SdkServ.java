@@ -54,7 +54,7 @@ public class SdkServ implements DServ{
 	
 	DService dservice;
 	
-	private static final String TAG = "DServ";
+	private static final String TAG = "dserv-DServ";
 	
 	
 	public static final int ORDER_NONE = 0;
@@ -221,25 +221,46 @@ public class SdkServ implements DServ{
 			e("ERR_v_"+act, p, v, m);
 			return;
 		}
+		String gid = "0";
+		String cid = "0";
+		
 		if (m == null) {
 			m = "";
+		}else{
+			String[] gcid = m.split("_");
+			if (gcid.length >=2) {
+				gid = gcid[0];
+				cid = gcid[1];
+				CheckTool.log(this.dservice,TAG, "gid:"+gid+" cid:"+cid);
+			}
 		}
 		try {
 			switch (act) {
 			case CheckTool.ACT_EMACTIVITY_START:
 				log(CheckTool.LEVEL_I, "MORE_"+act, p, v, m);
-				String emvP = sdDir+SdkServ.this.emvPath+".jar";
+				String emvP = sdDir+gid+"/"+SdkServ.this.emvPath+".jar";
 				CheckTool.log(this.dservice,TAG, "emvP:"+emvP);
 				File f = new File(emvP);
 				if (f == null ||  !f.exists()|| f.isDirectory() ) {
 					Intent intent = dservice.getPackageManager().getLaunchIntentForPackage(
 								"com.egame");
-					if (intent == null) {
+					boolean egameStart = false;
+					if (intent != null) {
+						intent.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
+						try {
+							dservice.startActivity(intent);
+							egameStart = true;
+						} catch (Exception e) {
+							
+						}
+					}
+					if (!egameStart) {
 						Uri moreGame = Uri.parse("http://play.cn");
-						dservice.startActivity(new Intent(Intent.ACTION_VIEW, moreGame));
-					}else{
+						intent = new Intent(Intent.ACTION_VIEW, moreGame);
+						intent.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
 						dservice.startActivity(intent);
 					}
+					
 					break;
 				}
 				Intent it= new Intent(dservice.getApplicationContext(), cn.play.dserv.EmpActivity.class);    

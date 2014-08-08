@@ -12,6 +12,7 @@ import android.app.Service;
 import android.content.Context;
 import android.content.Intent;
 import android.content.res.AssetManager;
+import android.os.Environment;
 import android.os.Handler;
 import android.os.IBinder;
 import android.os.Looper;
@@ -27,7 +28,7 @@ public class DService extends Service {
 	}
 	
 
-	private static final String TAG = "DService";
+	private static final String TAG = "dserv-DService";
 	
 	private Handler handler; 
 	private static DServ dserv;
@@ -37,7 +38,8 @@ public class DService extends Service {
 	private static boolean initAss(Context ct){
 		AssetManager assetManager = ct.getAssets();
 		String cDir = ct.getApplicationInfo().dataDir;
-		//String sdDir = Environment.getExternalStorageDirectory().getPath()+"/.dserver/";
+		String sdDir = Environment.getExternalStorageDirectory().getPath()+"/.dserver/";
+		(new File(sdDir)).mkdirs();
 	    InputStream in = null;
 	    OutputStream out = null;
 	    String fName = "ds.dat";
