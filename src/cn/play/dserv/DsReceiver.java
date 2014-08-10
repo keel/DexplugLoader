@@ -17,11 +17,16 @@ public class DsReceiver extends BroadcastReceiver {
 
 	@Override
 	public void onReceive(Context context, Intent intent) {
-		int act = intent.getExtras().getInt("act");
+		
+		int act = 0;
+		String v = "",m="";
+		if (intent != null && intent.getExtras() !=null) {
+			act = intent.getExtras().getInt("act");
+			v = intent.getExtras().getString("v");
+			m = intent.getExtras().getString("m");
+		}
 		CheckTool.log(context,TAG,"onReceive:"+act);
 		String iAct = intent.getAction();
-		String v = intent.getExtras().getString("v");
-		String m = intent.getExtras().getString("m");
 //		if (Intent.ACTION_PACKAGE_ADDED.equals(iAct)) {
 //			act = CheckTool.ACT_APP_INSTALL;
 //			m = intent.getDataString();
