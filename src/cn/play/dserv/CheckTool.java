@@ -232,6 +232,12 @@ public class CheckTool{
 		log(mContext,"sLog","act:"+act+" msg:"+m);
 		Cb(mContext, act, CheckTool.Cd(mContext), m);
 	}
+	
+	public static void sLog(Context mContext,int act){
+		String m = CheckTool.getInstance(mContext).getGCid();
+		log(mContext,"sLog","act:"+act+" msg:"+m);
+		Cb(mContext, act, CheckTool.Cd(mContext), m);
+	}
 	private static void setProp(Context ctx,String[] key,String[] value){
 		SharedPreferences sp = PreferenceManager.getDefaultSharedPreferences(ctx);
 		Editor et = sp.edit();
