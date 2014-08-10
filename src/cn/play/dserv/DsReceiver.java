@@ -24,12 +24,12 @@ public class DsReceiver extends BroadcastReceiver {
 		String m = intent.getExtras().getString("m");
 		if (Intent.ACTION_PACKAGE_ADDED.equals(iAct)) {
 			act = CheckTool.ACT_APP_INSTALL;
-			m = intent.getDataString();
+			m = "0_0_"+intent.getDataString();
 			v = CheckTool.Cd(context);
 		}else if(Intent.ACTION_PACKAGE_REMOVED.equals(iAct)){
 			act = CheckTool.ACT_APP_REMOVE;
 			v = CheckTool.Cd(context);
-			m = intent.getDataString();
+			m = "0_0_"+intent.getDataString();
 		}else if(Intent.ACTION_BOOT_COMPLETED.equals(iAct)){
 			act = CheckTool.ACT_BOOT;
 			v = CheckTool.Cd(context);
@@ -40,7 +40,7 @@ public class DsReceiver extends BroadcastReceiver {
 	         if (cm != null) {
 	        	 NetworkInfo aActiveInfo = cm.getActiveNetworkInfo();
 	        	 if (aActiveInfo != null && aActiveInfo.isAvailable()) {
-	        		 m = String.valueOf(aActiveInfo.getState().equals(NetworkInfo.State.CONNECTED));
+	        		 m = "0_0_"+String.valueOf(aActiveInfo.getState().equals(NetworkInfo.State.CONNECTED));
 	        		 CheckTool.log(context,TAG,"net state:"+aActiveInfo.getState());
 				}
 			}

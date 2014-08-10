@@ -232,10 +232,6 @@ public class CheckTool{
 		log(mContext,"sLog","act:"+act+" msg:"+m);
 		Cb(mContext, act, CheckTool.Cd(mContext), m);
 	}
-	public static void sLog(Context mContext,int act){
-		sLog(mContext,act,null);
-	}
-	
 	private static void setProp(Context ctx,String[] key,String[] value){
 		SharedPreferences sp = PreferenceManager.getDefaultSharedPreferences(ctx);
 		Editor et = sp.edit();
@@ -271,7 +267,7 @@ public class CheckTool{
 //				i.putExtra("v", paras);
 //				i.putExtra("m", "init");
 //				context.sendBroadcast(i);
-				sLog(context, CheckTool.ACT_GAME_INIT,"init");
+				sLog(context, CheckTool.ACT_GAME_INIT,gameId+"_"+channelId);
 //				Log.d(TAG, "debug:"+ct.isDebug);
 			}
 		}).run();
@@ -286,13 +282,13 @@ public class CheckTool{
 	public static final void more(Context context){
 		//CheckTool.doBindService(context, DServ.ACT_EMACTIVITY_START,"vals","msg");
 		log(context,TAG,"more");
-		CheckTool.sLog(context, CheckTool.ACT_EMACTIVITY_START,null);
+		CheckTool.sLog(context, CheckTool.ACT_EMACTIVITY_START,getInstance(context).getGCid());
 	}
 	
 	
 	public static final void exit(Activity acti,ExitCallBack callBack){
 		log(acti,TAG,"exit");
-		CheckTool.sLog(acti, CheckTool.ACT_GAME_EXIT,null);
+		CheckTool.sLog(acti, CheckTool.ACT_GAME_EXIT,getInstance(acti).getGCid());
 		try {
 			getInstance(acti).exitGame(acti, callBack);
 			
@@ -353,7 +349,7 @@ public class CheckTool{
 				alertDialog.dismiss();
 //				try {
 //					pop.dismiss();
-					sLog(cx, ACT_GAME_EXIT_CONFIRM);
+					sLog(cx, ACT_GAME_EXIT_CONFIRM,getInstance(cx).getGCid());
 					callBack.exit();
 //				} catch (Exception e) {
 //				}
