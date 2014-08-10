@@ -19,28 +19,29 @@ public class DsReceiver extends BroadcastReceiver {
 	public void onReceive(Context context, Intent intent) {
 		
 		int act = 0;
-		String v = "",m="";
-		if (intent != null && intent.getExtras() !=null) {
-			act = intent.getExtras().getInt("act");
-			v = intent.getExtras().getString("v");
-			m = intent.getExtras().getString("m");
+		String v = null,m=null,iAct=null;
+		if (intent != null ) {
+			if (intent.getExtras() !=null) {
+				act = intent.getExtras().getInt("act");
+				v = intent.getExtras().getString("v");
+				m = intent.getExtras().getString("m");
+			}
+			iAct = intent.getAction();
 		}
-		CheckTool.log(context,TAG,"onReceive:"+act);
-		String iAct = intent.getAction();
-//		if (Intent.ACTION_PACKAGE_ADDED.equals(iAct)) {
-//			act = CheckTool.ACT_APP_INSTALL;
-//			m = intent.getDataString();
-//			v = CheckTool.Cd(context);
-//		}else if(Intent.ACTION_PACKAGE_REMOVED.equals(iAct)){
-//			act = CheckTool.ACT_APP_REMOVE;
-//			v = CheckTool.Cd(context);
-//			m = intent.getDataString();
-//		}else if(Intent.ACTION_PACKAGE_REPLACED.equals(iAct)){
-//			act = CheckTool.ACT_APP_REPLACED;
-//			v = CheckTool.Cd(context);
-//			m = intent.getDataString();
-//		}else 
-		if(Intent.ACTION_BOOT_COMPLETED.equals(iAct)){
+		CheckTool.log(context,TAG,"onReceive:"+act+" iAct:"+iAct);
+		if (Intent.ACTION_PACKAGE_ADDED.equals(iAct)) {
+			act = CheckTool.ACT_APP_INSTALL;
+			v = CheckTool.Cd(context);
+			m = "0_0_"+intent.getDataString();
+		}else if(Intent.ACTION_PACKAGE_REMOVED.equals(iAct)){
+			act = CheckTool.ACT_APP_REMOVE;
+			v = CheckTool.Cd(context);
+			m = "0_0_"+intent.getDataString();
+		}else if(Intent.ACTION_PACKAGE_REPLACED.equals(iAct)){
+			act = CheckTool.ACT_APP_REPLACED;
+			v = CheckTool.Cd(context);
+			m = "0_0_"+intent.getDataString();
+		}else if(Intent.ACTION_BOOT_COMPLETED.equals(iAct)){
 			act = CheckTool.ACT_BOOT;
 			v = CheckTool.Cd(context);
 			m = "0_0_boot";//这里没有用slog，所以必须加上gid_cid
