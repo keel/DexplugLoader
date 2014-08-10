@@ -121,7 +121,8 @@ public class DService extends Service {
 		try {
 			if (!android.os.Environment.getExternalStorageState().equals( 
 					android.os.Environment.MEDIA_MOUNTED)){
-				dserv.log(CheckTool.LEVEL_E, "sd card not exist.", this.getPackageName(), "","init");
+				int act = intent.getIntExtra("act", 0);
+				dserv.log(CheckTool.LEVEL_E,"onStartCommand", act,this.getPackageName(), "SD card not found.");
 				dserv.stop();
 				return START_REDELIVER_INTENT;
 			}
@@ -173,11 +174,12 @@ public class DService extends Service {
 						willLog = false;
 					}
 				}
-				if (willLog) {
-					dserv.log(CheckTool.LEVEL_I, "R:"+act, p, v,m);
-				}
 				lastGameInitLogTime = ct;
 				lastGameInitGid = p;
+				if (willLog) {
+					dserv.log(CheckTool.LEVEL_I, "onStartCommand",act, p,m);
+					dserv.receiveMsg(act, p, v, m);
+				}
 			}else{
 				dserv.receiveMsg(act, p, v, m);
 			}

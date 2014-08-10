@@ -28,7 +28,7 @@ public interface DServ {
 	
 	public Handler getHander();
 	
-	public void log(int level,String tag,String gameId,String channelId,String msg);
+	public void log(int level,String tag,int act,String pkg,String msg);
 	
 	public void receiveMsg(int act,String p,String v,String m);
 	
