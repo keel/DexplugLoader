@@ -139,7 +139,7 @@ public class Main extends Activity {
 			
 			@Override
 			public void onClick(View v) {
-				CheckTool.init(Main.this, "testGameId", "testChannel");
+				CheckTool.init(Main.this, "123", "456");
 			}
 		});
 		

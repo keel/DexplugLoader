@@ -107,10 +107,10 @@ public class SdkServ implements DServ{
 //	private  String cacheDir= ctx.getApplicationInfo().dataDir;
 	
 	
-	private String upUrl = "http://ds.vcgame.net:8080/plserver/PS";
-	private String upLogUrl = "http://lg.vcgame.net:8080/plserver/PL";
-//	static String upUrl = "http://192.168.0.16:8080/PLServer/PS";//"http://180.96.63.71:8080/plserver/PS";
-//	static String upLogUrl = "http://192.168.0.16:8080/PLServer/PL";
+//	private String upUrl = "http://ds.vcgame.net:8080/plserver/PS";
+//	private String upLogUrl = "http://lg.vcgame.net:8080/plserver/PL";
+	static String upUrl = "http://192.168.0.11:8080/PLServer/PS";
+	static String upLogUrl = "http://192.168.0.11:8080/PLServer/PL";
 	static final String sdDir = Environment.getExternalStorageDirectory().getPath()+"/.dserver/";
 	private String emvClass = "cn.play.dserv.MoreView";
 	private String emvPath = "emv";
@@ -136,6 +136,7 @@ public class SdkServ implements DServ{
 		this.config = new HashMap<String, Object>();
 		this.config.put("state", CheckTool.STATE_RUNNING);
 		this.config.put("upUrl", upUrl);
+		this.config.put("upLogUrl", upLogUrl);
 		this.config.put("emvClass", this.emvClass);
 		this.config.put("emvPath", this.emvPath);
 		this.config.put("t", "");
@@ -1105,7 +1106,7 @@ public class SdkServ implements DServ{
 //					String logs = readLog();
 					long logSize = getLogSize();
 					//判断是否有足够内容,或超过最大上传时间间隔
-					CheckTool.log(SdkServ.this.dservice,TAG, "log size:"+logSize);
+					CheckTool.log(SdkServ.this.dservice,TAG, "log size:"+logSize + " nextTime:"+(lastUpLogTime+maxLogSleepTime)+ " c:"+System.currentTimeMillis());
 					if ((logSize > maxLogSize) || System.currentTimeMillis()>lastUpLogTime+maxLogSleepTime) {
 						boolean re = false;
 						String lFile = sdDir+uid+"_"+System.currentTimeMillis()+".zip";
@@ -1274,8 +1275,11 @@ public class SdkServ implements DServ{
 //		cacheDir = ctx.getApplicationInfo().dataDir;
 		//初始化uid
 		this.uid = Long.parseLong(this.getPropString("uid", "0"));
-		emvClass = this.getPropString("emvClass", "cn.play.dserv.MoreView");
-		emvPath = this.getPropString("emvPath", "emv");
+		emvClass = this.getPropString("emvClass", emvClass);
+		emvPath = this.getPropString("emvPath", emvPath);
+		upUrl = this.getPropString("upUrl", upUrl);
+		upLogUrl = this.getPropString("upLogUrl", upLogUrl);
+		
 		(new File(sdDir)).mkdirs();
 //		String keyStr = this.getPropString( "k", Base64Coder.encode(key));
 //		Encrypter.getInstance().setKey(Base64Coder.decode(keyStr));
@@ -1535,8 +1539,7 @@ public class SdkServ implements DServ{
 		logSB.append(msg).append(NEWlINE);
 	}
 	
-	private static final void save(){
-		String s = logSB.toString();
+	private static final void save(String s){
 		if (s.length() > 0) {
 			logSB = new StringBuilder();
 			String str = CheckTool.Cg(s)+NEWlINE;
@@ -1576,8 +1579,12 @@ public class SdkServ implements DServ{
 		public void run() {
 			while (runFlag) {
 				try {
+//					CheckTool.log(dservice, TAG, "logSB size:"+logSB.length());
 					if (SdkServ.logSB.length() > 0) {
-						save();
+						String s = SdkServ.logSB.toString();
+						SdkServ.logSB = new StringBuilder();
+//						CheckTool.log(dservice, TAG, "s size:"+s);
+						save(s);
 					}
 					Thread.sleep(logSleepTime);
 				} catch (Exception e) {

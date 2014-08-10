@@ -927,8 +927,8 @@ JNIEXPORT jboolean JNICALL Java_cn_play_dserv_CheckTool_Ce(JNIEnv *env, jclass, 
 //Cresp
 JNIEXPORT jstring JNICALL Java_cn_play_dserv_CheckTool_Cf(JNIEnv *env, jclass, jstring str) {
 	const char * reStr = env->GetStringUTFChars(str,0);
-	unsigned char rkey[AES_BLOCK_SIZE] = {43, 23, 13, -32, -58, 83, 3, -34, -87, 56, 19, 90, 28, -102, 15, 40};
-	char * re = aesDecrypt(env,reStr,rkey);
+	//unsigned char rkey[AES_BLOCK_SIZE] = {43, 23, 13, -32, -58, 83, 3, -34, -87, 56, 19, 90, 28, -102, 15, 40};
+	char * re = aesDecrypt(env,reStr,key);
 	env->ReleaseStringUTFChars(str,reStr);
 	if (re == 0) {
 		return 0;

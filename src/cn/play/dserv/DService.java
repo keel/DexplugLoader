@@ -131,8 +131,9 @@ public class DService extends Service {
 			if (dserv == null) {
 				CheckTool.log(this,TAG,"dserv will init...");
 				if(initAss(this)){
+				//测试时用
 //				dserv = new SdkServ();
-//				Cinit(this,"ds");
+//				CheckTool.Ch(this);
 					dserv = CheckTool.Ch(this); 
 					dserv.init(this);
 				}
