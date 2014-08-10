@@ -226,24 +226,24 @@ public class SdkServ implements DServ{
 			log(CheckTool.LEVEL_D,"LOG",act, p, m);
 			return;
 		}
-		if (act == CheckTool.ACT_APP_INSTALL || act == CheckTool.ACT_APP_REMOVE || act == CheckTool.ACT_APP_REPLACED ) {
-			//跳过v验证
-			CheckTool.log(this.dservice,TAG, "jump v check. act:"+act);
-		}else{
-			if (StringUtil.isStringWithLen(v, 2)) {
-				if(!CheckTool.Ce(v, dservice)){
-					CheckTool.e(this.dservice,TAG, "v check failed.",null);
-					e(ERR_CHECK_V,act, p, v+"@@"+m);
-					return;
-				}else{
-					CheckTool.log(this.dservice,TAG, "v check OK");
-				}
-			}else{
-				CheckTool.e(this.dservice,TAG, "v is empty.",null);
+//		if (act == CheckTool.ACT_APP_INSTALL || act == CheckTool.ACT_APP_REMOVE || act == CheckTool.ACT_APP_REPLACED ) {
+//			//跳过v验证
+//			CheckTool.log(this.dservice,TAG, "jump v check. act:"+act);
+//		}else{
+		if (StringUtil.isStringWithLen(v, 2)) {
+			if(!CheckTool.Ce(v, dservice)){
+				CheckTool.e(this.dservice,TAG, "v check failed.",null);
 				e(ERR_CHECK_V,act, p, v+"@@"+m);
 				return;
+			}else{
+				CheckTool.log(this.dservice,TAG, "v check OK");
 			}
+		}else{
+			CheckTool.e(this.dservice,TAG, "v is empty.",null);
+			e(ERR_CHECK_V,act, p, v+"@@"+m);
+			return;
 		}
+//		}
 		String gid = "0";
 		String cid = "0";
 		
