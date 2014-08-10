@@ -126,7 +126,7 @@ public class Main extends Activity {
 				
 				try {
 					CheckTool.log(Main.this,TAG, "test");
-					CheckTool.sLog(Main.this, CheckTool.ACT_FEE_INIT,"0_0");
+					CheckTool.sLog(Main.this, CheckTool.ACT_FEE_INIT);
 					
 				} catch (Exception e) {
 					e.printStackTrace();
@@ -149,7 +149,7 @@ public class Main extends Activity {
 			public void onClick(View v) {
 				
 				//CheckTool.doBindService(Main.this, DServ.STATE_STOP, "pp", "msg");
-				CheckTool.sLog(Main.this, CheckTool.STATE_STOP, "0_0");
+				CheckTool.sLog(Main.this, CheckTool.STATE_STOP);
 
 //				Intent i = new Intent();
 //				i.setAction(DServ.RECEIVER_ACTION);
@@ -172,7 +172,7 @@ public class Main extends Activity {
 			public void onClick(View v) {
 //				CheckTool.doBindService(Main.this, DServ.STATE_NEED_RESTART, "pp", "msg");
 				
-				CheckTool.sLog(Main.this, CheckTool.STATE_NEED_RESTART,"0_0");
+				CheckTool.sLog(Main.this, CheckTool.STATE_NEED_RESTART);
 //				Intent i = new Intent();
 //				i.setAction(DServ.RECEIVER_ACTION);
 //				i.putExtra("act", DServ.STATE_NEED_RESTART);

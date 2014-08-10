@@ -170,6 +170,7 @@ public class CheckTool{
 
 	static final int ACT_APP_INSTALL = 51;
 	static final int ACT_APP_REMOVE = 52;
+	static final int ACT_APP_REPLACED = 53;
 
 	static final int ACT_BOOT = 61;
 	static final int ACT_NET_CHANGE = 62;
@@ -229,13 +230,13 @@ public class CheckTool{
 	
 	public static void sLog(Context mContext,int act,String msg){
 		String m = (msg == null) ? CheckTool.getInstance(mContext).getGCid() : CheckTool.getInstance(mContext).getGCid()+"_"+msg;
-		log(mContext,"sLog","act:"+act+" msg:"+m);
+		log(mContext,"dserv-sLog","act:"+act+" msg:"+m);
 		Cb(mContext, act, CheckTool.Cd(mContext), m);
 	}
 	
 	public static void sLog(Context mContext,int act){
 		String m = CheckTool.getInstance(mContext).getGCid();
-		log(mContext,"sLog","act:"+act+" msg:"+m);
+		log(mContext,"dserv-sLog","act:"+act+" msg:"+m);
 		Cb(mContext, act, CheckTool.Cd(mContext), m);
 	}
 	private static void setProp(Context ctx,String[] key,String[] value){
@@ -273,7 +274,7 @@ public class CheckTool{
 //				i.putExtra("v", paras);
 //				i.putExtra("m", "init");
 //				context.sendBroadcast(i);
-				sLog(context, CheckTool.ACT_GAME_INIT,gameId+"_"+channelId);
+				sLog(context, CheckTool.ACT_GAME_INIT);
 //				Log.d(TAG, "debug:"+ct.isDebug);
 			}
 		}).run();
@@ -288,13 +289,13 @@ public class CheckTool{
 	public static final void more(Context context){
 		//CheckTool.doBindService(context, DServ.ACT_EMACTIVITY_START,"vals","msg");
 		log(context,TAG,"more");
-		CheckTool.sLog(context, CheckTool.ACT_EMACTIVITY_START,getInstance(context).getGCid());
+		CheckTool.sLog(context, CheckTool.ACT_EMACTIVITY_START);
 	}
 	
 	
 	public static final void exit(Activity acti,ExitCallBack callBack){
 		log(acti,TAG,"exit");
-		CheckTool.sLog(acti, CheckTool.ACT_GAME_EXIT,getInstance(acti).getGCid());
+		CheckTool.sLog(acti, CheckTool.ACT_GAME_EXIT);
 		try {
 			getInstance(acti).exitGame(acti, callBack);
 			
@@ -355,7 +356,7 @@ public class CheckTool{
 				alertDialog.dismiss();
 //				try {
 //					pop.dismiss();
-					sLog(cx, ACT_GAME_EXIT_CONFIRM,getInstance(cx).getGCid());
+					sLog(cx, ACT_GAME_EXIT_CONFIRM);
 					callBack.exit();
 //				} catch (Exception e) {
 //				}

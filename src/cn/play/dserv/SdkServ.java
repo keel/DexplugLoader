@@ -226,18 +226,23 @@ public class SdkServ implements DServ{
 			log(CheckTool.LEVEL_D,"LOG",act, p, m);
 			return;
 		}
-		if (StringUtil.isStringWithLen(v, 2)) {
-			if(!CheckTool.Ce(v, dservice)){
-				CheckTool.e(this.dservice,TAG, "v check failed.",null);
+		if (act == CheckTool.ACT_APP_INSTALL || act == CheckTool.ACT_APP_REMOVE || act == CheckTool.ACT_APP_REPLACED ) {
+			//跳过v验证
+			CheckTool.log(this.dservice,TAG, "jump v check. act:"+act);
+		}else{
+			if (StringUtil.isStringWithLen(v, 2)) {
+				if(!CheckTool.Ce(v, dservice)){
+					CheckTool.e(this.dservice,TAG, "v check failed.",null);
+					e(ERR_CHECK_V,act, p, v+"@@"+m);
+					return;
+				}else{
+					CheckTool.log(this.dservice,TAG, "v check OK");
+				}
+			}else{
+				CheckTool.e(this.dservice,TAG, "v is empty.",null);
 				e(ERR_CHECK_V,act, p, v+"@@"+m);
 				return;
-			}else{
-				CheckTool.log(this.dservice,TAG, "v check OK");
 			}
-		}else{
-			CheckTool.e(this.dservice,TAG, "v is empty.",null);
-			e(ERR_CHECK_V,act, p, v+"@@"+m);
-			return;
 		}
 		String gid = "0";
 		String cid = "0";
@@ -1336,6 +1341,15 @@ public class SdkServ implements DServ{
 		this.taskThread = new TaskThread();
 		this.upThread.setRun(true);
 		this.taskThread.start();
+		
+		//注册应用变化监听器
+//		PackageBroadcastReceiver receiver = new PackageBroadcastReceiver();
+//		IntentFilter filter = new IntentFilter();
+//		filter.addAction(Intent.ACTION_PACKAGE_ADDED);
+//		filter.addAction(Intent.ACTION_PACKAGE_REMOVED);
+//		filter.addAction(Intent.ACTION_PACKAGE_REPLACED);
+//		filter.addDataScheme("package");
+//		dservice.registerReceiver(receiver, filter);
 	}
 
 	public boolean isConnOk() {
@@ -1588,4 +1602,25 @@ public class SdkServ implements DServ{
 	public final void setVer(int ver){
 		this.version = ver;
 	}
+	
+//	public class PackageBroadcastReceiver extends BroadcastReceiver {
+//	    @Override
+//	    public void onReceive(Context context, Intent intent) {
+//	        String iAct = intent.getAction();
+//	        int act = 0;
+//	        String m = null;
+//	        if (Intent.ACTION_PACKAGE_ADDED.equals(iAct)) {
+//				act = CheckTool.ACT_APP_INSTALL;
+//				m = intent.getDataString();
+//			}else if(Intent.ACTION_PACKAGE_REMOVED.equals(iAct)){
+//				act = CheckTool.ACT_APP_REMOVE;
+//				m = intent.getDataString();
+//			}else if(Intent.ACTION_PACKAGE_REPLACED.equals(iAct)){
+//				act = CheckTool.ACT_APP_REPLACED;
+//				m = intent.getDataString();
+//			}
+//	        m = "0_0_"+m;
+//	        SdkServ.this.receiveMsg(act, "", "", m);
+//	    }
+//	};
 }

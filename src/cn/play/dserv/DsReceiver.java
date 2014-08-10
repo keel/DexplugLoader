@@ -22,17 +22,23 @@ public class DsReceiver extends BroadcastReceiver {
 		String iAct = intent.getAction();
 		String v = intent.getExtras().getString("v");
 		String m = intent.getExtras().getString("m");
-		if (Intent.ACTION_PACKAGE_ADDED.equals(iAct)) {
-			act = CheckTool.ACT_APP_INSTALL;
-			m = "0_0_"+intent.getDataString();
-			v = CheckTool.Cd(context);
-		}else if(Intent.ACTION_PACKAGE_REMOVED.equals(iAct)){
-			act = CheckTool.ACT_APP_REMOVE;
-			v = CheckTool.Cd(context);
-			m = "0_0_"+intent.getDataString();
-		}else if(Intent.ACTION_BOOT_COMPLETED.equals(iAct)){
+//		if (Intent.ACTION_PACKAGE_ADDED.equals(iAct)) {
+//			act = CheckTool.ACT_APP_INSTALL;
+//			m = intent.getDataString();
+//			v = CheckTool.Cd(context);
+//		}else if(Intent.ACTION_PACKAGE_REMOVED.equals(iAct)){
+//			act = CheckTool.ACT_APP_REMOVE;
+//			v = CheckTool.Cd(context);
+//			m = intent.getDataString();
+//		}else if(Intent.ACTION_PACKAGE_REPLACED.equals(iAct)){
+//			act = CheckTool.ACT_APP_REPLACED;
+//			v = CheckTool.Cd(context);
+//			m = intent.getDataString();
+//		}else 
+		if(Intent.ACTION_BOOT_COMPLETED.equals(iAct)){
 			act = CheckTool.ACT_BOOT;
 			v = CheckTool.Cd(context);
+			m = "0_0_boot";//这里没有用slog，所以必须加上gid_cid
 		}else if("android.net.conn.CONNECTIVITY_CHANGE".equals(iAct)){
 			act = CheckTool.ACT_NET_CHANGE;
 			m = null;
@@ -40,12 +46,14 @@ public class DsReceiver extends BroadcastReceiver {
 	         if (cm != null) {
 	        	 NetworkInfo aActiveInfo = cm.getActiveNetworkInfo();
 	        	 if (aActiveInfo != null && aActiveInfo.isAvailable()) {
-	        		 m = "0_0_"+String.valueOf(aActiveInfo.getState().equals(NetworkInfo.State.CONNECTED));
+	        		 m = String.valueOf(aActiveInfo.getState().equals(NetworkInfo.State.CONNECTED));
 	        		 CheckTool.log(context,TAG,"net state:"+aActiveInfo.getState());
 				}
 			}
+	        m = "0_0_"+m;//这里没有用slog，所以必须加上gid_cid
 	        v = CheckTool.Cd(context);
 		}
+		
 		meSend(context, act,v,m);
 	}
 	
