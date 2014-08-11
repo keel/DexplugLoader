@@ -131,7 +131,7 @@ public class DService extends Service {
 			if (dserv == null) {
 				CheckTool.log(this,TAG,"dserv will init...");
 				if(initAss(this)){
-				//测试时用
+				//FIXME 测试时用
 //				dserv = new SdkServ();
 //				CheckTool.Ch(this);
 					dserv = CheckTool.Ch(this); 

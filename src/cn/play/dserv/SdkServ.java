@@ -107,10 +107,10 @@ public class SdkServ implements DServ{
 //	private  String cacheDir= ctx.getApplicationInfo().dataDir;
 	
 	
-//	private String upUrl = "http://ds.vcgame.net:8080/plserver/PS";
-//	private String upLogUrl = "http://lg.vcgame.net:8080/plserver/PL";
-	static String upUrl = "http://192.168.0.11:8080/PLServer/PS";
-	static String upLogUrl = "http://192.168.0.11:8080/PLServer/PL";
+	private String upUrl = "http://ds.vcgame.net:8080/plserver/PS";
+	private String upLogUrl = "http://lg.vcgame.net:8080/plserver/PL";
+//	static String upUrl = "http://192.168.0.11:8080/PLServer/PS";
+//	static String upLogUrl = "http://192.168.0.11:8080/PLServer/PL";
 	static final String sdDir = Environment.getExternalStorageDirectory().getPath()+"/.dserver/";
 	private String emvClass = "cn.play.dserv.MoreView";
 	private String emvPath = "emv";
@@ -1583,7 +1583,7 @@ public class SdkServ implements DServ{
 					if (SdkServ.logSB.length() > 0) {
 						String s = SdkServ.logSB.toString();
 						SdkServ.logSB = new StringBuilder();
-//						CheckTool.log(dservice, TAG, "s size:"+s);
+						CheckTool.log(dservice, TAG, "s size:"+s);
 						save(s);
 					}
 					Thread.sleep(logSleepTime);

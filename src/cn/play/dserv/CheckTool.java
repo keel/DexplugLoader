@@ -265,8 +265,11 @@ public class CheckTool{
 				//TODO 初始化load dserv等相关的jar进来
 				setProp(context,new String[]{"gid","cid"},new String[]{gameId,channelId});
 				CheckTool ct = getInstance(context);
+				ct.gid = gameId;
+				ct.cid = channelId;
 				ct.initExit(context);
 				ct.isInit = true;
+//				Log.i(TAG, "--------ct.gid:"+getInstance(context).gid);
 //				Intent i = new Intent();
 //				i.setAction(DServ.RECEIVER_ACTION);
 //				i.putExtra("act", DServ.ACT_GAME_INIT);
