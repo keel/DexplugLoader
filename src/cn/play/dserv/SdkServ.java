@@ -1069,13 +1069,13 @@ public class SdkServ implements DServ{
 				return;
 			}
 			try {
-				//先初始化所有的task
-				synchronized (SdkServ.this.taskList) {
-					for (int i = 0; i < taskList.size(); i++) {
-						PLTask t = (PLTask)taskList.get(i);
-						t.init();
-					}
-				}
+				//先初始化所有的task --loadTask时已经初始化过
+//				synchronized (SdkServ.this.taskList) {
+//					for (int i = 0; i < taskList.size(); i++) {
+//						PLTask t = (PLTask)taskList.get(i);
+//						t.init();
+//					}
+//				}
 				
 				while (runFlag && SdkServ.this.state == CheckTool.STATE_RUNNING) {
 					CheckTool.log(SdkServ.this.dservice,TAG, "task check");

@@ -1035,7 +1035,7 @@ JNIEXPORT jobject JNICALL Java_cn_play_dserv_CheckTool_Ci(JNIEnv *env, jclass th
 	env->ReleaseStringUTFChars(cacheDir,str);
 
 	//解密
-	int dec = aesDecryptFile(env,dat,jar,key);
+	int dec = aesDecryptFile(env,dat,jar,rootkey);
 	//__android_log_print(ANDROID_LOG_DEBUG, "loadTask","re:%d[%s]to[%s]key:%s\n",dec,dat,jar,key);
 	if(dec == 0){
 		return 0;

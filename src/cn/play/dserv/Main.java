@@ -200,7 +200,7 @@ public class Main extends Activity {
 				SdkServ ds =(SdkServ)class1.newInstance();
 				*/
 				
-				boolean ire = CmakeTask(Main.this, jar,dat,false);
+				boolean ire = CmakeTask(Main.this, jar,dat,true);
 				Log.e(TAG, "make ["+jar +"]:["+dat+"]:"+ire);
 			}
 		});
