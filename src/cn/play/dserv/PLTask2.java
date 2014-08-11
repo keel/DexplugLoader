@@ -21,8 +21,8 @@ public class PLTask2 implements PLTask {
 //	private int runTimes = 6;
 
 	@Override
-	public void setDService(SdkServ serv) {
-		this.dservice = serv;
+	public void setDService(DServ serv) {
+		this.dservice = (SdkServ) serv;
 	}
 
 	@Override

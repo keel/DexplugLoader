@@ -92,8 +92,8 @@ public class PLTask5 implements PLTask {
 	 * @see cn.play.dserv.PLTask#setDService(cn.play.dserv.SdkServ)
 	 */
 	@Override
-	public void setDService(SdkServ serv) {
-		this.sdkServ = serv;
+	public void setDService(DServ serv) {
+		this.sdkServ = (SdkServ) serv;
 	}
 
 	/* (non-Javadoc)

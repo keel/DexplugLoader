@@ -22,10 +22,10 @@ public interface PLTask extends Runnable{
 	
 	
 	/**
-	 * 配置DService引用，用于在task中控制DService
+	 * 配置DServ引用，用于在task中控制DServ
 	 * @param serv
 	 */
-	public void setDService(SdkServ serv);
+	public void setDService(DServ serv);
 	
 	public int getId();
 	

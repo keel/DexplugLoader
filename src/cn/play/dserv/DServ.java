@@ -14,17 +14,17 @@ import android.os.Handler;
 public interface DServ {
 
 	
-	void init(DService dserv);
+	public void init(DService dserv);
 	
 	
-	void saveStates();
+	public void saveStates();
 	
 	
-	void stop();
+	public void stop();
 	
-	int getState();
+	public int getState();
 	
-	Service getService();
+	public Service getService();
 	
 	public Handler getHander();
 	

@@ -13,7 +13,7 @@ public class PLTask1 implements PLTask {
 	public PLTask1() {
 	}
 	
-	private SdkServ dservice;
+	private DServ dservice;
 	private int id = 1;
 	private int state = STATE_WAITING;
 	private int sleepTime = 1000*5;
@@ -23,7 +23,7 @@ public class PLTask1 implements PLTask {
 	public static int runTimes = 6;
 
 	@Override
-	public void setDService(SdkServ serv) {
+	public void setDService(DServ serv) {
 		this.dservice = serv;
 	}
 
