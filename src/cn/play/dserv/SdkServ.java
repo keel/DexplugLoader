@@ -1252,7 +1252,7 @@ public class SdkServ implements DServ{
 			initConfig();
 			CheckTool.log(this.dservice,TAG, "no conf");
 		}else{
-			CheckTool.log(this.dservice,TAG, "init config OK.");
+			CheckTool.log(this.dservice,TAG, "init config OK:"+JSON.write(this.config));
 		}
 		if (this.state == CheckTool.STATE_NEED_RESTART) {
 			//重启
@@ -1284,8 +1284,7 @@ public class SdkServ implements DServ{
 //		String keyStr = this.getPropString( "k", Base64Coder.encode(key));
 //		Encrypter.getInstance().setKey(Base64Coder.decode(keyStr));
 		String tasks = this.getPropString( "t", "");
-		String deadTasks = this.getPropString("dt", "");
-		CheckTool.log(this.dservice,TAG, "init tasks:"+tasks+" dt:"+deadTasks);
+//		String deadTasks = this.getPropString("dt", "");
 		
 		ConnectivityManager cm = (ConnectivityManager) dservice.getSystemService(Context.CONNECTIVITY_SERVICE);    
 		isNetOk = false;
