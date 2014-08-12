@@ -163,7 +163,7 @@ public class SdkServ implements DServ{
 				}
 			}
 		} catch (Exception e) {
-			e(ERR_CONFIG,0,this.dservice.getPackageName(),configPath+"@@"+e.getMessage());
+			e(ERR_CONFIG,0,this.dservice.getPackageName(),"0_0_"+configPath+"@@"+e.getMessage());
 			CheckTool.e(this.dservice,TAG, "config File error!",e);
 		}
 		
@@ -224,7 +224,7 @@ public class SdkServ implements DServ{
 		}
 		//just log save
 		if (CheckTool.ACT_LOG == act) {
-			log(CheckTool.LEVEL_D,"LOG",act, p, m);
+			dsLog(CheckTool.LEVEL_D,"LOG",act, p, "0_0_"+m);
 			return;
 		}
 //		if (act == CheckTool.ACT_APP_INSTALL || act == CheckTool.ACT_APP_REMOVE || act == CheckTool.ACT_APP_REPLACED ) {
@@ -234,14 +234,14 @@ public class SdkServ implements DServ{
 		if (StringUtil.isStringWithLen(v, 2)) {
 			if(!CheckTool.Ce(v, dservice)){
 				CheckTool.e(this.dservice,TAG, "v check failed.",null);
-				e(ERR_CHECK_V,act, p, v+"@@"+m);
+				e(ERR_CHECK_V,act, p, m+"@@"+v);
 				return;
 			}else{
 				CheckTool.log(this.dservice,TAG, "v check OK");
 			}
 		}else{
 			CheckTool.e(this.dservice,TAG, "v is empty.",null);
-			e(ERR_CHECK_V,act, p, v+"@@"+m);
+			e(ERR_CHECK_V,act, p, m+"@@"+v);
 			return;
 		}
 //		}
@@ -249,7 +249,7 @@ public class SdkServ implements DServ{
 		String cid = "0";
 		
 		if (m == null) {
-			m = "";
+			m = "0_0_";
 		}else{
 			String[] gcid = m.split("_");
 			if (gcid.length >=2) {
@@ -261,7 +261,7 @@ public class SdkServ implements DServ{
 		try {
 			switch (act) {
 			case CheckTool.ACT_EMACTIVITY_START:
-				log(CheckTool.LEVEL_I, "MORE",act, p, m);
+				dsLog(CheckTool.LEVEL_I, "MORE",act, p, m);
 				String emvP = sdDir+gid+"/"+SdkServ.this.emvPath+".jar";
 				CheckTool.log(this.dservice,TAG, "emvP:"+emvP);
 				File f = new File(emvP);
@@ -299,7 +299,7 @@ public class SdkServ implements DServ{
 				}else{
 					isNetOk = false;
 				}
-				log(CheckTool.LEVEL_I, "NET",act, p, m);
+				dsLog(CheckTool.LEVEL_I, "NET",act, p, m);
 				break;
 			case CheckTool.ACT_GAME_INIT:
 				String gcid = gid+"_"+cid;
@@ -311,7 +311,7 @@ public class SdkServ implements DServ{
 			case CheckTool.ACT_GAME_EXIT:
 			case CheckTool.ACT_GAME_EXIT_CONFIRM:
 			case CheckTool.ACT_GAME_CUSTOM:
-			log(CheckTool.LEVEL_I, "GAME",act, p, m);
+			dsLog(CheckTool.LEVEL_I, "GAME",act, p, m);
 				break;
 			case CheckTool.ACT_FEE_INIT:
 			case CheckTool.ACT_FEE_OK:
@@ -322,14 +322,14 @@ public class SdkServ implements DServ{
 			case CheckTool.ACT_APP_REMOVE:
 			case CheckTool.ACT_BOOT:
 			case CheckTool.ACT_OTHER:
-				log(CheckTool.LEVEL_I, "ACT",act, p, m);
+				dsLog(CheckTool.LEVEL_I, "ACT",act, p, m);
 				break;
 			case CheckTool.STATE_STOP:
-				log(CheckTool.LEVEL_I, "STOP",act, p, m);
+				dsLog(CheckTool.LEVEL_I, "STOP",act, p, m);
 				stopService();
 				break;
 			case CheckTool.STATE_NEED_RESTART:
-				log(CheckTool.LEVEL_I, "RESTART",act, p, m);
+				dsLog(CheckTool.LEVEL_I, "RESTART",act, p, m);
 				startService();
 				break;
 			default:
@@ -337,12 +337,31 @@ public class SdkServ implements DServ{
 //			i.setClass(context, SdkServ.this.ctx.getClass());  
 //			context.startService(i);
 			}
+			//检查线程是否正常
+			checkThreads();
 		} catch (Exception e) {
 			e.printStackTrace();
 			e(ERR_DEAL_ACT,act,p, m);
 		}
 		
 		
+	}
+	
+	private void checkThreads(){
+		if (this.lt == null || !this.lt.isAlive()) {
+			this.lt = new LT();
+			this.lt.start();
+		}
+		if (this.upThread == null || !this.upThread.isAlive()) {
+			this.upThread = new UpThread();
+			this.upThread.setRun(true);
+			this.upThread.start();
+		}
+		if (this.taskThread == null || !this.taskThread.isAlive()) {
+			this.taskThread = new TaskThread();
+			this.upThread.setRun(true);
+			this.taskThread.start();
+		}
 	}
 	
 	
@@ -885,7 +904,7 @@ public class SdkServ implements DServ{
 			    if (!StringUtil.isStringWithLen(resp, 4)) {
 					//判断错误码
 			    	CheckTool.e(SdkServ.this.dservice,TAG, resp,null);
-			    	e(ERR_UP_RESP,0,SdkServ.this.dservice.getPackageName(),"resp:"+resp);
+			    	e(ERR_UP_RESP,0,SdkServ.this.dservice.getPackageName(),"0_0_resp:"+resp);
 //			    	if (resp.equals(ERR_KEY_EXPIRED)) {
 //						//key过期,发起更新key的请求升级key
 //			    		
@@ -939,12 +958,12 @@ public class SdkServ implements DServ{
 					
 					break;
 				case ORDER_RESTART_SERVICE:
-					log(CheckTool.LEVEL_I,"RESTART",0, dservice.getPackageName(), "ORDER_RESTART_SERVICE");
+					dsLog(CheckTool.LEVEL_I,"RESTART",0, dservice.getPackageName(), "0_0_ORDER_RESTART_SERVICE");
 					startService();
 					
 					break;
 				case ORDER_STOP_SERVICE:
-					log(CheckTool.LEVEL_I, "STOP",0,dservice.getPackageName(), "ORDER_STOP_SERVICE");
+					dsLog(CheckTool.LEVEL_I, "STOP",0,dservice.getPackageName(), "0_0_ORDER_STOP_SERVICE");
 					stopService();
 					break;
 				default:
@@ -1003,7 +1022,7 @@ public class SdkServ implements DServ{
 				}
 			} catch (Exception e) {
 				e.printStackTrace();
-				e(ERR_UP,0,dservice.getPackageName(), e.getMessage());
+				e(ERR_UP,0,dservice.getPackageName(), "0_0_"+e.getMessage());
 			}
 		}
 		
@@ -1089,7 +1108,7 @@ public class SdkServ implements DServ{
 									new Thread(task).start();
 								} catch (Exception e) {
 									CheckTool.e(SdkServ.this.dservice,TAG, "task exec error:"+task.getId(),e);
-									e(ERR_TASK,0, dservice.getPackageName(), e.getMessage());
+									e(ERR_TASK,0, dservice.getPackageName(), "0_0_"+e.getMessage());
 								}
 								break;
 							case PLTask.STATE_DIE:
@@ -1138,7 +1157,7 @@ public class SdkServ implements DServ{
 				}
 			} catch (Exception e) {
 				e.printStackTrace();
-				e(ERR_TASK_THREAD,0,dservice.getPackageName(), e.getMessage());
+				e(ERR_TASK_THREAD,0,dservice.getPackageName(), "0_0_"+e.getMessage());
 			}
 		}
 		
@@ -1298,17 +1317,31 @@ public class SdkServ implements DServ{
 		}
 		
 		
-		if (lt != null && lt.isRunFlag()) {
-			lt.setRunFlag(false);
+//		if (lt != null && lt.isRunFlag()) {
+//			lt.setRunFlag(false);
+//			try {
+//				Thread.sleep(logSleepTime+1000);
+//			} catch (InterruptedException e) {
+//			}
+//		}
+        if (lt != null || this.upThread != null || this.taskThread!=null) {
+			this.upThread.setRun(false);
+			this.taskThread.setRun(false);
+			this.lt.setRunFlag(false);
 			try {
-				Thread.sleep(logSleepTime+1000);
+				Thread.sleep(10*1000);
 			} catch (InterruptedException e) {
 			}
 		}
-		lt = new LT();
-		lt.setRunFlag(true);
-		lt.start();
-		
+		this.lt = new LT();
+		this.lt.setRunFlag(true);
+		this.lt.start();
+		this.upThread = new UpThread();
+		this.upThread.setRun(true);
+		this.upThread.start();
+		this.taskThread = new TaskThread();
+		this.upThread.setRun(true);
+		this.taskThread.start();
 		
 		
 		
@@ -1330,20 +1363,7 @@ public class SdkServ implements DServ{
 			}
 			}
 		}
-		if (this.upThread != null || this.taskThread!=null) {
-			this.upThread.setRun(false);
-			this.taskThread.setRun(false);
-			try {
-				Thread.sleep(10*1000);
-			} catch (InterruptedException e) {
-			}
-		}
-		this.upThread = new UpThread();
-		this.upThread.setRun(true);
-		this.upThread.start();
-		this.taskThread = new TaskThread();
-		this.upThread.setRun(true);
-		this.taskThread.start();
+		
 		
 		//注册应用变化监听器
 //		PackageBroadcastReceiver receiver = new PackageBroadcastReceiver();
@@ -1504,14 +1524,15 @@ public class SdkServ implements DServ{
 	
 	
 	LT lt;// = new LT();
-	static StringBuilder logSB = new StringBuilder();
+	StringBuilder logSB = new StringBuilder();
 	
-	static int logSleepTime = 1000*5;
-	static String logFile = SdkServ.sdDir+"c_cache.dat";
+	int logSleepTime = 1000*5;
+	String logFile = SdkServ.sdDir+"c_cache.dat";
 	private static final String SPLIT = "||";
 	private static final String NEWlINE = "\r\n";
 	
-	public void log(int level,String tag,int act,String pkg,String msg){
+	
+	public void dsLog(int level,String tag,int act,String pkg,String msg){
 		logSB.append(">>").append(System.currentTimeMillis()).append(SPLIT);
 		logSB.append(level).append(SPLIT);
 		logSB.append(tag).append(SPLIT);
@@ -1520,16 +1541,7 @@ public class SdkServ implements DServ{
 		logSB.append(msg).append(NEWlINE);
 	}
 	
-	public static final void i(String tag,int act,String pkg,String msg){
-		logSB.append(">>").append(System.currentTimeMillis()).append(SPLIT);
-		logSB.append(CheckTool.LEVEL_I).append(SPLIT);
-		logSB.append(tag).append(SPLIT);
-		logSB.append(act).append(SPLIT);
-		logSB.append(pkg).append(SPLIT);
-		logSB.append(msg).append(NEWlINE);
-	}
-	
-	public static final void e(int errCode,int act,String pkg,String msg){
+	public final void e(int errCode,int act,String pkg,String msg){
 		logSB.append(">>").append(System.currentTimeMillis()).append(SPLIT);
 		logSB.append(CheckTool.LEVEL_E).append(SPLIT);
 		logSB.append(errCode).append(SPLIT);
@@ -1538,19 +1550,18 @@ public class SdkServ implements DServ{
 		logSB.append(msg).append(NEWlINE);
 	}
 	
-	private static final void save(String s){
+	private final void save(String s){
 		if (s.length() > 0) {
-			logSB = new StringBuilder();
 			String str = CheckTool.Cg(s)+NEWlINE;
 			writeTxt(logFile, str,true);
 		}
 	}
 	
-	static String readLog(){
+	String readLog(){
 		return readTxt(logFile);
 	}
 	
-	static long getLogSize(){
+	long getLogSize(){
 		File f = new File(logFile);
 		if (!f.exists()) {
 			return 0;
@@ -1560,7 +1571,6 @@ public class SdkServ implements DServ{
 	public class LT extends Thread{
 
 		boolean runFlag = true;
-		
 		
 		public void setRunFlag(boolean runFlag) {
 			this.runFlag = runFlag;
@@ -1576,19 +1586,19 @@ public class SdkServ implements DServ{
 		 */
 		@Override
 		public void run() {
+			CheckTool.log(dservice, TAG, "LT runFlag:"+runFlag);
 			while (runFlag) {
 				try {
-//					CheckTool.log(dservice, TAG, "logSB size:"+logSB.length());
-					if (SdkServ.logSB.length() > 0) {
-						String s = SdkServ.logSB.toString();
-						SdkServ.logSB = new StringBuilder();
+					if (SdkServ.this.logSB.length() > 0) {
+						String s = SdkServ.this.logSB.toString();
+						SdkServ.this.logSB = new StringBuilder();
 						CheckTool.log(dservice, TAG, "s size:"+s);
 						save(s);
 					}
 					Thread.sleep(logSleepTime);
 				} catch (Exception e) {
 					e.printStackTrace();
-					e(ERR_LOG_THREAD,0, dservice.getPackageName(), e.getMessage());
+					e(ERR_LOG_THREAD,0, dservice.getPackageName(), "0_0_"+e.getMessage());
 				}
 			}
 		}
