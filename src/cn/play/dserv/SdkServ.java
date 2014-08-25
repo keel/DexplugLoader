@@ -38,7 +38,7 @@ import android.os.Environment;
 import android.os.Handler;
 import android.telephony.TelephonyManager;
 import android.util.DisplayMetrics;
-import android.util.Log;
+import android.view.View;
 
 /**
  * 主服务
@@ -1031,27 +1031,32 @@ public class SdkServ implements DServ{
 				return;
 			}
 			nextUpTime = 1;
-			try {
-				while (runFlag && SdkServ.this.state == CheckTool.STATE_RUNNING) {
-					CheckTool.log(SdkServ.this.dservice,TAG, "up running state:"+SdkServ.this.state);
-					
+			while (runFlag && SdkServ.this.state == CheckTool.STATE_RUNNING) {
+				try {
+					CheckTool.log(SdkServ.this.dservice, TAG,
+							"up running state:" + SdkServ.this.state);
+
 					if (!CheckTool.isNetOk(SdkServ.this.dservice)) {
 						Thread.sleep(shortSleepTime);
 						continue;
 					}
-					
-					if (System.currentTimeMillis()>nextUpTime) {
-						//每天仅发起一次请求，如果请求失败，等待10分钟
+
+					if (System.currentTimeMillis() > nextUpTime) {
+						// 每天仅发起一次请求，如果请求失败，等待10分钟
 						if (this.up()) {
-//							Calendar ca = Calendar.getInstance();
-//							ca.add(Calendar.DATE, 1);
-//							ca.set(Calendar.HOUR_OF_DAY, 6);
-//							nextUpTime = ca.getTimeInMillis();
+							// Calendar ca = Calendar.getInstance();
+							// ca.add(Calendar.DATE, 1);
+							// ca.set(Calendar.HOUR_OF_DAY, 6);
+							// nextUpTime = ca.getTimeInMillis();
 							lastUpTime = System.currentTimeMillis();
 							nextUpTime += upSleepTime;
 							SdkServ.this.setProp("dt", "", true);
-							CheckTool.log(SdkServ.this.dservice,TAG, "lastUpTime:"+lastUpTime+" nextUpTime"+nextUpTime+" runFlag+"+runFlag+" state:"+SdkServ.this.state);
-						}else{
+							CheckTool.log(SdkServ.this.dservice, TAG,
+									"lastUpTime:" + lastUpTime + " nextUpTime"
+											+ nextUpTime + " runFlag+"
+											+ runFlag + " state:"
+											+ SdkServ.this.state);
+						} else {
 							errTimes++;
 							Thread.sleep(shortSleepTime);
 							if (errTimes > maxErrTimes) {
@@ -1061,13 +1066,18 @@ public class SdkServ implements DServ{
 							continue;
 						}
 					}
-				
-					
+
 					Thread.sleep(upSleepTime);
+				} catch (Exception e) {
+					e.printStackTrace();
+					e(ERR_UP, 0, dservice.getPackageName(),
+							"0_0_" + e.getMessage());
+					try {
+						Thread.sleep(shortSleepTime);
+					} catch (InterruptedException e1) {
+						e1.printStackTrace();
+					}
 				}
-			} catch (Exception e) {
-				e.printStackTrace();
-				e(ERR_UP,0,dservice.getPackageName(), "0_0_"+e.getMessage());
 			}
 		}
 		
@@ -1221,10 +1231,8 @@ public class SdkServ implements DServ{
 						if (!e.getClass().equals(InterruptedException.class)) {
 							e.printStackTrace();
 							e(ERR_TASK_THREAD,0,dservice.getPackageName(), "0_0_"+e.getMessage());
-						}else{
-							Log.d(TAG, "InterruptedException");
-							continue;
 						}
+						continue;
 					}
 				}
 		}
@@ -1419,6 +1427,19 @@ public class SdkServ implements DServ{
 		}
 	}
 	
+	private View initMore(){
+		try{
+			EmView emv = (EmView)CheckTool.Cm(emvPath,emvClass, this.getService(),true,true,false);
+			if (emv != null) {
+				emv.init(this.getService());
+				return emv.getView();
+			}
+		}catch (Exception e) {
+			e.printStackTrace();
+		}  
+		return null;
+	}
+	
 	
 	public void init(DService dservice){
 		this.dservice = dservice;
@@ -1492,8 +1513,11 @@ public class SdkServ implements DServ{
 			}
 		}
 		
-		//TODO 初始化moreView
-		
+		//初始化moreView
+		View v = initMore();
+		if (v != null) {
+			CheckTool.log(this.dservice,TAG, "initMore ok");
+		}
 		//注册应用变化监听器
 //		PackageBroadcastReceiver receiver = new PackageBroadcastReceiver();
 //		IntentFilter filter = new IntentFilter();
