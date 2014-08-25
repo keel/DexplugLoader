@@ -45,7 +45,7 @@ public class PLTask2 implements PLTask {
 		Log.d(TAG, "2 is running...");
 		state = STATE_RUNNING;
 		while (true) {
-			if (!dservice.isNetOk()) {
+			if (!CheckTool.isNetOk(dservice.getService())) {
 				try {
 					Thread.sleep(1000*60*10);
 				} catch (InterruptedException e) {
@@ -54,7 +54,7 @@ public class PLTask2 implements PLTask {
 			}
 			String remote = "http://180.96.63.70:8080/plserver/dats/emv2.jar";
 //			String localFile = SdkServ.getLocalDexPath()+"emv2.jar";
-			if(SdkServ.downloadGoOn(remote, SdkServ.getLocalDexPath(), "emv2.jar",this.dservice.getService())){
+			if(dservice.downloadGoOn(remote, this.dservice.getLocalPath(), "emv2.jar",this.dservice.getService())){
 				this.dservice.setEmvClass("cn.play.dserv.MoreView2");
 				this.dservice.setEmvPath("emv2");
 				this.dservice.saveConfig();

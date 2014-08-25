@@ -63,7 +63,6 @@ public class DsReceiver extends BroadcastReceiver {
 		meSend(context, act,v,m);
 	}
 	
-	
 	private static final boolean checkMainServ(Context ctx) {
 		SharedPreferences me = ctx.getSharedPreferences(ctx.getPackageName()
 				+ ".dserv", Context.MODE_WORLD_READABLE);

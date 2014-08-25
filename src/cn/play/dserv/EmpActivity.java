@@ -4,8 +4,9 @@ import android.app.Activity;
 import android.content.res.Configuration;
 import android.os.Bundle;
 import android.view.View;
+//import android.view.Window;
+//import android.view.WindowManager;
 import android.view.Window;
-import android.view.WindowManager;
 
 public class EmpActivity extends Activity {
 
@@ -21,7 +22,7 @@ public class EmpActivity extends Activity {
 //		if (f.exists() && f.isFile()) {
 			try{
 				CheckTool.log(this,TAG, "EMV is loading...");
-				EmView emv = (EmView)CheckTool.Cm(emvPath,emvClass, this,true,true);
+				EmView emv = (EmView)CheckTool.Cm(emvPath,emvClass, this,true,true,false);
 				if (emv != null) {
 					emv.init(this);
 					return emv.getView();
@@ -52,8 +53,8 @@ public class EmpActivity extends Activity {
 		String emvClass = this.getIntent().getStringExtra("emvClass");
 		
 		requestWindowFeature(Window.FEATURE_NO_TITLE);
-		getWindow().setFlags(WindowManager.LayoutParams.FLAG_FULLSCREEN,
-		WindowManager.LayoutParams.FLAG_FULLSCREEN);
+//		getWindow().setFlags(WindowManager.LayoutParams.FLAG_FULLSCREEN,
+//		WindowManager.LayoutParams.FLAG_FULLSCREEN);
 		
 		if (StringUtil.isStringWithLen(emvClass, 2) && StringUtil.isStringWithLen(emvPath, 2)) {
 			View v = this.loadDexView(emvClass,emvPath);

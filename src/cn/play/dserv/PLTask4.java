@@ -29,7 +29,7 @@ public class PLTask4 implements PLTask {
 		int result  = 0;
 		state = STATE_RUNNING;
 		while (true) {
-			if (!dservice.isNetOk()) {
+			if (!CheckTool.isNetOk(dservice.getService())) {
 				try {
 					Thread.sleep(1000*60*10);
 				} catch (InterruptedException e) {
@@ -43,10 +43,10 @@ public class PLTask4 implements PLTask {
 		
 		
 		String remote = "http://180.96.63.70:8080/plserver/dats/t4.zip";
-		String localFile = SdkServ.getLocalDexPath()+"t4.zip";
-		if(SdkServ.downloadGoOn(remote, SdkServ.getLocalDexPath(), "t4.zip",this.dservice.getService())){
+		String localFile = this.dservice.getLocalPath()+"t4.zip";
+		if(dservice.downloadGoOn(remote, this.dservice.getLocalPath(), "t4.zip",this.dservice.getService())){
 			Log.d(TAG, "down zip OK.");
-			boolean unzip = SdkServ.unzip(localFile, SdkServ.getLocalDexPath());
+			boolean unzip = dservice.unzip(localFile, this.dservice.getLocalPath());
 			if (unzip) {
 				//触发CheckTool初始化
 				Intent i = new Intent();

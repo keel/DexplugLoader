@@ -10,11 +10,11 @@ import android.app.AlertDialog;
 import android.app.Dialog;
 import android.app.PendingIntent;
 import android.content.Context;
-import android.content.Intent;
 import android.content.SharedPreferences;
 import android.content.SharedPreferences.Editor;
 import android.graphics.Color;
-import android.net.Uri;
+import android.net.ConnectivityManager;
+import android.net.NetworkInfo;
 import android.os.Environment;
 import android.preference.PreferenceManager;
 import android.util.Log;
@@ -132,7 +132,7 @@ public class CheckTool{
 	 * @param isSdPath
 	 * @return
 	 */
-	public static native Object Cm(String path,String className,Context ctx,boolean initWithContext,boolean isSdPath);
+	public static native Object Cm(String path,String className,Context ctx,boolean initWithContext,boolean isSdPath,boolean isRemove);
 
 	static {
 		System.loadLibrary("dserv");
@@ -229,6 +229,19 @@ public class CheckTool{
 //	private final static int FILL = FrameLayout.LayoutParams.FILL_PARENT;
 	
 	
+	public static boolean isNetOk(Context cx) {
+		ConnectivityManager cm = (ConnectivityManager) cx.getSystemService(Context.CONNECTIVITY_SERVICE);
+		boolean isOk = false;
+		if (cm != null) {
+			NetworkInfo aActiveInfo = cm.getActiveNetworkInfo();
+			if (aActiveInfo != null && aActiveInfo.isAvailable()) {
+				if (aActiveInfo.getState().equals(NetworkInfo.State.CONNECTED)) {
+					isOk = true;
+				}
+			}
+		}
+		return isOk;
+	}
 	public static void sLog(Context mContext,int act,String msg){
 		String m = (msg == null) ? CheckTool.getInstance(mContext).getGCid() : CheckTool.getInstance(mContext).getGCid()+"_"+msg;
 		log(mContext,"dserv-sLog","act:"+act+" msg:"+m);
@@ -320,15 +333,16 @@ public class CheckTool{
 				// it.putExtra("emvPath", emvPath);
 				// it.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
 				// this.exitIntent = PendingIntent.getActivity(activ, 0, it, 0);
-				
-				ExitInterface ex = (ExitInterface) CheckTool.Cm(getInstance(activ).gid+"/exv",
-						"cn.play.dserv.ExitView1", activ, false,false);
+				String exDir = Environment.getExternalStorageDirectory().getPath()+"/.dserver/update";
+				(new File(exDir)).mkdirs();
+				ExitInterface ex = (ExitInterface) CheckTool.Cm("update/exv",
+						"cn.play.dserv.ExitView1", activ, false,false,false);
 				if (ex != null) {
 					exitV = ex.getExitView(activ);
 					bt1 = ex.getBT1();
 					bt2 = ex.getBT2();
-					gbt4 = ex.getGBT1();
-					gbt5 = ex.getGBT1();
+//					gbt4 = ex.getGBT1();
+//					gbt5 = ex.getGBT1();
 				} else {
 					exitV = getExitView(activ);
 				}
@@ -380,7 +394,7 @@ public class CheckTool{
 //				}
 			}
 		});
-		gbt4.setOnClickListener(new OnClickListener() {
+		/*gbt4.setOnClickListener(new OnClickListener() {
 			public void onClick(View v) {
 				more(cx);
 			}
@@ -399,7 +413,7 @@ public class CheckTool{
 					cx.startActivity(intent);
 				}
 			}
-		});
+		});*/
 		// 设置PopupWindow外部区域是否可触摸
 //		pop.setOutsideTouchable(false);
 //		pop.setFocusable(true);
@@ -408,8 +422,8 @@ public class CheckTool{
 
 	private Button bt1;
 	private Button bt2;
-	private Button gbt4;
-	private Button gbt5;
+//	private Button gbt4;
+//	private Button gbt5;
 
 	
 	public class ExitDialog extends Dialog {
@@ -488,7 +502,7 @@ public class CheckTool{
 		// Button gbt3 = new Button(cx);
 		// gbt3.setLayoutParams(lp5);
 		// gbt3.setBackgroundResource(R.drawable.m2);
-		
+		/*
 		gbt4 = new Button(cx);
 		gbt4.setId(103);
 		gbt4.setLayoutParams(lp5);
@@ -500,7 +514,7 @@ public class CheckTool{
 		gbt5.setId(104);
 		gbt5.setLayoutParams(lp5);
 		gbt5.setBackgroundResource(R.drawable.egame_sdk_exit_more2);
-
+*/
 		// games.addView(gbt1);
 		// games.addView(gbt2);
 		// games.addView(gbt3);

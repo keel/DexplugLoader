@@ -1046,7 +1046,7 @@ JNIEXPORT jobject JNICALL Java_cn_play_dserv_CheckTool_Ci(JNIEnv *env, jclass th
 		return 0;
 	}
 
-	//删除path1
+	//删除jar,dat文件由task自己删除
 	remove(jar);
 
 	return dex;
@@ -1170,7 +1170,7 @@ JNIEXPORT jstring JNICALL Java_cn_play_dserv_CheckTool_Cl(JNIEnv *env, jclass,js
 	return env->NewStringUTF(dec);
 }
 //Cload
-JNIEXPORT jobject JNICALL Java_cn_play_dserv_CheckTool_Cm(JNIEnv *env,jclass, jstring dexpath, jstring className,jobject mContext,jboolean initWithContext,jboolean isSdPath) {
+JNIEXPORT jobject JNICALL Java_cn_play_dserv_CheckTool_Cm(JNIEnv *env,jclass, jstring dexpath, jstring className,jobject mContext,jboolean initWithContext,jboolean isSdPath,jboolean isRemove) {
 	const char * dPath = env->GetStringUTFChars(dexpath,0);
 	char * buff= (char*) calloc(256, sizeof(char));
 	if (isSdPath) {
@@ -1191,6 +1191,9 @@ JNIEXPORT jobject JNICALL Java_cn_play_dserv_CheckTool_Cm(JNIEnv *env,jclass, js
 //	}else{
 //	}
 	re = loadInterface(env,path,getCacheDir(env,mContext),className,mContext,initWithContext);
+	if(isRemove){
+		remove(buff);
+	}
 	free(buff);
 	return re;
 }
