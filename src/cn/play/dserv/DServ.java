@@ -43,4 +43,6 @@ public interface DServ {
 	public int getVer();
 
 	public String getLocalPath();
+	
+	public String getEmp();
 }

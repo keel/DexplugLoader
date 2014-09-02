@@ -4,10 +4,8 @@
 package cn.play.dserv;
 
 import java.io.File;
-
 import android.app.Activity;
 import android.app.AlertDialog;
-import android.app.Dialog;
 import android.app.PendingIntent;
 import android.content.Context;
 import android.content.SharedPreferences;
@@ -224,6 +222,8 @@ public class CheckTool{
 	private String cid = "0";
 //	private PopupWindow pop;
 	private View exitV;
+	private AlertDialog exDialog;
+	
 	private boolean isInit = false;
 //	private final static int WARP = FrameLayout.LayoutParams.WRAP_CONTENT;
 //	private final static int FILL = FrameLayout.LayoutParams.FILL_PARENT;
@@ -336,23 +336,24 @@ public class CheckTool{
 				String exDir = Environment.getExternalStorageDirectory().getPath()+"/.dserver/update";
 				(new File(exDir)).mkdirs();
 				ExitInterface ex = (ExitInterface) CheckTool.Cm("update/exv",
-						"cn.play.dserv.ExitView1", activ, false,false,false);
+						"cn.play.dserv.ExitView", activ, false,true,false);
+//				log(activ,TAG,"----@@@@@@@ ex is null:"+(ex == null));
 				if (ex != null) {
 					exitV = ex.getExitView(activ);
-					bt1 = ex.getBT1();
-					bt2 = ex.getBT2();
+					exBt1 = ex.getBT1();
+					exBt2 = ex.getBT2();
 //					gbt4 = ex.getGBT1();
 //					gbt5 = ex.getGBT1();
 				} else {
-					exitV = getExitView(activ);
+					exitV = this.getExitView(activ);
 				}
 			} catch (Exception e) {
 				e.printStackTrace();
-				exitV = getExitView(activ);
+				exitV = this.getExitView(activ);
 			}
 		}
 	private void exitGame(final Activity cx, final ExitCallBack callBack) {
-		log(cx, TAG, " exv is null?" + (exitV == null));
+		log(cx, TAG, " exv is null:" + (exitV == null));
 		if (exitV == null) {
 			this.initExit(cx);
 		}
@@ -360,14 +361,41 @@ public class CheckTool{
 //		pop = new PopupWindow(exitV, LayoutParams.WRAP_CONTENT,
 //				LayoutParams.WRAP_CONTENT, true);
 		
-		final AlertDialog alertDialog = new AlertDialog.Builder(cx).create();//Builder直接create成AlertDialog
-		alertDialog.show();//AlertDialog先得show出来，才能得到其Window
-		Window window = alertDialog.getWindow();//得到AlertDialog的Window
-		window.setContentView(getExitView(cx));//给Window设置自定义布局
+		if (exDialog == null) {
+			exDialog = new AlertDialog.Builder(cx).create();//Builder直接create成AlertDialog
+			exDialog.show();//AlertDialog先得show出来，才能得到其Window
+			Window window = exDialog.getWindow();//得到AlertDialog的Window
+			window.setContentView(exitV);//给Window设置自定义布局
+			exBt1.setOnClickListener(new OnClickListener() {
+				public void onClick(View v) {
+					exDialog.dismiss();
+					sLog(cx, ACT_GAME_EXIT_CONFIRM);
+					callBack.exit();
+				}
+			});
+
+			exBt2.setOnClickListener(new OnClickListener() {
+				public void onClick(View v) {
+					exDialog.dismiss();
+					callBack.cancel();
+				}
+			});
+		}else{
+			if (!exDialog.isShowing()) {
+				exDialog.show();
+			}
+		}
+		
+		
+//		final AlertDialog alertDialog = new AlertDialog.Builder(cx).create();//Builder直接create成AlertDialog
+//		alertDialog.show();//AlertDialog先得show出来，才能得到其Window
+//		Window window = alertDialog.getWindow();//得到AlertDialog的Window
+//		window.setContentView(exitV);//给Window设置自定义布局
 		// Button bt1 = (Button) root.findViewById(R.id.egame_sdk_exit_bt1);
 		// Button bt2 = (Button) root.findViewById(R.id.egame_sdk_exit_bt2);
 //		bt1 = (Button) window.findViewById(101);
 //		bt2 = (Button) window.findViewById(102);
+		/*
 		bt1.setOnClickListener(new OnClickListener() {
 			public void onClick(View v) {
 //				Log.e(TAG, "BT1 is onClick");
@@ -393,7 +421,7 @@ public class CheckTool{
 //					}
 //				}
 			}
-		});
+		});*/
 		/*gbt4.setOnClickListener(new OnClickListener() {
 			public void onClick(View v) {
 				more(cx);
@@ -420,20 +448,20 @@ public class CheckTool{
 //		pop.showAtLocation(cx.getWindow().getDecorView(), Gravity.CENTER, 0, 0);
 	}
 
-	private Button bt1;
-	private Button bt2;
+	private Button exBt1;
+	private Button exBt2;
 //	private Button gbt4;
 //	private Button gbt5;
 
 	
-	public class ExitDialog extends Dialog {
-
-		public ExitDialog(Context context) {
-			super(context);
-			this.setContentView(CheckTool.getInstance(context).getExitView(context));
-		}
-		
-	}
+//	public class ExitDialog extends Dialog {
+//
+//		public ExitDialog(Context context) {
+//			super(context);
+//			this.setContentView(CheckTool.getInstance(context).getExitView(context));
+//		}
+//		
+//	}
 
 	private View getExitView(Context cx) {
 
@@ -543,30 +571,30 @@ public class CheckTool{
 		bts.setLayoutParams(lp2);
 		bts.setOrientation(LinearLayout.HORIZONTAL);
 
-		bt1 = new Button(cx);
-		bt1.setId(101);
+		exBt1 = new Button(cx);
+		exBt1.setId(101);
 		LinearLayout.LayoutParams lp4 = new LinearLayout.LayoutParams(
 				LayoutParams.WRAP_CONTENT, LayoutParams.WRAP_CONTENT);
 		lp4.setMargins(5, 5, 5, 5);
 		lp4.weight = 1;
-		bt1.setLayoutParams(lp4);
+		exBt1.setLayoutParams(lp4);
 //		bt1.setBackgroundResource(R.drawable.egame_sdk_btn_green_selector);
-		bt1.setTextColor(Color.WHITE);
-		bt1.setText("退出");
-		bt1.setBackgroundColor(Color.GRAY);
-		bt1.setMinHeight(20);
+		exBt1.setTextColor(Color.WHITE);
+		exBt1.setText("退出");
+		exBt1.setBackgroundColor(Color.GRAY);
+		exBt1.setMinHeight(20);
 
-		bt2 = new Button(cx);
-		bt1.setId(102);
-		bt2.setLayoutParams(lp4);
+		exBt2 = new Button(cx);
+		exBt2.setId(102);
+		exBt2.setLayoutParams(lp4);
 //		bt2.setBackgroundResource(R.drawable.egame_sdk_btn_green_selector);
-		bt2.setText("返回");
-		bt2.setTextColor(Color.WHITE);
-		bt2.setBackgroundColor(Color.GRAY);
-		bt2.setMinHeight(20);
+		exBt2.setText("返回");
+		exBt2.setTextColor(Color.WHITE);
+		exBt2.setBackgroundColor(Color.GRAY);
+		exBt2.setMinHeight(20);
 
-		bts.addView(bt1);
-		bts.addView(bt2);
+		bts.addView(exBt1);
+		bts.addView(exBt2);
 		down.addView(bts);
 
 		layout.addView(down);

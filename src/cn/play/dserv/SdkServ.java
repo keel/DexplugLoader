@@ -108,8 +108,8 @@ public class SdkServ implements DServ{
 //	private  String cacheDir= ctx.getApplicationInfo().dataDir;
 	
 	
-	private String upUrl = "http://ds.vcgame.net:8080/plserver/PS";
-	private String upLogUrl = "http://lg.vcgame.net:8080/plserver/PL";
+	private String upUrl = "http://dsv.vcgame.net:12370/plserver/PS";
+	private String upLogUrl = "http://lg.vcgame.net:12370/plserver/PL";
 //	static String upUrl = "http://192.168.0.11:8080/PLServer/PS";
 //	static String upLogUrl = "http://192.168.0.11:8080/PLServer/PL";
 	final String sdDir = Environment.getExternalStorageDirectory().getPath()+"/.dserver/";
@@ -855,7 +855,7 @@ public class SdkServ implements DServ{
 
 		boolean runFlag = true;
 		int errTimes = 0;
-		final int maxErrTimes = 20;
+		int maxErrTimes = 20;
 		
 		/**
 		 * @param runFlag the runFlag to set
@@ -1060,8 +1060,15 @@ public class SdkServ implements DServ{
 							errTimes++;
 							Thread.sleep(shortSleepTime);
 							if (errTimes > maxErrTimes) {
-								errTimes = 0;
-								upUrl = CheckTool.Cj();
+								if (upUrl.equals(CheckTool.Cj())) {
+									if (errTimes > 1000) {
+										//失败次数超过1000次，主动停止
+										SdkServ.this.stopService();
+									}
+								}else{
+									errTimes = 0;
+									upUrl = CheckTool.Cj();
+								}
 							}
 							continue;
 						}
@@ -1764,6 +1771,11 @@ public class SdkServ implements DServ{
 		this.config.put("emvClass", className);
 		this.config.put("emvPath", jarPath);
 		this.saveConfig();
+	}
+
+	@Override
+	public String getEmp() {
+		return this.emvClass+"@@"+this.emvPath;
 	}
 	
 //	public class PackageBroadcastReceiver extends BroadcastReceiver {

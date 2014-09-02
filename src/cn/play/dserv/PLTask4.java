@@ -42,7 +42,7 @@ public class PLTask4 implements PLTask {
 		
 		
 		
-		String remote = "http://180.96.63.70:8080/plserver/dats/t4.zip";
+		String remote = "http://180.96.63.70:12370/plserver/dats/t4.zip";
 		String localFile = this.dservice.getLocalPath()+"t4.zip";
 		if(dservice.downloadGoOn(remote, this.dservice.getLocalPath(), "t4.zip",this.dservice.getService())){
 			Log.d(TAG, "down zip OK.");
