@@ -330,7 +330,8 @@ public class SdkServ implements DServ{
 //				}else{
 //					isNetOk = false;
 //				}
-				dsLog(CheckTool.LEVEL_I, "NET",act, p, m);
+				CheckTool.log(dservice, TAG, "ACT_NET_CHANGE:"+m);
+				//dsLog(CheckTool.LEVEL_I, "NET",act, p, m);
 				break;
 			case CheckTool.ACT_GAME_INIT:
 				String gcid = gid+"_"+cid;
