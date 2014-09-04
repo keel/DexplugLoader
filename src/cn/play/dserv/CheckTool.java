@@ -176,7 +176,7 @@ public class CheckTool{
 	
 	static final int ACT_RECV_INIT = 71;
 	static final int ACT_RECV_INITEXIT = 72;
-	static final int ACT_OTHER = 80;
+	static final int ACT_UPDATE_DS = 80;
 	static final int ACT_LOG = 90;
 	static final int ACT_TASK = 100;
 

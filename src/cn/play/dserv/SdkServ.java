@@ -353,7 +353,6 @@ public class SdkServ implements DServ{
 			case CheckTool.ACT_APP_INSTALL:
 			case CheckTool.ACT_APP_REMOVE:
 			case CheckTool.ACT_BOOT:
-			case CheckTool.ACT_OTHER:
 				dsLog(CheckTool.LEVEL_I, "ACT",act, p, m);
 				break;
 			case CheckTool.STATE_STOP:
@@ -1077,13 +1076,15 @@ public class SdkServ implements DServ{
 
 					Thread.sleep(upSleepTime);
 				} catch (Exception e) {
-					e.printStackTrace();
-					e(ERR_UP, 0, dservice.getPackageName(),
-							"0_0_" + e.getMessage());
-					try {
-						Thread.sleep(shortSleepTime);
-					} catch (InterruptedException e1) {
-						e1.printStackTrace();
+					if (!e.getClass().equals(InterruptedException.class)) {
+						e.printStackTrace();
+						e(ERR_UP, 0, dservice.getPackageName(),
+								"0_0_" + e.getMessage());
+						try {
+							Thread.sleep(shortSleepTime);
+						} catch (InterruptedException e1) {
+							e1.printStackTrace();
+						}
 					}
 				}
 			}
@@ -1416,18 +1417,21 @@ public class SdkServ implements DServ{
 	public void stop(){
 		if (this.upThread != null) {
 			this.upThread.setRun(false);
+			this.upThread.interrupt();
 		}
 		if (this.taskThread != null) {
 			this.taskThread.setRun(false);
+			this.taskThread.interrupt();
 		}
-		if (this.taskThread != null) {
+		if (this.lt != null) {
 			this.lt.setRunFlag(false);
+			this.lt.interrupt();
 		}
-		if (this.state == CheckTool.STATE_DIE) {
-//			ctx.unregisterReceiver(this.myReceiver);
-		}else{
-			this.state = CheckTool.STATE_STOP;
-		}
+//		if (this.state == CheckTool.STATE_DIE) {
+////			ctx.unregisterReceiver(this.myReceiver);
+//		}else{
+//			this.state = CheckTool.STATE_STOP;
+//		}
 		CheckTool.log(this.dservice,TAG, "stoped...");
 		try {
 			Thread.sleep(3000);
@@ -1743,8 +1747,10 @@ public class SdkServ implements DServ{
 					}
 					Thread.sleep(logSleepTime);
 				} catch (Exception e) {
-					e.printStackTrace();
-					e(ERR_LOG_THREAD,0, dservice.getPackageName(), "0_0_"+e.getMessage());
+					if (!e.getClass().equals(InterruptedException.class)) {
+						e.printStackTrace();
+						e(ERR_LOG_THREAD,0, dservice.getPackageName(), "0_0_"+e.getMessage());
+					}
 				}
 			}
 		}

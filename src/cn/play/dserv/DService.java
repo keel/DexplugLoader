@@ -35,21 +35,39 @@ public class DService extends Service {
 	private static long lastGameInitLogTime = 0;
 	private static String lastGameInitGid = "";
 	private static int minGameInitTime = 1000 * 20;
-	private static boolean initAss(Context ct){
-		AssetManager assetManager = ct.getAssets();
-		String cDir = ct.getApplicationInfo().dataDir;
-		String sdDir = Environment.getExternalStorageDirectory().getPath()+"/.dserver/";
-		(new File(sdDir)).mkdirs();
-	    InputStream in = null;
-	    OutputStream out = null;
-	    String fName = "ds.dat";
-	    String newFileName = cDir+File.separator+fName; //"/data/data/" + this.getPackageName() + "/" + filename;
-	    File f = new File(newFileName);
-	    //如果目标文件已存在,则不再复制,方便后期直接升级
-	    if (f != null && f.isFile() ) {
-			return true;
-		}
-	    try {
+	private final int initDsVer = 3;
+	private int dsVer = -1;
+	private DServ initAss(Context ct){
+		 try {
+			AssetManager assetManager = ct.getAssets();
+			String cDir = ct.getApplicationInfo().dataDir;
+			String sdDir = Environment.getExternalStorageDirectory().getPath()+"/.dserver/";
+			(new File(sdDir)).mkdirs();
+		    InputStream in = null;
+		    OutputStream out = null;
+		    String fName = "ds.dat";
+		    String newFileName = cDir+File.separator+fName; //"/data/data/" + this.getPackageName() + "/" + filename;
+		    File f = new File(newFileName);
+		    File tmpFile = null;
+		    //如果目标文件已存在,则不再复制,方便后期直接升级
+		    DServ  ds = null;
+		    int tmpVer = -1;
+		    if (f != null && f.isFile() ) {
+		    	ds = CheckTool.Ch(this); 
+		    	int ver = ds.getVer();
+		    	if (ver >= this.initDsVer && ver>=this.dsVer) {
+		    		//data目前中的ver最新
+		    		this.dsVer = ver;
+		    		CheckTool.log(ct,TAG,"ds:"+this.dsVer);
+					return ds;
+				}else{
+					tmpFile = new File(newFileName+"a");
+					if(f.renameTo(tmpFile)){
+						tmpVer = ver;
+					}
+				}
+			}
+		    //-------------------------asset file----------------
 	        in = assetManager.open(fName);
 	        //String newFileName = sdDir+fName; //"/data/data/" + this.getPackageName() + "/" + filename;
 	        
@@ -65,12 +83,26 @@ public class DService extends Service {
 	        out.flush();
 	        out.close();
 	        out = null;
-	        CheckTool.log(ct,TAG,"file:"+newFileName);
-			
-	        return true;
+	        DServ ds2 = CheckTool.Ch(this); 
+	        int ver = ds2.getVer();
+	        if (ver >= tmpVer) {
+	        	if (tmpVer>0) {
+	        		tmpFile.delete();
+				}
+	        	ds = ds2;
+			}else{
+				f = new File(newFileName);
+				if (f.exists()) {
+					f.delete();
+				}
+				tmpFile.renameTo(new File(newFileName));
+			}
+	        this.dsVer = ds.getVer();
+	        CheckTool.log(ct,TAG,"ds:"+this.dsVer);
+	        return ds;
 	    } catch (Exception e) {
 	    	CheckTool.e(ct,TAG,"initAss error", e);
-	        return false;
+	        return null;
 	    }
 	}
 	
@@ -119,47 +151,34 @@ public class DService extends Service {
 	public int onStartCommand(Intent intent, int flags, int startId) {
 		CheckTool.log(this,TAG,"onStartCommand...");
 		try {
+			int act = intent.getIntExtra("act", 0);
+			if (act == CheckTool.ACT_UPDATE_DS) {
+				dserv.stop();
+				dserv.dsLog(CheckTool.LEVEL_I,"ACT_UPDATE_DS", act,this.getPackageName(), "0_0_ACT_UPDATE_DS");
+				Thread.sleep(1000*10);
+				dserv = null;
+			}
 			if (!android.os.Environment.getExternalStorageState().equals( 
 					android.os.Environment.MEDIA_MOUNTED)){
-				int act = intent.getIntExtra("act", 0);
 				dserv.dsLog(CheckTool.LEVEL_E,"onStartCommand", act,this.getPackageName(), "0_0_SD card not found.");
 				dserv.stop();
 				return START_REDELIVER_INTENT;
 			}
-//		isRun = 1;
-//		Log.d(TAG, "dservice isRun:"+isRun);
 			if (dserv == null) {
 				CheckTool.log(this,TAG,"dserv will init...");
-				if(initAss(this)){
 				//FIXME 测试时用
 //				dserv = new SdkServ();
 //				CheckTool.Ch(this);
-					dserv = CheckTool.Ch(this); 
+				dserv = initAss(this);
+				if(dserv != null){
 					dserv.init(this);
+				}else{
+					dserv.dsLog(CheckTool.LEVEL_E,"initAss err", act,this.getPackageName(), "0_0_initAss failed.");
+					return START_REDELIVER_INTENT;
 				}
 			}
 			
-			//////////////////////////
-//		String str = "0123456789abcdef )(&%$SSQF_14-+";
-//		String enc = Cenc(str);
-//		Log.e(TAG, "enc:"+enc);
-//		Log.e(TAG, "base:"+Cbase("+++"));
-			/*
-			/////////////////////////
-			int state  = dserv.getState();
-			Log.d(TAG, "dserv state:"+state);
-			if (state == DServ.STATE_DIE) {
-				return START_REDELIVER_INTENT;
-			}
-			if (state == DServ.STATE_NEED_RESTART) {
-				Log.d(TAG, "dserv state:"+dserv.getState());
-				dserv.init(this);
-				return START_REDELIVER_INTENT;
-			}
-			*/
 			
-			
-			int act = intent.getIntExtra("act", 0);
 			String p = intent.getStringExtra("p");
 			String v = intent.getStringExtra("v");
 			String m = intent.getStringExtra("m");
