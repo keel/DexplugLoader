@@ -1113,7 +1113,7 @@ public class SdkServ implements DServ{
 		this.saveStates();
 	}
 	
-	public void delTask(PLTask task){
+	public void taskDone(PLTask task){
 		int tid = task.getId();
 		synchronized (this.taskList) {
 			this.taskList.remove(task);
@@ -1190,7 +1190,7 @@ public class SdkServ implements DServ{
 									}
 									break;
 								case PLTask.STATE_DIE:
-									SdkServ.this.delTask(task);
+									SdkServ.this.taskDone(task);
 									break;
 								default:
 									break;

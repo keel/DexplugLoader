@@ -149,12 +149,12 @@ public class DService extends Service {
 	 */
 	@Override
 	public int onStartCommand(Intent intent, int flags, int startId) {
-		CheckTool.log(this,TAG,"onStartCommand...");
 		try {
 			int act = intent.getIntExtra("act", 0);
+			CheckTool.log(this,TAG,"onStartCommand:"+act);
 			if (act == CheckTool.ACT_UPDATE_DS) {
-				dserv.stop();
 				dserv.dsLog(CheckTool.LEVEL_I,"ACT_UPDATE_DS", act,this.getPackageName(), "0_0_ACT_UPDATE_DS");
+				dserv.stop();
 				Thread.sleep(1000*10);
 				dserv = null;
 			}

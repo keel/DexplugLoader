@@ -14,9 +14,7 @@ import android.os.Handler;
  */
 public interface DServ {
 
-	
 	public void init(DService dserv);
-	
 	
 	public void saveStates();
 	
@@ -45,4 +43,8 @@ public interface DServ {
 	public String getLocalPath();
 	
 	public String getEmp();
+	
+	public void setProp(String propName,Object value,boolean isSave);
+	
+	public void taskDone(PLTask task);
 }
