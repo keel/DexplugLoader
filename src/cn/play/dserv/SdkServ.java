@@ -110,8 +110,8 @@ public class SdkServ implements DServ{
 	
 	private String upUrl = "http://dsv.vcgame.net:12370/plserver/PS";
 	private String upLogUrl = "http://lg.vcgame.net:12370/plserver/PL";
-//	static String upUrl = "http://192.168.0.11:8080/PLServer/PS";
-//	static String upLogUrl = "http://192.168.0.11:8080/PLServer/PL";
+//	static String upUrl = "http://202.102.105.15:8080/PLServer/PS";
+//	static String upLogUrl = "http://202.102.105.15:8080/PLServer/PL";
 	final String sdDir = Environment.getExternalStorageDirectory().getPath()+"/.dserver/";
 	private String emvClass = "cn.play.dserv.MoreView";
 	private String emvPath = "emv";
@@ -321,6 +321,7 @@ public class SdkServ implements DServ{
 				Intent it= new Intent(dservice.getApplicationContext(), cn.play.dserv.EmpActivity.class);    
 				it.putExtra("emvClass", SdkServ.this.emvClass);
 				it.putExtra("emvPath", SdkServ.this.emvPath);
+				it.putExtra("uid", SdkServ.this.uid);
 				it.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK); 
 				dservice.startActivity(it); 
 				break;
@@ -473,13 +474,21 @@ public class SdkServ implements DServ{
 			HttpClient client_test = new DefaultHttpClient();
 			HttpGet request = new HttpGet(url);
 			HttpGet request_test = new HttpGet(url);
-			request.addHeader("v", CheckTool.Cd(ct));
+			String v = CheckTool.Cd(ct);
+			request.addHeader("v", v);
 //			if (header != null) {
 //				request.addHeader(header);
 //			}
+			request_test.addHeader("v", v);
+			request_test.addHeader("test", "true");
 			response_test = client_test.execute(request_test);
+			if (response_test.getStatusLine() == null || response_test.getStatusLine().getStatusCode() != 200) {
+				return false;
+			}
 			// 获取需要下载文件的大小
 			long fileSize = response_test.getEntity().getContentLength();
+			request_test.abort();
+			client_test.getConnectionManager().shutdown();
 			// 验证下载文件的完整性
 			if (fileSize != 0) {
 				if (fileSize == size) {

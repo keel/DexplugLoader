@@ -442,13 +442,13 @@ static jint aesDecryptFile(JNIEnv *env, char * filepathorg, char * filepathnow,u
 			re = 0;
 			//return 0;//env->NewStringUTF("Filed to create file!");
 		}
+		free(decryptString);
+		free(inputString);
 	} else {
 		re = 0;//
 		//return 0;//env->NewStringUTF("Filed to read file!");
 	}
 
-	free(decryptString);
-	free(inputString);
 	//释放出从java端接收的字符串
 //	env->ReleaseStringUTFChars(pathorg, filepathorg);
 //	env->ReleaseStringUTFChars(pathnow, filepathnow);
