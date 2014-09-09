@@ -369,6 +369,8 @@ public class CheckTool{
 			exBt1.setOnClickListener(new OnClickListener() {
 				public void onClick(View v) {
 					exDialog.dismiss();
+					exDialog = null;
+					exitV = null;
 					sLog(cx, ACT_GAME_EXIT_CONFIRM);
 					callBack.exit();
 				}
@@ -381,6 +383,7 @@ public class CheckTool{
 				}
 			});
 		}else{
+			log(cx,TAG,"!!!!!!!!!!exDialog:"+exDialog.isShowing());
 			if (!exDialog.isShowing()) {
 				exDialog.show();
 			}

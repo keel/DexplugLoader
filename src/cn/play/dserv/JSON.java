@@ -103,7 +103,6 @@ public class JSON {
 		return sb.toString();
 	}
 	
-	@SuppressWarnings("unchecked")
 	private static final void map(StringBuilder sb,Map map) {
         sb.append("{");
         Iterator it = map.entrySet().iterator();

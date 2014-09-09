@@ -1287,8 +1287,7 @@ public class SdkServ implements DServ{
 						CheckTool.log(SdkServ.this.dservice,TAG, "upload log OK");
 					}
 				}
-				f = new File(this.zipFileName);
-				f.delete();
+				
 				if (re) {
 					SdkServ.this.lastUpLogTime = System.currentTimeMillis();
 					f = new File(logFile);
@@ -1305,6 +1304,9 @@ public class SdkServ implements DServ{
 			} catch (Exception e) {
 				e.printStackTrace();
 				e(ERR_LOG_UPLOAD,0, dservice.getPackageName(), "0_0_"+e.getMessage());
+			} finally{
+				File f = new File(this.zipFileName);
+				f.delete();
 			}
 			
 		}
@@ -1784,7 +1786,6 @@ public class SdkServ implements DServ{
 	public String getEmp() {
 		return this.emvClass+"@@"+this.emvPath;
 	}
-	
 //	public class PackageBroadcastReceiver extends BroadcastReceiver {
 //	    @Override
 //	    public void onReceive(Context context, Intent intent) {

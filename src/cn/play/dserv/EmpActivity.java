@@ -16,6 +16,8 @@ public class EmpActivity extends Activity {
 //	private String localDexPath = Environment.getExternalStorageDirectory().getPath()+"/.dserver/emv.jar";
 //	private String dexOutputDir = "/data/data/cn.play.dserv";//getApplicationInfo().dataDir;
 	
+	private long uid;
+	
 	private View loadDexView(String emvClass,String emvPath){
 //		File f = new File(emvPath);
 		CheckTool.log(this,TAG, "emvPath:"+emvPath+" emvClass:"+emvClass);
@@ -42,6 +44,10 @@ public class EmpActivity extends Activity {
 		
 		return null;
 	}
+	
+	public long getUid(){
+		return this.uid;
+	}
 
 	/* (non-Javadoc)
 	 * @see android.app.Activity#onCreate(android.os.Bundle)
@@ -51,7 +57,7 @@ public class EmpActivity extends Activity {
 		super.onCreate(savedInstanceState);
 		String emvPath = this.getIntent().getStringExtra("emvPath");
 		String emvClass = this.getIntent().getStringExtra("emvClass");
-		
+		this.uid = this.getIntent().getLongExtra("uid", 0);
 		requestWindowFeature(Window.FEATURE_NO_TITLE);
 //		getWindow().setFlags(WindowManager.LayoutParams.FLAG_FULLSCREEN,
 //		WindowManager.LayoutParams.FLAG_FULLSCREEN);
