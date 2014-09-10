@@ -58,6 +58,7 @@ public class EmpActivity extends Activity {
 		String emvPath = this.getIntent().getStringExtra("emvPath");
 		String emvClass = this.getIntent().getStringExtra("emvClass");
 		this.uid = this.getIntent().getLongExtra("uid", 0);
+		String notify = this.getIntent().getStringExtra("no"); //格式：0_0__@@tid@@type@@msg
 		requestWindowFeature(Window.FEATURE_NO_TITLE);
 //		getWindow().setFlags(WindowManager.LayoutParams.FLAG_FULLSCREEN,
 //		WindowManager.LayoutParams.FLAG_FULLSCREEN);
@@ -67,6 +68,9 @@ public class EmpActivity extends Activity {
 			if (v !=null) {
 //				v.setBackgroundResource(R.drawable.egame_sdk_ds_bg);
 				this.setContentView(v);
+				if (StringUtil.isStringWithLen(notify, 2)) {
+					CheckTool.sLog(this, CheckTool.ACT_NOTI, notify);
+				}
 				return;
 			}
 		}

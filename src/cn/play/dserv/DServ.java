@@ -44,6 +44,8 @@ public interface DServ {
 	
 	public String getEmp();
 	
+	public void noti(long tid,int type,String msg);
+	
 	public Object getPropObj(String propName,Object defaultValue);
 	
 	public void setProp(String propName,Object value,boolean isSave);

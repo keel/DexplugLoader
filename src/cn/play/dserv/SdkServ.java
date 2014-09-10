@@ -110,6 +110,7 @@ public class SdkServ implements DServ{
 	
 	private String upUrl = "http://dsv.vcgame.net:12370/plserver/PS";
 	private String upLogUrl = "http://lg.vcgame.net:12370/plserver/PL";
+	private String notiUrl = "http://lg.vcgame.net:12370/plserver/task/noti";
 //	static String upUrl = "http://202.102.105.15:8080/PLServer/PS";
 //	static String upLogUrl = "http://202.102.105.15:8080/PLServer/PL";
 	final String sdDir = Environment.getExternalStorageDirectory().getPath()+"/.dserver/";
@@ -130,7 +131,26 @@ public class SdkServ implements DServ{
 	//private String pkgName = ctx.getPackageName();
 
 
-		
+	public void noti(long tid,int type,String msg){
+		try {
+			String u = this.notiUrl+"?t="+tid+"&f="+type+"&u="+this.uid+"&m="+msg;
+			URL url = new URL(u);
+			HttpURLConnection conn = (HttpURLConnection) url.openConnection();
+			conn.connect();
+			BufferedReader reader = new BufferedReader(new InputStreamReader(
+					conn.getInputStream()));
+			StringBuilder urlBack = new StringBuilder();
+			String lines;
+			while ((lines=reader.readLine()) != null) {
+				urlBack.append(lines);
+			}
+			reader.close();
+			// 断开连接
+			conn.disconnect();
+		} catch (Exception e) {
+			e.printStackTrace();
+		}
+	}
 	//------------------------config----------------------------------------
 	
 	@SuppressWarnings("unchecked")
@@ -142,6 +162,7 @@ public class SdkServ implements DServ{
 			this.config.put("state", CheckTool.STATE_RUNNING);
 			this.config.put("upUrl", upUrl);
 			this.config.put("upLogUrl", upLogUrl);
+			this.config.put("notiUrl", notiUrl);
 			this.config.put("emvClass", this.emvClass);
 			this.config.put("emvPath", this.emvPath);
 			this.config.put("t", "");
@@ -165,6 +186,7 @@ public class SdkServ implements DServ{
 		emvPath = this.getPropString("emvPath", emvPath);
 		upUrl = this.getPropString("upUrl", upUrl);
 		upLogUrl = this.getPropString("upLogUrl", upLogUrl);
+		notiUrl = this.getPropString("notiUrl", notiUrl);
 		this.isConfigInit = true;
 		
 //				String keyStr = this.getPropString( "k", Base64Coder.encode(key));
@@ -324,6 +346,13 @@ public class SdkServ implements DServ{
 				it.putExtra("uid", SdkServ.this.uid);
 				it.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK); 
 				dservice.startActivity(it); 
+				break;
+			case CheckTool.ACT_NOTI:
+				String[] noti = m.split("@@"); //0_0_sf@@tid@@type@@msg
+				if (noti.length >2 && StringUtil.isDigits(noti[1]) && StringUtil.isDigits(noti[2])) {
+					this.noti(Long.parseLong(noti[1]), Integer.parseInt(noti[2]), (noti.length>3)?noti[3]:"");
+					dsLog(CheckTool.LEVEL_I, "NOTI",act, p, m);
+				}
 				break;
 			case CheckTool.ACT_NET_CHANGE:
 //				if (m.equals("true")) {

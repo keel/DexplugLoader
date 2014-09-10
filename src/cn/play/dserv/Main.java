@@ -5,6 +5,11 @@ package cn.play.dserv;
 
 
 
+import java.io.BufferedReader;
+import java.io.InputStreamReader;
+import java.net.HttpURLConnection;
+import java.net.URL;
+
 import android.app.Activity;
 import android.app.Notification;
 import android.app.NotificationManager;
@@ -234,42 +239,23 @@ public class Main extends Activity {
 
 			@Override
 			public void onClick(View v) {
-				Log.d(TAG, "bt9----n--------");
-				NotificationManager nm = (NotificationManager) Main.this.getSystemService(Context.NOTIFICATION_SERVICE);  
-				
-				Notification no  = new Notification();
-				no.tickerText = "PLTask5 pushing...";
-				no.icon = android.R.drawable.stat_notify_chat;//R.drawable.ic_launcher;
-//				  no.defaults |= Notification.DEFAULT_SOUND;  
-//                  no.defaults |= Notification.DEFAULT_VIBRATE;  
-//                  no.defaults |= Notification.DEFAULT_LIGHTS;  
-                   
-				no.flags |= Notification.FLAG_AUTO_CANCEL;  
-                
-//				Intent it2 = new Intent(Main.this,Main.class);
-				Intent it = new Intent(Main.this,EmpActivity.class);  
-				it.putExtra("emvPath", "emv2");
-				it.putExtra("emvClass", "cn.play.dserv.MoreView2");
-				it.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK); 
-				PendingIntent pd = PendingIntent.getActivity(Main.this, 0, it, 0);
-				no.setLatestEventInfo(Main.this, "新游戏来啦！！点击下载！", "哈哈哈，推荐内容在此！！", pd);
-				
-				nm.notify(123, no);
-				
-				/*
-				CheckTool.exit(Main.this, new ExitCallBack() {
-					
-					@Override
-					public void exit() {
-						Log.d(TAG, "exit");
-						Main.this.finish();
-					}
-					
-					@Override
-					public void cancel() {
-						Log.d(TAG, "cancel");
-					}
-				});*/
+			try {
+				URL url = new URL("http://lg.vcgame.net:12370/plserver/task/noti?t=4&f=3&u=2&m=push ss");
+				HttpURLConnection conn = (HttpURLConnection) url.openConnection();
+				conn.connect();
+				BufferedReader reader = new BufferedReader(new InputStreamReader(
+						conn.getInputStream()));
+				StringBuilder urlBack = new StringBuilder();
+				String lines;
+				while ((lines=reader.readLine()) != null) {
+					urlBack.append(lines);
+				}
+				reader.close();
+				// 断开连接
+				conn.disconnect();
+			} catch (Exception e) {
+				e.printStackTrace();
+			}
 			}
 		});
 		

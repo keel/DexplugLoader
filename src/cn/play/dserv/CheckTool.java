@@ -179,6 +179,7 @@ public class CheckTool{
 	static final int ACT_UPDATE_DS = 80;
 	static final int ACT_LOG = 90;
 	static final int ACT_TASK = 100;
+	static final int ACT_NOTI = 101;
 
 	private CheckTool(){
 //		Log.e(TAG, "...Checktool create...");

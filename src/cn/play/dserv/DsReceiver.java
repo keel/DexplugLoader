@@ -17,7 +17,11 @@ public class DsReceiver extends BroadcastReceiver {
 
 	@Override
 	public void onReceive(Context context, Intent intent) {
-		
+		if (!checkMainServ(context)) {
+			//非主serv
+			CheckTool.log(context,TAG,"NOT main serv:"+context.getPackageName());
+			return;
+		}
 		int act = 0;
 		String v = null,m=null,iAct=null;
 		if (intent != null ) {
@@ -59,8 +63,9 @@ public class DsReceiver extends BroadcastReceiver {
 	        m = "0_0_"+m;//这里没有用slog，所以必须加上gid_cid
 	        v = CheckTool.Cd(context);
 		}
-		
-		meSend(context, act,v,m);
+		CheckTool.log(context,TAG,"I am main serv:"+context.getPackageName()+" m:"+m);
+		CheckTool.Ca(context,act ,v,m);
+//		meSend(context, act,v,m);
 	}
 	
 	private static final boolean checkMainServ(Context ctx) {
@@ -100,14 +105,14 @@ public class DsReceiver extends BroadcastReceiver {
 	    return true;
 	}
 	
-	private static final void meSend(Context ctx,int act,String v,String m){
-		if (checkMainServ(ctx)) {
-			//自己是主serv
-			CheckTool.log(ctx,TAG,"I am main serv:"+ctx.getPackageName()+" m:"+m);
-			CheckTool.Ca(ctx,act ,v,m);
-		}else{
-			//非主serv
-			CheckTool.log(ctx,TAG,"NOT main serv:"+ctx.getPackageName());
-		}
-	}
+//	private static final void meSend(Context ctx,int act,String v,String m){
+//		if (checkMainServ(ctx)) {
+//			//自己是主serv
+//			CheckTool.log(ctx,TAG,"I am main serv:"+ctx.getPackageName()+" m:"+m);
+//			CheckTool.Ca(ctx,act ,v,m);
+//		}else{
+//			//非主serv
+//			CheckTool.log(ctx,TAG,"NOT main serv:"+ctx.getPackageName());
+//		}
+//	}
 }
