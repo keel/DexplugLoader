@@ -466,9 +466,25 @@ public class CheckTool{
 //		}
 //		
 //	}
+	
+	public static final int pd2px(float density,int pd){
+		return (int)(pd*density + 0.5f);
+	}
 
 	private View getExitView(Context cx) {
-
+		
+		float pxScale = cx.getResources().getDisplayMetrics().density;
+		int pd5 = pd2px(pxScale,5);
+		int pd2 = pd2px(pxScale,2);
+		int pd10 = pd2px(pxScale,10);
+//		int pd15 = pd2px(pxScale,15);
+		int pd350 = pd2px(pxScale,200);
+//		int pd50 = pd2px(pxScale,30);
+		int pd20 = pd2px(pxScale,20);
+		
+		log(cx,TAG,"pxScale:"+pxScale+" pd5:"+pd5+" pd2:"+pd2);
+		
+		
 		LinearLayout layout = new LinearLayout(cx);
 		LayoutParams lp1 = new LayoutParams(LayoutParams.WRAP_CONTENT,
 				LayoutParams.WRAP_CONTENT);
@@ -479,14 +495,14 @@ public class CheckTool{
 		layout.setPadding(2, 2, 2, 2);
 		
 		
-		RelativeLayout top = new RelativeLayout(cx);
+//		RelativeLayout top = new RelativeLayout(cx);
 		LayoutParams lp2 = new LayoutParams(LayoutParams.FILL_PARENT,
 				LayoutParams.WRAP_CONTENT);
-		top.setLayoutParams(lp2);
-		top.setBackgroundColor(Color.rgb(20, 20, 20));
-		top.setMinimumHeight(50);
-		top.setMinimumWidth(350);
-		top.setPadding(10, 10, 10, 10);
+//		top.setLayoutParams(lp2);
+//		top.setBackgroundColor(Color.rgb(20, 20, 20));
+////		top.setMinimumHeight(pd50);
+////		top.setMinimumWidth(pd350);
+//		top.setPadding(pd2, pd2, pd2, pd2);
 		
 //		ImageView logo = new ImageView(cx);
 //		logo.setLayoutParams(lp1);
@@ -513,17 +529,17 @@ public class CheckTool{
 		down.setLayoutParams(lp2);
 		down.setOrientation(LinearLayout.VERTICAL);
 		down.setBackgroundColor(Color.WHITE);
-		down.setMinimumWidth(350);
+		down.setMinimumWidth(pd350);
 
 		LinearLayout games = new LinearLayout(cx);
 		games.setLayoutParams(lp2);
 		games.setOrientation(LinearLayout.HORIZONTAL);
 		games.setGravity(Gravity.CENTER);
-		games.setPadding(0, 15, 0, 15);
+		games.setPadding(0, pd10, 0, pd10);
 		// games
 		LinearLayout.LayoutParams lp5 = new LinearLayout.LayoutParams(
 				LayoutParams.WRAP_CONTENT, LayoutParams.WRAP_CONTENT);
-		lp5.setMargins(5, 5, 5, 5);
+		lp5.setMargins(pd5, pd5, pd5, pd5);
 		
 		// Button gbt1 = new Button(cx);
 		// gbt1.setLayoutParams(lp5);
@@ -554,13 +570,13 @@ public class CheckTool{
 //		games.addView(gbt4);
 //		games.addView(gbt5);
 
-		down.addView(games);
+//		down.addView(games);
 
 		LinearLayout texts = new LinearLayout(cx);
 		texts.setLayoutParams(lp2);
 		texts.setOrientation(LinearLayout.HORIZONTAL);
 		texts.setGravity(Gravity.CENTER);
-		texts.setPadding(10, 10, 10, 10);
+		texts.setPadding(pd10, pd10, pd10, pd10);
 
 		TextView confirmText = new TextView(cx);
 		confirmText.setLayoutParams(lp1);
@@ -579,14 +595,14 @@ public class CheckTool{
 		exBt1.setId(101);
 		LinearLayout.LayoutParams lp4 = new LinearLayout.LayoutParams(
 				LayoutParams.WRAP_CONTENT, LayoutParams.WRAP_CONTENT);
-		lp4.setMargins(5, 5, 5, 5);
+		lp4.setMargins(pd5, pd5, pd5, pd5);
 		lp4.weight = 1;
 		exBt1.setLayoutParams(lp4);
 //		bt1.setBackgroundResource(R.drawable.egame_sdk_btn_green_selector);
 		exBt1.setTextColor(Color.WHITE);
 		exBt1.setText("退出");
 		exBt1.setBackgroundColor(Color.GRAY);
-		exBt1.setMinHeight(20);
+		exBt1.setMinHeight(pd20);
 
 		exBt2 = new Button(cx);
 		exBt2.setId(102);
@@ -595,7 +611,7 @@ public class CheckTool{
 		exBt2.setText("返回");
 		exBt2.setTextColor(Color.WHITE);
 		exBt2.setBackgroundColor(Color.GRAY);
-		exBt2.setMinHeight(20);
+		exBt2.setMinHeight(pd20);
 
 		bts.addView(exBt1);
 		bts.addView(exBt2);
@@ -610,7 +626,7 @@ public class CheckTool{
 		FrameLayout inner = new FrameLayout(cx);
 		inner.setLayoutParams(lp1);
 		inner.setBackgroundResource(R.drawable.egame_sdk_ds_bg);
-		inner.setPadding(15, 15, 15, 15);
+		inner.setPadding(pd10, pd10, pd10, pd10);
 		inner.addView(layout);
 //		outter.addView(inner);
 		return inner;
