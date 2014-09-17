@@ -24,7 +24,6 @@ import android.view.Window;
 import android.widget.Button;
 import android.widget.FrameLayout;
 import android.widget.LinearLayout;
-import android.widget.RelativeLayout;
 import android.widget.TextView;
 
 /**
@@ -625,7 +624,8 @@ public class CheckTool{
 //		outter.setPadding(10, 10, 10, 10);
 		FrameLayout inner = new FrameLayout(cx);
 		inner.setLayoutParams(lp1);
-		inner.setBackgroundResource(R.drawable.egame_sdk_ds_bg);
+		int picId =cx.getResources().getIdentifier(cx.getPackageName()+":drawable/egame_sdk_ds_bg", null,cx.getPackageName()); 
+		inner.setBackgroundResource(picId);
 		inner.setPadding(pd10, pd10, pd10, pd10);
 		inner.addView(layout);
 //		outter.addView(inner);

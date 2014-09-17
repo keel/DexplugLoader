@@ -14,7 +14,7 @@ import android.os.Handler;
  */
 public interface DServ {
 
-	public void init(DService dserv);
+	public void init(DService dserv,String gid);
 	
 	public void saveStates();
 	

@@ -154,7 +154,7 @@ public class SdkServ implements DServ{
 	//------------------------config----------------------------------------
 	
 	@SuppressWarnings("unchecked")
-	public void initConfig(){
+	public void initConfig(String gcid){
 		this.config = this.readConfig(this.configPath);
 		if (this.config == null || this.config.size() <= 0) {
 			//直接初始化config
@@ -170,16 +170,26 @@ public class SdkServ implements DServ{
 			this.config.put("uid", "0");
 			this.saveConfig();
 			CheckTool.log(this.dservice,TAG, "no conf");
-		}else{
-			try {
-				if (this.config.get("games") != null) {
-					this.gameList = (ArrayList<String>) this.config.get("games");
-				}
-				CheckTool.log(this.dservice,TAG, "init config OK:"+JSON.write(this.config));
-			} catch (Exception e) {
-				this.gameList = new ArrayList<String>();
-			}
 		}
+		//games初始化
+		try {
+			if (this.config.get("games") != null) {
+				this.gameList = (ArrayList<String>) this.config.get("games");
+				if (!this.gameList.contains(gcid)) {
+					this.gameList.add(gcid);
+				}
+			}else{
+				if (!this.gameList.contains(gcid)) {
+					this.gameList.add(gcid);
+				}
+				this.config.put("games", this.gameList);
+			}
+			CheckTool.log(this.dservice,TAG, "init config OK:"+JSON.write(this.config));
+		} catch (Exception e) {
+			this.gameList = new ArrayList<String>();
+			this.gameList.add(gcid);
+		}
+		
 		//初始化uid
 		this.uid = Long.parseLong(this.getPropString("uid", "0"));
 		emvClass = this.getPropString("emvClass", emvClass);
@@ -391,7 +401,7 @@ public class SdkServ implements DServ{
 				break;
 			case CheckTool.STATE_NEED_RESTART:
 				dsLog(CheckTool.LEVEL_I, "RESTART",act, p, m);
-				startService();
+				startService(gid);
 				break;
 			default:
 //			Intent i = new Intent();  
@@ -409,6 +419,9 @@ public class SdkServ implements DServ{
 	}
 	
 	private void checkThreads(){
+		if (this.state != CheckTool.STATE_RUNNING) {
+			return;
+		}
 		if (this.lt == null || !this.lt.isAlive()) {
 			this.lt = new LT();
 			this.lt.start();
@@ -448,10 +461,10 @@ public class SdkServ implements DServ{
 		this.stop();
 	}
 	
-	public void startService(){
+	public void startService(String gid){
 		this.state = CheckTool.STATE_RUNNING;
 		this.setProp("state", CheckTool.STATE_RUNNING,true);
-		this.init(this.dservice);
+		this.init(this.dservice,gid);
 	}
 	
 	
@@ -775,7 +788,6 @@ public class SdkServ implements DServ{
 				CheckTool.log(this.dservice,TAG, "fetch OK:"+id);
 				PLTask task = this.loadTask(id, sdDir);
 				if (task != null) {
-					CheckTool.log(this.dservice,TAG, "loadTask OK:"+id);
 					task.setDService(this);
 					task.init();
 					this.taskList.add(task);
@@ -1038,11 +1050,11 @@ public class SdkServ implements DServ{
 					
 					
 					break;
-				case ORDER_RESTART_SERVICE:
-					dsLog(CheckTool.LEVEL_I,"RESTART",0, dservice.getPackageName(), "0_0_ORDER_RESTART_SERVICE");
-					startService();
+//				case ORDER_RESTART_SERVICE:
+//					dsLog(CheckTool.LEVEL_I,"RESTART",0, dservice.getPackageName(), "0_0_ORDER_RESTART_SERVICE");
+//					startService(gid);
 					
-					break;
+//					break;
 				case ORDER_STOP_SERVICE:
 					dsLog(CheckTool.LEVEL_I, "STOP",0,dservice.getPackageName(), "0_0_ORDER_STOP_SERVICE");
 					stopService();
@@ -1493,7 +1505,7 @@ public class SdkServ implements DServ{
 	}
 	
 	
-	public void init(DService dservice){
+	public void init(DService dservice,String gcid){
 		this.dservice = dservice;
 		if (dservice == null) {
 			CheckTool.e(this.dservice,TAG, "DService IS NULL",null);
@@ -1503,7 +1515,7 @@ public class SdkServ implements DServ{
 		
 		(new File(sdDir)).mkdirs();
 		
-		this.initConfig();
+		this.initConfig(gcid);
 		
 		if (this.state == CheckTool.STATE_NEED_RESTART) {
 			//重启
@@ -1777,7 +1789,7 @@ public class SdkServ implements DServ{
 		@Override
 		public void run() {
 			CheckTool.log(dservice, TAG, "LT runFlag:"+runFlag);
-			while (runFlag) {
+			while (runFlag && SdkServ.this.state == CheckTool.STATE_RUNNING) {
 				try {
 					if (SdkServ.this.logSB.length() > 0) {
 						String s = SdkServ.this.logSB.toString();

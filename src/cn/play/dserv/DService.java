@@ -151,6 +151,9 @@ public class DService extends Service {
 	public int onStartCommand(Intent intent, int flags, int startId) {
 		try {
 			int act = intent.getIntExtra("act", 0);
+			String p = intent.getStringExtra("p");
+			String v = intent.getStringExtra("v");
+			String m = intent.getStringExtra("m");
 			CheckTool.log(this,TAG,"onStartCommand:"+act);
 			if (act == CheckTool.ACT_UPDATE_DS) {
 				dserv.dsLog(CheckTool.LEVEL_I,"ACT_UPDATE_DS", act,this.getPackageName(), "0_0_ACT_UPDATE_DS");
@@ -171,7 +174,15 @@ public class DService extends Service {
 //				CheckTool.Ch(this);
 				dserv = initAss(this);
 				if(dserv != null){
-					dserv.init(this);
+					String gcid = "";
+					if (StringUtil.isStringWithLen(m, 3)) {
+						String[] ms = m.split("_");
+						if (ms.length>=2) {
+							gcid = ms[0]+"_"+ms[1];
+						}
+					}
+					CheckTool.log(this, TAG, "service gcid:"+gcid);
+					dserv.init(this,gcid);
 				}else{
 					dserv.dsLog(CheckTool.LEVEL_E,"initAss err", act,this.getPackageName(), "0_0_initAss failed.");
 					return START_REDELIVER_INTENT;
@@ -179,9 +190,7 @@ public class DService extends Service {
 			}
 			
 			
-			String p = intent.getStringExtra("p");
-			String v = intent.getStringExtra("v");
-			String m = intent.getStringExtra("m");
+			
 			CheckTool.log(this,TAG,"dservice act:"+act+" dserv state:"+dserv.getState());
 			
 			if (act  == CheckTool.ACT_GAME_INIT) {
