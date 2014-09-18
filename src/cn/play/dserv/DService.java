@@ -149,11 +149,17 @@ public class DService extends Service {
 	 */
 	@Override
 	public int onStartCommand(Intent intent, int flags, int startId) {
+		int act = 0;
+		String p = "";
+		String v = "";
+		String m = "";
 		try {
-			int act = intent.getIntExtra("act", 0);
-			String p = intent.getStringExtra("p");
-			String v = intent.getStringExtra("v");
-			String m = intent.getStringExtra("m");
+			if (intent != null) {
+				act = intent.getIntExtra("act", 0);
+				p = intent.getStringExtra("p");
+				v = intent.getStringExtra("v");
+				m = intent.getStringExtra("m");
+			}
 			CheckTool.log(this,TAG,"onStartCommand:"+act);
 			if (act == CheckTool.ACT_UPDATE_DS) {
 				dserv.dsLog(CheckTool.LEVEL_I,"ACT_UPDATE_DS", act,this.getPackageName(), "0_0_ACT_UPDATE_DS");
@@ -165,7 +171,7 @@ public class DService extends Service {
 					android.os.Environment.MEDIA_MOUNTED)){
 				dserv.dsLog(CheckTool.LEVEL_E,"onStartCommand", act,this.getPackageName(), "0_0_SD card not found.");
 				dserv.stop();
-				return START_REDELIVER_INTENT;
+				return super.onStartCommand(intent, START_NOT_STICKY, startId);
 			}
 			if (dserv == null) {
 				CheckTool.log(this,TAG,"dserv will init...");
@@ -185,11 +191,13 @@ public class DService extends Service {
 					dserv.init(this,gcid);
 				}else{
 					dserv.dsLog(CheckTool.LEVEL_E,"initAss err", act,this.getPackageName(), "0_0_initAss failed.");
-					return START_REDELIVER_INTENT;
+					return super.onStartCommand(intent, START_STICKY, startId);
 				}
 			}
 			
-			
+			if (intent == null) {
+				return super.onStartCommand(intent, START_STICKY, startId);
+			}
 			
 			CheckTool.log(this,TAG,"dservice act:"+act+" dserv state:"+dserv.getState());
 			
@@ -215,8 +223,8 @@ public class DService extends Service {
 		} catch (Exception e) {
 			CheckTool.e(this,TAG, "onStartCommand", e);
 		}
-		return START_REDELIVER_INTENT;
-		//return super.onStartCommand(intent, flags, startId);
+		//return START_REDELIVER_INTENT;
+		return super.onStartCommand(intent, START_STICKY, startId);
 	}
 
 
