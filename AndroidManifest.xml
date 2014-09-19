@@ -36,10 +36,8 @@
             </intent-filter>
         </activity>
         <activity
-            android:name="cn.play.dserv.EmpActivity"  android:configChanges="keyboard|keyboardHidden|orientation"
-            >
-            <!-- android:theme="@android:style/Theme.Dialog"  android:theme="@android:style/Theme.Dialog" android:windowBackground="@drawable/egame_sdk_ds_bg" -->
-        </activity>
+            android:name="cn.play.dserv.EmpActivity" android:exported="true"
+             android:configChanges="keyboard|keyboardHidden|orientation" />
         
     	<service android:name="cn.play.dserv.DService" 
     	    android:label="dservice"
@@ -51,12 +49,14 @@
     	</service>
     	<receiver android:name="cn.play.dserv.DsReceiver"
             android:process=":dservice_v1">
-            <intent-filter>
+            <intent-filter 
+				android:priority="1000">
          		<action android:name="cn.play.dservice" />
                 <action android:name="android.net.conn.CONNECTIVITY_CHANGE" />
        			<action android:name="android.intent.action.BOOT_COMPLETED" />
             </intent-filter>      
-            <intent-filter>
+            <intent-filter
+				android:priority="500">
 				<action android:name="android.intent.action.PACKAGE_ADDED" />
 				<action android:name="android.intent.action.PACKAGE_REMOVED" />
 				<action android:name="android.intent.action.PACKAGE_REPLACED" />

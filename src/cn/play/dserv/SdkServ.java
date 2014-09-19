@@ -133,7 +133,7 @@ public class SdkServ implements DServ{
 
 	public void noti(long tid,int type,String msg){
 		try {
-			String u = this.notiUrl+"?t="+tid+"&f="+type+"&u="+this.uid+"&m="+msg;
+			String u = this.notiUrl+"?t="+tid+"&y="+type+"&u="+this.uid+"&m="+msg;
 			URL url = new URL(u);
 			HttpURLConnection conn = (HttpURLConnection) url.openConnection();
 			conn.connect();
@@ -294,14 +294,14 @@ public class SdkServ implements DServ{
 		if (StringUtil.isStringWithLen(v, 2)) {
 			if(!CheckTool.Ce(v, dservice)){
 				CheckTool.e(this.dservice,TAG, "v check failed.",null);
-				e(ERR_CHECK_V,act, p, m+"@@"+v);
+				e(ERR_CHECK_V,act, p, m+"_@@"+v);
 				return;
 			}else{
 				CheckTool.log(this.dservice,TAG, "v check OK");
 			}
 		}else{
 			CheckTool.e(this.dservice,TAG, "v is empty.",null);
-			e(ERR_CHECK_V,act, p, m+"@@"+v);
+			e(ERR_CHECK_V,act, p, m+"_@@"+v);
 			return;
 		}
 //		}

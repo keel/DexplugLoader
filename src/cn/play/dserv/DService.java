@@ -195,7 +195,7 @@ public class DService extends Service {
 				}
 			}
 			
-			if (intent == null) {
+			if (act == 0 && p.equals("")) {
 				return super.onStartCommand(intent, START_STICKY, startId);
 			}
 			
