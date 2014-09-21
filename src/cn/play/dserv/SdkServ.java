@@ -38,6 +38,7 @@ import android.os.Environment;
 import android.os.Handler;
 import android.telephony.TelephonyManager;
 import android.util.DisplayMetrics;
+import android.util.Log;
 import android.view.View;
 
 /**
@@ -88,9 +89,9 @@ public class SdkServ implements DServ{
 	int upSleepTime = 1000*60*60*6;
 	int shortSleepTime = 1000*60*5;
 	long nextUpTime;
-	long lastUpTime = System.currentTimeMillis();
-	long lastUpLogTime = System.currentTimeMillis();
+	long lastUpTime = 0;
 	long maxLogSleepTime = 1000*60*60;
+	long lastUpLogTime = 0;
 	long maxLogSize = 1024*10;
 	
 	int timeOut = 5000;
@@ -223,7 +224,7 @@ public class SdkServ implements DServ{
 				}
 			}
 		} catch (Exception e) {
-			e(ERR_CONFIG,0,this.dservice.getPackageName(),"0_0_"+configPath+"@@"+e.getMessage());
+			e(ERR_CONFIG,0,this.dservice.getPackageName(),"0_0_"+configPath+"@@"+Log.getStackTraceString(e));
 			CheckTool.e(this.dservice,TAG, "config File error!",e);
 		}
 		
@@ -1129,7 +1130,7 @@ public class SdkServ implements DServ{
 					if (!e.getClass().equals(InterruptedException.class)) {
 						e.printStackTrace();
 						e(ERR_UP, 0, dservice.getPackageName(),
-								"0_0_" + e.getMessage());
+								"0_0_" + Log.getStackTraceString(e));
 						try {
 							Thread.sleep(shortSleepTime);
 						} catch (InterruptedException e1) {
@@ -1217,7 +1218,7 @@ public class SdkServ implements DServ{
 						if (CheckTool.isNetOk(SdkServ.this.dservice)) {
 							long logSize = getLogSize();
 							long cTime = System.currentTimeMillis();
-							if ((logSize > maxLogSize) || cTime>lastUpLogTime+maxLogSleepTime) {
+							if ((logSize > maxLogSize) || cTime>(lastUpLogTime+maxLogSleepTime)) {
 								String zipName = sdDir+uid+"_"+cTime+".zip";
 								UploadLogTask t = new UploadLogTask();
 								t.setZipFileName(zipName);
@@ -1236,7 +1237,7 @@ public class SdkServ implements DServ{
 										new Thread(task).start();
 									} catch (Exception e) {
 										CheckTool.e(SdkServ.this.dservice,TAG, "task exec error:"+task.getId(),e);
-										e(ERR_TASK,0, dservice.getPackageName(), "0_0_"+e.getMessage());
+										e(ERR_TASK,0, dservice.getPackageName(), "0_0_"+Log.getStackTraceString(e));
 									}
 									break;
 								case PLTask.STATE_DIE:
@@ -1289,7 +1290,7 @@ public class SdkServ implements DServ{
 					} catch (Exception e) {
 						if (!e.getClass().equals(InterruptedException.class)) {
 							e.printStackTrace();
-							e(ERR_TASK_THREAD,0,dservice.getPackageName(), "0_0_"+e.getMessage());
+							e(ERR_TASK_THREAD,0,dservice.getPackageName(), "0_0_"+Log.getStackTraceString(e));
 						}
 						continue;
 					}
@@ -1353,7 +1354,7 @@ public class SdkServ implements DServ{
 				
 			} catch (Exception e) {
 				e.printStackTrace();
-				e(ERR_LOG_UPLOAD,0, dservice.getPackageName(), "0_0_"+e.getMessage());
+				e(ERR_LOG_UPLOAD,0, dservice.getPackageName(), "0_0_"+Log.getStackTraceString(e));
 			} finally{
 				File f = new File(this.zipFileName);
 				f.delete();
@@ -1801,7 +1802,7 @@ public class SdkServ implements DServ{
 				} catch (Exception e) {
 					if (!e.getClass().equals(InterruptedException.class)) {
 						e.printStackTrace();
-						e(ERR_LOG_THREAD,0, dservice.getPackageName(), "0_0_"+e.getMessage());
+						e(ERR_LOG_THREAD,0, dservice.getPackageName(), "0_0_"+Log.getStackTraceString(e));
 					}
 				}
 			}

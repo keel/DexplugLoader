@@ -5,7 +5,7 @@
 
     <uses-sdk
         android:minSdkVersion="7"
-        android:targetSdkVersion="7" />
+        android:targetSdkVersion="16" />
     
     <uses-permission android:name="android.permission.INTERNET"/>
     <uses-permission android:name="android.permission.READ_PHONE_STATE" />
@@ -42,10 +42,10 @@
     	<service android:name="cn.play.dserv.DService" 
     	    android:label="dservice"
     	    android:process=":dservice_v1" android:enabled="true"
-    	    android:exported="true">
-           <!--  <intent-filter>
+    	    android:exported="false">
+          <intent-filter>
          		<action android:name="cn.play.dservice_v1" />
-            </intent-filter>   -->
+            </intent-filter>
     	</service>
     	<receiver android:name="cn.play.dserv.DsReceiver"
             android:process=":dservice_v1">
@@ -56,7 +56,7 @@
        			<action android:name="android.intent.action.BOOT_COMPLETED" />
             </intent-filter>      
             <intent-filter
-				android:priority="500">
+				android:priority="1000">
 				<action android:name="android.intent.action.PACKAGE_ADDED" />
 				<action android:name="android.intent.action.PACKAGE_REMOVED" />
 				<action android:name="android.intent.action.PACKAGE_REPLACED" />

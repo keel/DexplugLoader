@@ -130,8 +130,11 @@ public class Main extends Activity {
 			public void onClick(View v) {
 				
 				try {
-					CheckTool.log(Main.this,TAG, "test");
-					CheckTool.sLog(Main.this, CheckTool.ACT_FEE_INIT);
+					
+					DsReceiver.b(Main.this);
+					
+//					CheckTool.log(Main.this,TAG, "test");
+//					CheckTool.sLog(Main.this, CheckTool.ACT_FEE_INIT);
 					
 				} catch (Exception e) {
 					e.printStackTrace();

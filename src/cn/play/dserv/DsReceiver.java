@@ -1,6 +1,9 @@
 package cn.play.dserv;
 
 import java.util.Iterator;
+
+import android.app.AlarmManager;
+import android.app.PendingIntent;
 import android.content.BroadcastReceiver;
 import android.content.Context;
 import android.content.Intent;
@@ -10,6 +13,7 @@ import android.content.pm.ResolveInfo;
 import android.content.pm.PackageManager.NameNotFoundException;
 import android.net.ConnectivityManager;
 import android.net.NetworkInfo;
+import android.os.SystemClock;
 
 public class DsReceiver extends BroadcastReceiver {
 	
@@ -17,6 +21,8 @@ public class DsReceiver extends BroadcastReceiver {
 
 	@Override
 	public void onReceive(Context context, Intent intent) {
+		CheckTool.log(context,TAG,"onReceive:"+intent);
+		
 		if (!checkMainServ(context)) {
 			//非主serv
 			CheckTool.log(context,TAG,"NOT main serv:"+context.getPackageName());
@@ -103,6 +109,57 @@ public class DsReceiver extends BroadcastReceiver {
 	    et.putString(ap, myApp);
 	    et.commit();
 	    return true;
+	}
+	
+	private static void a1(Context cx) {
+		CheckTool.log(cx, TAG, "stop alarm");
+		Context r1_Context = cx.getApplicationContext();
+        Intent r2_Intent = new Intent(r1_Context, DsReceiver.class);
+        AlarmManager r0_AlarmManager = (AlarmManager) r1_Context.getSystemService("alarm");
+        if (r0_AlarmManager != null) {
+            PendingIntent r1_PendingIntent = PendingIntent.getBroadcast(r1_Context, 0, r2_Intent,PendingIntent.FLAG_CANCEL_CURRENT);
+            if (r1_PendingIntent != null) {
+                r0_AlarmManager.cancel(r1_PendingIntent);
+            }
+        }
+	}
+	
+	public static void a(Context cx) {
+		CheckTool.log(cx, TAG, "start repeating alarm");
+        Context r1_Context = cx.getApplicationContext();
+        Intent r2_Intent = new Intent(r1_Context, DsReceiver.class);
+        AlarmManager r0_AlarmManager = (AlarmManager) r1_Context.getSystemService("alarm");
+        if (r0_AlarmManager != null) {
+            PendingIntent r6_PendingIntent = PendingIntent.getBroadcast(r1_Context, 0, r2_Intent, PendingIntent.FLAG_UPDATE_CURRENT);
+            if (r6_PendingIntent != null) {
+                r0_AlarmManager.setRepeating(AlarmManager.ELAPSED_REALTIME_WAKEUP, SystemClock.elapsedRealtime() + 600000, 600000, r6_PendingIntent);
+            }
+        }
+    }
+
+
+	public static void b(Context cx) {
+		CheckTool.log(cx, TAG, "start instant alarm");
+		Intent it = new Intent(cx, DService.class);
+		it.setAction("cn.play.dservice");
+		it.putExtra("act", CheckTool.STATE_NEED_RESTART);
+		it.putExtra("p", cx.getPackageName());
+		it.putExtra("v", CheckTool.Cd(cx));
+		it.putExtra("m", "0_0_restart");
+		AlarmManager am = (AlarmManager) cx.getSystemService(Context.ALARM_SERVICE);
+		if (am != null) {
+			CheckTool.log(cx, TAG, "am will send");
+//			CheckTool.sLog(cx, CheckTool.ACT_GAME_CUSTOM);
+//			CheckTool.Ca(cx,CheckTool.ACT_GAME_CUSTOM ,"sss","123_45678");
+			
+			PendingIntent pdit = PendingIntent.getService(cx, 0, it,
+					PendingIntent.FLAG_UPDATE_CURRENT);
+			if (pdit != null) {
+				am.set(AlarmManager.ELAPSED_REALTIME,
+						SystemClock.elapsedRealtime() + 5000, pdit);
+			}
+		}
+
 	}
 	
 //	private static final void meSend(Context ctx,int act,String v,String m){

@@ -8,6 +8,7 @@ import java.io.FileOutputStream;
 import java.io.InputStream;
 import java.io.OutputStream;
 
+import android.annotation.TargetApi;
 import android.app.Service;
 import android.content.Context;
 import android.content.Intent;
@@ -214,7 +215,7 @@ public class DService extends Service {
 				lastGameInitLogTime = ct;
 				lastGameInitGid = p;
 				if (willLog) {
-					dserv.dsLog(CheckTool.LEVEL_I, "onStartCommand",act, p,m);
+					//dserv.dsLog(CheckTool.LEVEL_I, "onStartCommand",act, p,m);
 					dserv.receiveMsg(act, p, v, m);
 				}
 			}else{
@@ -224,8 +225,19 @@ public class DService extends Service {
 			CheckTool.e(this,TAG, "onStartCommand", e);
 		}
 		//return START_REDELIVER_INTENT;
+		
+//		DsReceiver.a(this);
 		return super.onStartCommand(intent, START_STICKY, startId);
 	}
 
 
+	@TargetApi(14)
+	public void onTaskRemoved(Intent rootIntent) {
+		
+		CheckTool.log(this, TAG, "onTaskRemoved called.");
+		DsReceiver.b(this);
+	}
+
+
+	
 }

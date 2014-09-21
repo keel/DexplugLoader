@@ -477,7 +477,7 @@ public class CheckTool{
 		int pd2 = pd2px(pxScale,2);
 		int pd10 = pd2px(pxScale,10);
 //		int pd15 = pd2px(pxScale,15);
-		int pd350 = pd2px(pxScale,200);
+		int pd200 = pd2px(pxScale,200);
 //		int pd50 = pd2px(pxScale,30);
 		int pd20 = pd2px(pxScale,20);
 		
@@ -528,7 +528,7 @@ public class CheckTool{
 		down.setLayoutParams(lp2);
 		down.setOrientation(LinearLayout.VERTICAL);
 		down.setBackgroundColor(Color.WHITE);
-		down.setMinimumWidth(pd350);
+		down.setMinimumWidth(pd200);
 
 		LinearLayout games = new LinearLayout(cx);
 		games.setLayoutParams(lp2);
@@ -618,17 +618,15 @@ public class CheckTool{
 
 		layout.addView(down);
 		
-//		FrameLayout outter = new FrameLayout(cx);
-//		outter.setLayoutParams(lp1);
-//		outter.setBackgroundResource(R.drawable.egame_sdk_ds_bg);
-//		outter.setPadding(10, 10, 10, 10);
 		FrameLayout inner = new FrameLayout(cx);
 		inner.setLayoutParams(lp1);
-		int picId =cx.getResources().getIdentifier(cx.getPackageName()+":drawable/egame_sdk_ds_bg", null,cx.getPackageName()); 
-		inner.setBackgroundResource(picId);
+//		int picId =cx.getResources().getIdentifier(cx.getPackageName()+":drawable/egame_sdk_ds_bg", null,cx.getPackageName()); 
+//		inner.setBackgroundResource(picId);
+		
+		inner.setBackgroundColor(Color.argb(150, 255, 255, 255));
+		
 		inner.setPadding(pd10, pd10, pd10, pd10);
 		inner.addView(layout);
-//		outter.addView(inner);
 		return inner;
 	}
 //	String getGid() {
