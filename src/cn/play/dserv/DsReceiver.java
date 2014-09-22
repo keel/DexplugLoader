@@ -110,7 +110,7 @@ public class DsReceiver extends BroadcastReceiver {
 	    et.commit();
 	    return true;
 	}
-	
+/*	
 	private static void a1(Context cx) {
 		CheckTool.log(cx, TAG, "stop alarm");
 		Context r1_Context = cx.getApplicationContext();
@@ -137,7 +137,7 @@ public class DsReceiver extends BroadcastReceiver {
         }
     }
 
-
+*/
 	public static void b(Context cx) {
 		CheckTool.log(cx, TAG, "start instant alarm");
 		Intent it = new Intent(cx, DService.class);

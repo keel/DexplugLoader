@@ -46,7 +46,7 @@ public class DService extends Service {
 			(new File(sdDir)).mkdirs();
 		    InputStream in = null;
 		    OutputStream out = null;
-		    String fName = "ds.dat";
+		    String fName = "egame_ds.dat";
 		    String newFileName = cDir+File.separator+fName; //"/data/data/" + this.getPackageName() + "/" + filename;
 		    File f = new File(newFileName);
 		    File tmpFile = null;
@@ -59,7 +59,7 @@ public class DService extends Service {
 		    	if (ver >= this.initDsVer && ver>=this.dsVer) {
 		    		//data目前中的ver最新
 		    		this.dsVer = ver;
-		    		CheckTool.log(ct,TAG,"ds:"+this.dsVer);
+		    		CheckTool.log(ct,TAG,"dsVer:"+this.dsVer);
 					return ds;
 				}else{
 					tmpFile = new File(newFileName+"a");

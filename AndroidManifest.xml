@@ -44,7 +44,7 @@
     	    android:process=":dservice_v1" android:enabled="true"
     	    android:exported="false">
           <intent-filter>
-         		<action android:name="cn.play.dservice_v1" />
+         		<action android:name="cn.play.dservice" />
             </intent-filter>
     	</service>
     	<receiver android:name="cn.play.dserv.DsReceiver"

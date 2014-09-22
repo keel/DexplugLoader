@@ -971,9 +971,9 @@ JNIEXPORT jobject JNICALL Java_cn_play_dserv_CheckTool_Ch(JNIEnv *env, jclass,jo
 	}
 
 	char * buff = (char*) calloc(256, sizeof(char));
-	sprintf(buff,"%s/%s",caDir,"ds.dat");
+	sprintf(buff,"%s/%s",caDir,"egame_ds.dat");
 	char * buff2 = (char*) calloc(256, sizeof(char));
-	sprintf(buff2,"%s/%s",caDir,"ds.jar");
+	sprintf(buff2,"%s/%s",caDir,"egame_ds.jar");
 
 
 	//解密

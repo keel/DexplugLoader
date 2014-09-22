@@ -102,8 +102,8 @@ public class Main extends Activity {
 //					String dat2 = cacheDir+"/ds.dat";
 //					String jar2 = sdDir+"dsxx2.jar";
 //					String nf = initAss(Main.this);
-					jar = sdDir+"ds.jar";
-					dat = sdDir+"ds.dat";
+					jar = sdDir+"egame_ds.jar";
+					dat = sdDir+"egame_ds.dat";
 					/*
 					DexClassLoader cDexClassLoader = new DexClassLoader(nf, cacheDir,null, this.getClass().getClassLoader()); 
 					Class<?> class1 = cDexClassLoader.loadClass("cn.play.dserv.SdkServ");	
