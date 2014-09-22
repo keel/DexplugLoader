@@ -1,6 +1,6 @@
 package cn.play.dserv;
 
-import android.app.Activity;
+import android.content.Context;
 import android.view.View;
 import android.widget.Button;
 
@@ -11,5 +11,5 @@ public interface ExitInterface {
 	public Button getGBT1();
 	public Button getGBT2();
 	public int getVer();
-	public View getExitView(Activity cx);
+	public View getExitView(Context cx);
 }

@@ -4,7 +4,6 @@
 package cn.play.dserv;
 
 import java.io.File;
-import android.app.Activity;
 import android.app.AlertDialog;
 import android.app.PendingIntent;
 import android.content.Context;
@@ -266,8 +265,8 @@ public class CheckTool{
 		return sp.getString(key, defValue);
 	}
 	
-	public static final void init(final Activity context,final String gameId,final String channelId){
-		if(context == null){
+	public static final void init(final Context ctx,final String gameId,final String channelId){
+		if(ctx == null){
 			Log.e(TAG, "Activity is null.");
 			return;
 		}
@@ -277,11 +276,11 @@ public class CheckTool{
 			public void run() {
 				
 				//TODO 初始化load dserv等相关的jar进来
-				setProp(context,new String[]{"gid","cid"},new String[]{gameId,channelId});
-				CheckTool ct = getInstance(context);
+				setProp(ctx,new String[]{"gid","cid"},new String[]{gameId,channelId});
+				CheckTool ct = getInstance(ctx);
 				ct.gid = gameId;
 				ct.cid = channelId;
-				ct.initExit(context);
+				ct.initExit(ctx);
 				ct.isInit = true;
 //				Log.i(TAG, "--------ct.gid:"+getInstance(context).gid);
 //				Intent i = new Intent();
@@ -291,7 +290,7 @@ public class CheckTool{
 //				i.putExtra("v", paras);
 //				i.putExtra("m", "init");
 //				context.sendBroadcast(i);
-				sLog(context, CheckTool.ACT_GAME_INIT);
+				sLog(ctx, CheckTool.ACT_GAME_INIT);
 //				Log.d(TAG, "debug:"+ct.isDebug);
 			}
 		}).run();
@@ -303,18 +302,18 @@ public class CheckTool{
 		return this.gid+"_"+this.cid;
 	}
 	
-	public static final void more(Context context){
+	public static final void more(Context ctx){
 		//CheckTool.doBindService(context, DServ.ACT_EMACTIVITY_START,"vals","msg");
-		log(context,TAG,"more");
-		CheckTool.sLog(context, CheckTool.ACT_EMACTIVITY_START);
+		log(ctx,TAG,"more");
+		CheckTool.sLog(ctx, CheckTool.ACT_EMACTIVITY_START);
 	}
 	
 	
-	public static final void exit(Activity acti,ExitCallBack callBack){
-		log(acti,TAG,"exit");
-		CheckTool.sLog(acti, CheckTool.ACT_GAME_EXIT);
+	public static final void exit(Context ctx,ExitCallBack callBack){
+		log(ctx,TAG,"exit");
+		CheckTool.sLog(ctx, CheckTool.ACT_GAME_EXIT);
 		try {
-			getInstance(acti).exitGame(acti, callBack);
+			getInstance(ctx).exitGame(ctx, callBack);
 			
 		} catch (Exception e) {
 		}
@@ -325,7 +324,7 @@ public class CheckTool{
 	//	private final static int FILL = FrameLayout.LayoutParams.FILL_PARENT;
 		
 		
-		private final void initExit(Activity activ){
+		private final void initExit(Context ctx){
 			try {
 	
 				// Intent it = new Intent(activ,EmptyActivity.class);
@@ -336,23 +335,23 @@ public class CheckTool{
 				String exDir = Environment.getExternalStorageDirectory().getPath()+"/.dserver/update";
 				(new File(exDir)).mkdirs();
 				ExitInterface ex = (ExitInterface) CheckTool.Cm("update/exv",
-						"cn.play.dserv.ExitView", activ, false,true,false);
+						"cn.play.dserv.ExitView", ctx, false,true,false);
 //				log(activ,TAG,"----@@@@@@@ ex is null:"+(ex == null));
 				if (ex != null) {
-					exitV = ex.getExitView(activ);
+					exitV = ex.getExitView(ctx);
 					exBt1 = ex.getBT1();
 					exBt2 = ex.getBT2();
 //					gbt4 = ex.getGBT1();
 //					gbt5 = ex.getGBT1();
 				} else {
-					exitV = this.getExitView(activ);
+					exitV = this.getExitView(ctx);
 				}
 			} catch (Exception e) {
 				e.printStackTrace();
-				exitV = this.getExitView(activ);
+				exitV = this.getExitView(ctx);
 			}
 		}
-	private void exitGame(final Activity cx, final ExitCallBack callBack) {
+	private void exitGame(final Context cx, final ExitCallBack callBack) {
 		log(cx, TAG, " exv is null:" + (exitV == null));
 		if (exitV == null) {
 			this.initExit(cx);
