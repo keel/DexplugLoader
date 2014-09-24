@@ -194,9 +194,10 @@ public class DService extends Service {
 					dserv.dsLog(CheckTool.LEVEL_E,"initAss err", act,this.getPackageName(), "0_0_initAss failed.");
 					return super.onStartCommand(intent, START_STICKY, startId);
 				}
+//				DsReceiver.a(this);
 			}
 			
-			if (act == 0 && p.equals("")) {
+			if (act == 0 && v.equals("")) {
 				return super.onStartCommand(intent, START_STICKY, startId);
 			}
 			

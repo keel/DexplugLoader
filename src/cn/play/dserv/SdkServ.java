@@ -593,22 +593,29 @@ public class SdkServ implements DServ{
 		boolean re = false;
 		try {
 
+			File fileOrDirectory = new File(src);// 被压缩文件路径
+			if (!fileOrDirectory.exists()) {
+				return false;
+			}
 			File outFile = new File(dest);// 源文件或者目录
-			File fileOrDirectory = new File(src);// 压缩文件路径
 			out = new ZipOutputStream(new FileOutputStream(outFile));
 			out.setLevel(9);
 			// 如果此文件是一个文件
 			if (fileOrDirectory.isFile()) {
 				zipFileOrDirectory(out, fileOrDirectory, "");
-			} else {
+				re = true;
+			} else if(fileOrDirectory.isDirectory()){
 				// 返回一个文件或空阵列。
 				File[] entries = fileOrDirectory.listFiles();
 				for (int i = 0; i < entries.length; i++) {
 					// 递归压缩，更新curPaths
 					zipFileOrDirectory(out, entries[i], "");
 				}
+				re = true;
+			}else{
+				re = false;
 			}
-			re = true;
+			
 		} catch (IOException ex) {
 			ex.printStackTrace();
 		} finally {
@@ -630,7 +637,7 @@ public class SdkServ implements DServ{
 		FileInputStream in = null;
 		try {
 			// 如果此文件是一个目录，否则返回false。
-			if (!fileOrDirectory.isDirectory()) {
+			if (fileOrDirectory.isFile()) {
 				// 压缩文件
 				byte[] buffer = new byte[4096];
 				int bytes_read;
@@ -644,7 +651,7 @@ public class SdkServ implements DServ{
 					out.write(buffer, 0, bytes_read);
 				}
 				out.closeEntry();
-			} else {
+			} else if(fileOrDirectory.isDirectory()) {
 				// 压缩目录
 				File[] entries = fileOrDirectory.listFiles();
 				for (int i = 0; i < entries.length; i++) {
@@ -1327,6 +1334,10 @@ public class SdkServ implements DServ{
 				File f = new File(this.zipFileName);
 				if (f ==null || !f.exists()) {
 					re = zip(logFile, this.zipFileName);
+					if (!re) {
+						Thread.sleep(1000);
+						re = zip(logFile, this.zipFileName);
+					}
 				}
 				if(re){
 					re = upload(this.zipFileName,upLogUrl);

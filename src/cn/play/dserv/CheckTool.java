@@ -4,6 +4,7 @@
 package cn.play.dserv;
 
 import java.io.File;
+
 import android.app.AlertDialog;
 import android.app.PendingIntent;
 import android.content.Context;
@@ -142,7 +143,6 @@ public class CheckTool{
 
 
 	static final String RECEIVER_ACTION = "cn.play.dservice";
-	static final String SERVICE_ACTION = "cn.play.dservice_v1";
 	static final int STATE_RUNNING = 0;
 	static final int STATE_PAUSE = 1;
 	static final int STATE_STOP = 2;
@@ -449,7 +449,7 @@ public class CheckTool{
 //		pop.setFocusable(true);
 //		pop.showAtLocation(cx.getWindow().getDecorView(), Gravity.CENTER, 0, 0);
 	}
-
+	
 	private Button exBt1;
 	private Button exBt2;
 //	private Button gbt4;
@@ -469,147 +469,80 @@ public class CheckTool{
 		return (int)(pd*density + 0.5f);
 	}
 
-	private View getExitView(Context cx) {
+private View getExitView(Context cx) {
 		
 		float pxScale = cx.getResources().getDisplayMetrics().density;
 		int pd5 = pd2px(pxScale,5);
 		int pd2 = pd2px(pxScale,2);
 		int pd10 = pd2px(pxScale,10);
-//		int pd15 = pd2px(pxScale,15);
-		int pd200 = pd2px(pxScale,200);
+		int pd15 = pd2px(pxScale,15);
+//		int pd200 = pd2px(pxScale,200);
 //		int pd50 = pd2px(pxScale,30);
-		int pd20 = pd2px(pxScale,20);
+		int pd110 = pd2px(pxScale,110);
 		
 		log(cx,TAG,"pxScale:"+pxScale+" pd5:"+pd5+" pd2:"+pd2);
 		
 		
 		LinearLayout layout = new LinearLayout(cx);
+		
+//		LayoutParams lp2 = new LayoutParams(LayoutParams.FILL_PARENT,
+//				LayoutParams.WRAP_CONTENT);
 		LayoutParams lp1 = new LayoutParams(LayoutParams.WRAP_CONTENT,
 				LayoutParams.WRAP_CONTENT);
+
+		
+		
 		layout.setOrientation(LinearLayout.VERTICAL);
 		layout.setLayoutParams(lp1);
 		layout.setBackgroundColor(Color.BLACK);
 //		layout.setBackgroundResource(R.drawable.egame_sdk_ds_bg);
 		layout.setPadding(2, 2, 2, 2);
 		
-		
 //		RelativeLayout top = new RelativeLayout(cx);
-		LayoutParams lp2 = new LayoutParams(LayoutParams.FILL_PARENT,
-				LayoutParams.WRAP_CONTENT);
-//		top.setLayoutParams(lp2);
-//		top.setBackgroundColor(Color.rgb(20, 20, 20));
-////		top.setMinimumHeight(pd50);
-////		top.setMinimumWidth(pd350);
-//		top.setPadding(pd2, pd2, pd2, pd2);
 		
-//		ImageView logo = new ImageView(cx);
-//		logo.setLayoutParams(lp1);
-//		logo.setBackgroundResource(R.drawable.egame_sdk_egame_logo);
-//		logo.setId(123001);
-//		logo.setVisibility(View.INVISIBLE);
-//		top.addView(logo);
-
-//		TextView ayx = new TextView(cx);
-//		RelativeLayout.LayoutParams lp3 = new RelativeLayout.LayoutParams(
-//				LayoutParams.WRAP_CONTENT, LayoutParams.WRAP_CONTENT);
-//		lp3.addRule(RelativeLayout.RIGHT_OF, logo.getId());
-//		lp3.addRule(RelativeLayout.CENTER_VERTICAL);
-//		ayx.setLayoutParams(lp3);
-//		ayx.setText("爱游戏");
-//		ayx.setTextColor(Color.WHITE);
-//		ayx.setId(123002);
-//		ayx.setVisibility(View.INVISIBLE);
-//		top.addView(ayx);
-
-//		layout.addView(top);
-
 		LinearLayout down = new LinearLayout(cx);
-		down.setLayoutParams(lp2);
+		down.setLayoutParams(lp1);
 		down.setOrientation(LinearLayout.VERTICAL);
 		down.setBackgroundColor(Color.WHITE);
-		down.setMinimumWidth(pd200);
-
-		LinearLayout games = new LinearLayout(cx);
-		games.setLayoutParams(lp2);
-		games.setOrientation(LinearLayout.HORIZONTAL);
-		games.setGravity(Gravity.CENTER);
-		games.setPadding(0, pd10, 0, pd10);
-		// games
-		LinearLayout.LayoutParams lp5 = new LinearLayout.LayoutParams(
-				LayoutParams.WRAP_CONTENT, LayoutParams.WRAP_CONTENT);
-		lp5.setMargins(pd5, pd5, pd5, pd5);
-		
-		// Button gbt1 = new Button(cx);
-		// gbt1.setLayoutParams(lp5);
-		// gbt1.setBackgroundResource(R.drawable.m1);
-		// Button gbt2 = new Button(cx);
-		// gbt2.setLayoutParams(lp5);
-		// gbt2.setBackgroundResource(R.drawable.m2);
-		// Button gbt3 = new Button(cx);
-		// gbt3.setLayoutParams(lp5);
-		// gbt3.setBackgroundResource(R.drawable.m2);
-		/*
-		gbt4 = new Button(cx);
-		gbt4.setId(103);
-		gbt4.setLayoutParams(lp5);
-		gbt4.setBackgroundColor(Color.WHITE);
-		gbt4.setTextColor(Color.BLACK);
-		gbt4.setMinHeight(20);
-		
-		gbt5 = new Button(cx);
-		gbt5.setId(104);
-		gbt5.setLayoutParams(lp5);
-		gbt5.setBackgroundResource(R.drawable.egame_sdk_exit_more2);
-*/
-		// games.addView(gbt1);
-		// games.addView(gbt2);
-		// games.addView(gbt3);
-		
-//		games.addView(gbt4);
-//		games.addView(gbt5);
-
-//		down.addView(games);
+		down.setGravity(Gravity.CENTER);
+//		down.setMinimumWidth(pd200);
 
 		LinearLayout texts = new LinearLayout(cx);
-		texts.setLayoutParams(lp2);
+		texts.setLayoutParams(lp1);
 		texts.setOrientation(LinearLayout.HORIZONTAL);
 		texts.setGravity(Gravity.CENTER);
-		texts.setPadding(pd10, pd10, pd10, pd10);
+		texts.setPadding(pd10, pd15, pd10, pd15);
 
 		TextView confirmText = new TextView(cx);
 		confirmText.setLayoutParams(lp1);
 		confirmText.setId(100);
-		confirmText.setText("     确认退出？");
+		confirmText.setText("确认退出?");
 		confirmText.setTextSize(20);
 		confirmText.setTextColor(Color.BLACK);
 		texts.addView(confirmText);
 		down.addView(texts);
 
 		LinearLayout bts = new LinearLayout(cx);
-		bts.setLayoutParams(lp2);
+		bts.setLayoutParams(lp1);
 		bts.setOrientation(LinearLayout.HORIZONTAL);
 
 		exBt1 = new Button(cx);
 		exBt1.setId(101);
 		LinearLayout.LayoutParams lp4 = new LinearLayout.LayoutParams(
-				LayoutParams.WRAP_CONTENT, LayoutParams.WRAP_CONTENT);
+				pd110, LayoutParams.WRAP_CONTENT);
 		lp4.setMargins(pd5, pd5, pd5, pd5);
-		lp4.weight = 1;
+//		lp4.weight = 1;
 		exBt1.setLayoutParams(lp4);
-//		bt1.setBackgroundResource(R.drawable.egame_sdk_btn_green_selector);
 		exBt1.setTextColor(Color.WHITE);
 		exBt1.setText("退出");
 		exBt1.setBackgroundColor(Color.GRAY);
-		exBt1.setMinHeight(pd20);
 
 		exBt2 = new Button(cx);
 		exBt2.setId(102);
 		exBt2.setLayoutParams(lp4);
-//		bt2.setBackgroundResource(R.drawable.egame_sdk_btn_green_selector);
 		exBt2.setText("返回");
 		exBt2.setTextColor(Color.WHITE);
 		exBt2.setBackgroundColor(Color.GRAY);
-		exBt2.setMinHeight(pd20);
 
 		bts.addView(exBt1);
 		bts.addView(exBt2);
@@ -617,16 +550,19 @@ public class CheckTool{
 
 		layout.addView(down);
 		
-		FrameLayout inner = new FrameLayout(cx);
-		inner.setLayoutParams(lp1);
-//		int picId =cx.getResources().getIdentifier(cx.getPackageName()+":drawable/egame_sdk_ds_bg", null,cx.getPackageName()); 
-//		inner.setBackgroundResource(picId);
+		FrameLayout outter = new FrameLayout(cx);
+		outter.setLayoutParams(lp1);
+		outter.setBackgroundColor(Color.argb(150, 255, 255, 255));
+		outter.setPadding(pd10, pd10, pd10, pd10);
+		outter.addView(layout);
 		
-		inner.setBackgroundColor(Color.argb(150, 255, 255, 255));
+		LinearLayout outter2 = new LinearLayout(cx);
+		outter2.setLayoutParams(lp1);
+		outter2.setBackgroundColor(Color.TRANSPARENT);
+		outter2.setGravity(Gravity.CENTER);
+		outter2.addView(outter);
 		
-		inner.setPadding(pd10, pd10, pd10, pd10);
-		inner.addView(layout);
-		return inner;
+		return outter2;
 	}
 //	String getGid() {
 //		return gid;

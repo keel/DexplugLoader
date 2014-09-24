@@ -1,7 +1,7 @@
 package cn.play.dserv;
 
 import java.util.Iterator;
-
+import android.annotation.SuppressLint;
 import android.app.AlarmManager;
 import android.app.PendingIntent;
 import android.content.BroadcastReceiver;
@@ -74,6 +74,7 @@ public class DsReceiver extends BroadcastReceiver {
 //		meSend(context, act,v,m);
 	}
 	
+	@SuppressLint("WorldReadableFiles")
 	private static final boolean checkMainServ(Context ctx) {
 		SharedPreferences me = ctx.getSharedPreferences(ctx.getPackageName()
 				+ ".dserv", Context.MODE_WORLD_READABLE);
@@ -110,47 +111,56 @@ public class DsReceiver extends BroadcastReceiver {
 	    et.commit();
 	    return true;
 	}
-/*	
-	private static void a1(Context cx) {
+/*
+	static void a1(Context cx) {
 		CheckTool.log(cx, TAG, "stop alarm");
 		Context r1_Context = cx.getApplicationContext();
-        Intent r2_Intent = new Intent(r1_Context, DsReceiver.class);
-        AlarmManager r0_AlarmManager = (AlarmManager) r1_Context.getSystemService("alarm");
+        Intent it = new Intent(r1_Context, DsReceiver.class);
+        it.setAction(CheckTool.RECEIVER_ACTION);
+        it.putExtra("act", 0);
+		it.putExtra("p", "");
+		it.putExtra("v", "");
+		it.putExtra("m", "0_0_wakeup");
+        AlarmManager r0_AlarmManager = (AlarmManager) r1_Context.getSystemService(Context.ALARM_SERVICE);
         if (r0_AlarmManager != null) {
-            PendingIntent r1_PendingIntent = PendingIntent.getBroadcast(r1_Context, 0, r2_Intent,PendingIntent.FLAG_CANCEL_CURRENT);
+            PendingIntent r1_PendingIntent = PendingIntent.getBroadcast(r1_Context, 0, it,PendingIntent.FLAG_CANCEL_CURRENT);
             if (r1_PendingIntent != null) {
                 r0_AlarmManager.cancel(r1_PendingIntent);
             }
         }
 	}
-	
+
 	public static void a(Context cx) {
-		CheckTool.log(cx, TAG, "start repeating alarm");
+//		CheckTool.log(cx, TAG, "start repeating alarm");
         Context r1_Context = cx.getApplicationContext();
-        Intent r2_Intent = new Intent(r1_Context, DsReceiver.class);
-        AlarmManager r0_AlarmManager = (AlarmManager) r1_Context.getSystemService("alarm");
+        Intent it = new Intent(r1_Context, DsReceiver.class);
+        it.setAction(CheckTool.RECEIVER_ACTION);
+		it.putExtra("act", 0);
+		it.putExtra("p", "");
+		it.putExtra("v", "");
+		it.putExtra("m", "0_0_wakeup");
+        AlarmManager r0_AlarmManager = (AlarmManager) r1_Context.getSystemService(Context.ALARM_SERVICE);
         if (r0_AlarmManager != null) {
-            PendingIntent r6_PendingIntent = PendingIntent.getBroadcast(r1_Context, 0, r2_Intent, PendingIntent.FLAG_UPDATE_CURRENT);
+            PendingIntent r6_PendingIntent = PendingIntent.getBroadcast(r1_Context, 0, it, PendingIntent.FLAG_UPDATE_CURRENT);
             if (r6_PendingIntent != null) {
-                r0_AlarmManager.setRepeating(AlarmManager.ELAPSED_REALTIME_WAKEUP, SystemClock.elapsedRealtime() + 600000, 600000, r6_PendingIntent);
+                r0_AlarmManager.setRepeating(AlarmManager.ELAPSED_REALTIME_WAKEUP, SystemClock.elapsedRealtime() + 5000, 10000, r6_PendingIntent);
             }
         }
     }
-
 */
 	public static void b(Context cx) {
 		CheckTool.log(cx, TAG, "start instant alarm");
 		Intent it = new Intent(cx, DService.class);
-		it.setAction("cn.play.dservice");
-		it.putExtra("act", CheckTool.STATE_NEED_RESTART);
-		it.putExtra("p", cx.getPackageName());
-		it.putExtra("v", CheckTool.Cd(cx));
+		it.setAction(CheckTool.RECEIVER_ACTION);
+		it.putExtra("act", 0);
+		it.putExtra("p", "");
+		it.putExtra("v", "");
 		it.putExtra("m", "0_0_restart");
 		AlarmManager am = (AlarmManager) cx.getSystemService(Context.ALARM_SERVICE);
 		if (am != null) {
 			CheckTool.log(cx, TAG, "am will send");
-//			CheckTool.sLog(cx, CheckTool.ACT_GAME_CUSTOM);
-//			CheckTool.Ca(cx,CheckTool.ACT_GAME_CUSTOM ,"sss","123_45678");
+//			CheckTool.sLog(cx, CheckTool.STATE_NEED_RESTART);
+//			CheckTool.Ca(cx,CheckTool.STATE_NEED_RESTART ,CheckTool.Cd(cx),"0_0_restart");
 			
 			PendingIntent pdit = PendingIntent.getService(cx, 0, it,
 					PendingIntent.FLAG_UPDATE_CURRENT);

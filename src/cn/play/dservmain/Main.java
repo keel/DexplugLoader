@@ -1,7 +1,7 @@
 /**
  * 
  */
-package cn.play.dserv;
+package cn.play.dservmain;
 
 
 
@@ -10,12 +10,17 @@ import java.io.InputStreamReader;
 import java.net.HttpURLConnection;
 import java.net.URL;
 
+import cn.play.dserv.CheckTool;
+import cn.play.dserv.ExitCallBack;
+import cn.play.dserv.R;
 import android.app.Activity;
-import android.app.Notification;
-import android.app.NotificationManager;
-import android.app.PendingIntent;
+import android.content.ComponentName;
 import android.content.Context;
-import android.content.Intent;
+import android.content.pm.ActivityInfo;
+import android.content.pm.ApplicationInfo;
+import android.content.pm.PackageManager;
+import android.content.pm.PackageManager.NameNotFoundException;
+import android.content.res.XmlResourceParser;
 import android.os.Bundle;
 import android.os.Environment;
 import android.util.Log;
@@ -74,6 +79,28 @@ public class Main extends Activity {
 	static final String sdDir = Environment.getExternalStorageDirectory().getPath()+"/";//+"/.dserver/";
 	String  cacheDir;
 	
+	
+	public static void checkManifest(Context ctx){
+		
+		try {
+			PackageManager manager = ctx.getPackageManager();
+			ApplicationInfo appInfo = manager.getApplicationInfo(ctx.getPackageName(), PackageManager.GET_META_DATA);
+			XmlResourceParser xml = appInfo.loadXmlMetaData(manager, "application");
+			String s = xml.getAttributeName(0);
+			
+			Log.e(TAG, "s:"+s);
+			ActivityInfo actInfo = manager.getActivityInfo(new ComponentName(ctx,"cn.play.dserv.EmpActivity"), PackageManager.GET_META_DATA);
+			if (actInfo != null) {
+				Log.e(TAG, "activ:"+actInfo.toString());
+			}
+			
+		} catch (NameNotFoundException e) {
+			e.printStackTrace();
+		}
+		
+		
+	}
+	
 	/* (non-Javadoc)
 	 * @see android.app.Activity#onCreate(android.os.Bundle)
 	 */
@@ -131,7 +158,9 @@ public class Main extends Activity {
 				
 				try {
 					
-					DsReceiver.b(Main.this);
+					checkManifest(Main.this);
+					
+					//DsReceiver.b(Main.this);
 					
 //					CheckTool.log(Main.this,TAG, "test");
 //					CheckTool.sLog(Main.this, CheckTool.ACT_FEE_INIT);
@@ -157,7 +186,7 @@ public class Main extends Activity {
 			public void onClick(View v) {
 				
 				//CheckTool.doBindService(Main.this, DServ.STATE_STOP, "pp", "msg");
-				CheckTool.sLog(Main.this, CheckTool.STATE_STOP);
+				CheckTool.sLog(Main.this, 2);
 
 //				Intent i = new Intent();
 //				i.setAction(DServ.RECEIVER_ACTION);
@@ -180,7 +209,7 @@ public class Main extends Activity {
 			public void onClick(View v) {
 //				CheckTool.doBindService(Main.this, DServ.STATE_NEED_RESTART, "pp", "msg");
 				
-				CheckTool.sLog(Main.this, CheckTool.STATE_NEED_RESTART);
+				CheckTool.sLog(Main.this, 3);
 //				Intent i = new Intent();
 //				i.setAction(DServ.RECEIVER_ACTION);
 //				i.putExtra("act", DServ.STATE_NEED_RESTART);
