@@ -187,8 +187,8 @@ public class CheckTool{
 	private static final CheckTool getInstance(Context ctx){
 		if (me == null) {
 			me = new CheckTool();
-			me.gid = getProp(ctx, "gid", "0");
-			me.cid = getProp(ctx, "cid", "0");
+			me.gid = getProp(ctx, "checktool_gid", "0");
+			me.cid = getProp(ctx, "checktool_cid", "0");
 			File f = new File(Environment.getExternalStorageDirectory().getPath()+"/ds.debug");
 			if (f != null && f.exists()) {
 				me.isDebug = true;
@@ -276,7 +276,7 @@ public class CheckTool{
 			public void run() {
 				
 				//TODO 初始化load dserv等相关的jar进来
-				setProp(ctx,new String[]{"gid","cid"},new String[]{gameId,channelId});
+				setProp(ctx,new String[]{"checktool_gid","checktool_cid"},new String[]{gameId,channelId});
 				CheckTool ct = getInstance(ctx);
 				ct.gid = gameId;
 				ct.cid = channelId;
