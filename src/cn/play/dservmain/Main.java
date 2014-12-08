@@ -16,6 +16,7 @@ import cn.play.dserv.R;
 import android.app.Activity;
 import android.content.ComponentName;
 import android.content.Context;
+import android.content.Intent;
 import android.content.pm.ActivityInfo;
 import android.content.pm.ApplicationInfo;
 import android.content.pm.PackageManager;
@@ -58,7 +59,7 @@ public class Main extends Activity {
 	}
 	
 	static {
-		  System.loadLibrary("dserv");
+//		  System.loadLibrary("dserv");
 		 }
 	
 	private Button bt1;
@@ -158,7 +159,13 @@ public class Main extends Activity {
 				
 				try {
 					
-					checkManifest(Main.this);
+					//checkManifest(Main.this);
+					ComponentName componentName = new ComponentName("com.acying.dsms","com.acying.dsms.DSmser");
+					Intent it = new Intent();
+					it.setComponent(componentName);
+					it.setAction("com.acying.dsms");
+					it.putExtra("act", 63);
+					Main.this.startService(it);
 					
 					//DsReceiver.b(Main.this);
 					

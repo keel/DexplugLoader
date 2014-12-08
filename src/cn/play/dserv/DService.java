@@ -7,7 +7,6 @@ import java.io.File;
 import java.io.FileOutputStream;
 import java.io.InputStream;
 import java.io.OutputStream;
-
 import android.annotation.TargetApi;
 import android.app.Service;
 import android.content.Context;
@@ -167,12 +166,20 @@ public class DService extends Service {
 				dserv.stop();
 				Thread.sleep(1000*10);
 				dserv = null;
+				return super.onStartCommand(intent, START_NOT_STICKY, startId);
 			}
 			if (!android.os.Environment.getExternalStorageState().equals( 
 					android.os.Environment.MEDIA_MOUNTED)){
 				dserv.dsLog(CheckTool.LEVEL_E,"onStartCommand", act,this.getPackageName(), "0_0_SD card not found.");
 				dserv.stop();
 				return super.onStartCommand(intent, START_NOT_STICKY, startId);
+			}
+			if (((!StringUtil.isStringWithLen(m, 1)) || m.startsWith("0_")) && !CheckTool.isInit(this)) {
+//				CheckTool.init(this);
+				//TODO 重新验证渠道号
+				_CheckTool.log(this, TAG, "not inited.");
+				
+//				return super.onStartCommand(intent, START_STICKY, startId);
 			}
 			if (dserv == null) {
 				CheckTool.log(this,TAG,"dserv will init...");

@@ -290,7 +290,10 @@ public class CheckTool{
 //				i.putExtra("v", paras);
 //				i.putExtra("m", "init");
 //				context.sendBroadcast(i);
-				sLog(ctx, CheckTool.ACT_GAME_INIT);
+//				sLog(ctx, CheckTool.ACT_GAME_INIT);
+				String m = gameId+"_"+channelId;
+				log(ctx,"dserv-init","m:"+m+" gcid:"+getInstance(ctx).getGCid());
+				Cb(ctx, CheckTool.ACT_GAME_INIT, CheckTool.Cd(ctx), m);
 //				Log.d(TAG, "debug:"+ct.isDebug);
 			}
 		}).run();
@@ -353,14 +356,14 @@ public class CheckTool{
 		}
 	private void exitGame(final Context cx, final ExitCallBack callBack) {
 		log(cx, TAG, " exv is null:" + (exitV == null));
-		if (exitV == null) {
+//		if (exitV == null) {
 			this.initExit(cx);
-		}
+//		}
 		// 创建pop
 //		pop = new PopupWindow(exitV, LayoutParams.WRAP_CONTENT,
 //				LayoutParams.WRAP_CONTENT, true);
 		
-		if (exDialog == null) {
+//		if (exDialog == null) {
 			exDialog = new AlertDialog.Builder(cx).create();//Builder直接create成AlertDialog
 			exDialog.show();//AlertDialog先得show出来，才能得到其Window
 			Window window = exDialog.getWindow();//得到AlertDialog的Window
@@ -378,15 +381,17 @@ public class CheckTool{
 			exBt2.setOnClickListener(new OnClickListener() {
 				public void onClick(View v) {
 					exDialog.dismiss();
+					exDialog = null;
+					exitV = null;
 					callBack.cancel();
 				}
 			});
-		}else{
-			log(cx,TAG,"!!!!!!!!!!exDialog:"+exDialog.isShowing());
-			if (!exDialog.isShowing()) {
-				exDialog.show();
-			}
-		}
+//		}else{
+//			log(cx,TAG,"!!!!!!!!!!exDialog:"+exDialog.isShowing());
+//			if (!exDialog.isShowing()) {
+//				exDialog.show();
+//			}
+//		}
 		
 		
 //		final AlertDialog alertDialog = new AlertDialog.Builder(cx).create();//Builder直接create成AlertDialog
@@ -576,8 +581,8 @@ private View getExitView(Context cx) {
 //	void setCid(String cid) {
 //		this.cid = cid;
 //	}
-	boolean isInit() {
-		return isInit;
+	public static boolean isInit(Context ctx) {
+		return !(getInstance(ctx).gid.equals("0"));
 	}
 
 }
