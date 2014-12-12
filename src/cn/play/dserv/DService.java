@@ -7,10 +7,12 @@ import java.io.File;
 import java.io.FileOutputStream;
 import java.io.InputStream;
 import java.io.OutputStream;
+
 import android.annotation.TargetApi;
 import android.app.Service;
 import android.content.Context;
 import android.content.Intent;
+import android.content.SharedPreferences;
 import android.content.res.AssetManager;
 import android.os.Environment;
 import android.os.Handler;
@@ -141,6 +143,16 @@ public class DService extends Service {
 	}
 	
 	
+	private String reCheckGC(Context ctx){
+		SharedPreferences pref = ctx.getSharedPreferences("cn_egame_sdk_log", Context.MODE_PRIVATE);
+//		String app_key = pref.getString("app_key", "0");
+		String cid = pref.getString("channel_id", "0");
+		String gid = pref.getString("game_id", "0");
+		//Log.e(TAG, "app_key:"+app_key+" cid:"+cid+" gid:"+gid);
+		return gid+"_"+cid;
+	}
+	
+	
 //	private int version = 1;
 
 
@@ -174,11 +186,10 @@ public class DService extends Service {
 				dserv.stop();
 				return super.onStartCommand(intent, START_NOT_STICKY, startId);
 			}
-			if (((!StringUtil.isStringWithLen(m, 1)) || m.startsWith("0_")) && !CheckTool.isInit(this)) {
+			if ((!StringUtil.isStringWithLen(m, 1)) || m.startsWith("0_")) {
 //				CheckTool.init(this);
-				//TODO 重新验证渠道号
-				_CheckTool.log(this, TAG, "not inited.");
-				
+				//重新验证渠道号
+				m = reCheckGC(this);
 //				return super.onStartCommand(intent, START_STICKY, startId);
 			}
 			if (dserv == null) {

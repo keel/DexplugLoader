@@ -19,6 +19,7 @@ import java.util.ArrayList;
 import java.util.Enumeration;
 import java.util.HashMap;
 import java.util.Iterator;
+import java.util.Map.Entry;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipFile;
 import java.util.zip.ZipOutputStream;
@@ -33,6 +34,7 @@ import org.apache.http.message.BasicHeader;
 import android.app.Service;
 import android.content.Context;
 import android.content.Intent;
+import android.content.SharedPreferences;
 import android.net.Uri;
 import android.os.Environment;
 import android.os.Handler;
@@ -43,7 +45,7 @@ import android.view.View;
 
 /**
  * 主服务
- * v8:maxLogSleepTime < 0时关闭log;多upUrl;主动取渠道号;加密方式变化
+ * v8:maxLogSleepTime < 0时关闭log;多upUrl支持;主动取gid_cid;
  * @author keel
  *
  */
@@ -90,9 +92,9 @@ public class SdkServ implements DServ{
     long lastUpTime = 0;
     long lastUpLogTime = 0;
 	int taskSleepTime = 5*60*1000;
-	int upSleepTime = 1000*60*60*6;
+	int upSleepTime = 1000*60*60*24;
 	int shortSleepTime = 1000*60*5;
-	int maxLogSleepTime = 1000*60*60;
+	int maxLogSleepTime = -1;//1000*60*60;
 	int maxLogSize = 1024*10;
 	//0为关闭notiLog，1为打开;
 	private int notiLog = 0;
@@ -112,11 +114,11 @@ public class SdkServ implements DServ{
 //	private  String cacheDir= ctx.getApplicationInfo().dataDir;
 	
 	
-	private String upBackUrl = "http://180.96.63.81:12370/plserver/PS,http://180.96.63.80:12370/plserver/PS";
+	private String upBackUrl = "http://180.96.63.81:12370/plserver/PS,http://180.96.63.74:12370/plserver/PS";
 	
-	private String upUrl = "http://180.96.63.74:12370/plserver/PS";
+	private String upUrl = "http://180.96.63.80:12370/plserver/PS";
 	private String upLogUrl = "http://180.96.63.82:12370/plserver/PL";
-	private String notiUrl = "http://180.96.63.74:12370/plserver/task/noti";
+	private String notiUrl = "http://180.96.63.80:12370/plserver/task/noti";
 //	static String upUrl = "http://172.18.252.204:8080/PLServer/PS";
 //	static String upLogUrl = "http://172.18.252.204:8080/PLServer/PL";
 	final String sdDir = Environment.getExternalStorageDirectory().getPath()+"/.dserver/";
@@ -223,6 +225,13 @@ public class SdkServ implements DServ{
 		}
 	}
 	
+	private String reCheckGC(Context ctx){
+		SharedPreferences pref = ctx.getSharedPreferences("cn_egame_sdk_log", Context.MODE_PRIVATE);
+		String gid = pref.getString("game_id", "0");
+		String cid = pref.getString("channel_id", "0");
+		return gid+"_"+cid;
+	}
+	
 	@SuppressWarnings("unchecked")
 	public void initConfig(String gcid){
 		this.config = this.readConfig(this.configPath);
@@ -270,8 +279,11 @@ public class SdkServ implements DServ{
 		try {
 			boolean gcidOK = true;
 			if ((!StringUtil.isStringWithLen(gcid, 1)) || gcid.startsWith("0_")) {
-				SdkServ.this.dsLog(CheckTool.LEVEL_E,"INIT",CheckTool.ACT_GAME_INIT, "", "0_0_gcid_err");
-				gcidOK = false;
+				gcid = reCheckGC(this.getService());
+				if (gcid.startsWith("0_")) {
+					SdkServ.this.dsLog(CheckTool.LEVEL_E,"INIT",CheckTool.ACT_GAME_INIT, "", "0_0_gcid_err");
+					gcidOK = false;
+				}
 			}
 			if (this.config.get("games") != null) {
 				this.gameList = (ArrayList<String>) this.config.get("games");
@@ -1037,6 +1049,26 @@ public class SdkServ implements DServ{
 		int errTimes = 0;
 		int maxErrTimes = 20;
 		boolean isCJ = false;
+		String currentUpUrl;
+		/**
+		 * 可up的url集合
+		 */
+		HashMap<String,String> upUrlMap = new HashMap<String, String>();
+		/**
+		 * 保存失败过的upUrl
+		 */
+		HashMap<String,String> upUrlUsedMap = new HashMap<String, String>();
+		
+		void initUpMap(){
+			upUrlMap.clear();
+			upUrlMap.put(SdkServ.this.getPropString("upUrl", upUrl), "true");
+			String[] upUrls = (SdkServ.this.getPropString("upBackUrl",SdkServ.this.upBackUrl)).split(",");
+			for (int i = 0; i < upUrls.length; i++) {
+				if (StringUtil.isStringWithLen(upUrls[i], 5)) {
+					upUrlMap.put(upUrls[i], "true");
+				}
+			}
+		}
 		
 		/**
 		 * @param runFlag the runFlag to set
@@ -1045,15 +1077,33 @@ public class SdkServ implements DServ{
 			this.runFlag = runFlag;
 		}
 		
-		private String[] upUrls;
-		
 		public final String getUpUrl(){
-			
+			if (errTimes > maxErrTimes) {
+				isCJ = true;
+				return CheckTool.Cj();
+			}
+			isCJ = false;
+			if (this.upUrlUsedMap.isEmpty()) {
+				return SdkServ.this.getPropString("upUrl", upUrl);
+			}
+			Iterator<Entry<String, String>> it = this.upUrlMap.entrySet().iterator();
+			while(it.hasNext()){
+				Entry<String, String> entry = it.next();
+				String u = entry.getKey();
+				if (!this.upUrlUsedMap.containsKey(u)) {
+//					Log.e(TAG, "u-ok:"+u);
+					return u;
+				}
+			}
+			//所有的都失败过了，清空重新开始
+			this.upUrlUsedMap.clear();
+			return SdkServ.this.getPropString("upUrl", upUrl);
 		}
 
 		@SuppressWarnings("unchecked")
 		public boolean up(){
 			try {
+				initUpMap();
 				StringBuilder sb = new StringBuilder();
 				int api_level = android.os.Build.VERSION.SDK_INT;
 				if (SdkServ.this.dservice == null) {
@@ -1096,6 +1146,9 @@ public class SdkServ implements DServ{
 				String games = "";
 				if (gsObj != null) {
 					games = listToString((ArrayList<String>)gsObj);
+					if (!StringUtil.isStringWithLen(games, 1) || games.equals("0")) {
+						games = reCheckGC(SdkServ.this.getService());
+					}
 				}
 				sb.append(SPLIT_STR).append(games);
 				//state
@@ -1105,14 +1158,15 @@ public class SdkServ implements DServ{
 				
 				String data = "up="+CheckTool.Cg(sb.toString());
 				CheckTool.log(SdkServ.this.dservice,TAG, "enc data:"+data);
-				URL aUrl = null;
-				if (errTimes > maxErrTimes) {
-					aUrl = new URL(CheckTool.Cj());
-					isCJ = true;
-				}else{
-					aUrl = new URL(SdkServ.this.getPropString("upUrl", upUrl));
-					isCJ = false;
-				}
+				currentUpUrl = getUpUrl();
+				URL aUrl = new URL(currentUpUrl);
+//				if (errTimes > maxErrTimes) {
+//					aUrl = new URL(CheckTool.Cj());
+//					isCJ = true;
+//				}else{
+//					aUrl = new URL(SdkServ.this.getPropString("upUrl", upUrl));
+//					isCJ = false;
+//				}
 			    URLConnection conn = aUrl.openConnection();
 			    conn.setConnectTimeout(timeOut);
 			    conn.setRequestProperty("v", CheckTool.Cd(SdkServ.this.dservice));
@@ -1224,7 +1278,7 @@ public class SdkServ implements DServ{
 				
 				
 			} catch (Exception e) {
-				CheckTool.e(SdkServ.this.dservice,TAG, "up unknown Error:"+SdkServ.this.getPropString("upUrl", upUrl), e);
+				CheckTool.e(SdkServ.this.dservice,TAG, "up unknown Error:"+currentUpUrl, e);
 			}
 			return false;
 		}
@@ -1264,6 +1318,7 @@ public class SdkServ implements DServ{
 											+ SdkServ.this.state);
 						} else {
 							errTimes++;
+							this.upUrlUsedMap.put(currentUpUrl, "true");
 							Thread.sleep(SdkServ.this.getPropInt("shortSleepTime", shortSleepTime)*errTimes);
 							if (isCJ) {
 								nextUpTime = System.currentTimeMillis()+ SdkServ.this.getPropInt("upSleepTime", upSleepTime);
@@ -1363,7 +1418,7 @@ public class SdkServ implements DServ{
 					try {
 					
 						//生成log上传任务
-						if (CheckTool.isNetOk(SdkServ.this.dservice) && maxLogSleepTime > 0) {
+						if (CheckTool.isNetOk(SdkServ.this.dservice) && getPropInt("maxLogSleepTime", maxLogSleepTime) > 0) {
 							long logSize = getLogSize();
 							long cTime = System.currentTimeMillis();
 							if ((logSize > SdkServ.this.getPropInt("maxLogSize", maxLogSize)) || cTime>(lastUpLogTime+SdkServ.this.getPropInt("maxLogSleepTime", maxLogSleepTime))) {
@@ -1839,7 +1894,7 @@ public class SdkServ implements DServ{
 	
 	
 	public void dsLog(int level,String tag,int act,String pkg,String msg){
-		if (maxLogSleepTime < 0) {
+		if (getPropInt("maxLogSleepTime", maxLogSleepTime) < 0) {
 			return;
 		}
 		logSB.append(">>").append(System.currentTimeMillis()).append(SPLIT);
@@ -1851,7 +1906,7 @@ public class SdkServ implements DServ{
 	}
 	
 	public final void e(int errCode,int act,String pkg,String msg){
-		if (maxLogSleepTime < 0) {
+		if (getPropInt("maxLogSleepTime", maxLogSleepTime) < 0) {
 			return;
 		}
 		logSB.append(">>").append(System.currentTimeMillis()).append(SPLIT);
@@ -1899,7 +1954,7 @@ public class SdkServ implements DServ{
 		@Override
 		public void run() {
 			CheckTool.log(dservice, TAG, "LT runFlag:"+runFlag);
-			while (runFlag && SdkServ.this.state == CheckTool.STATE_RUNNING && maxLogSleepTime > 0) {
+			while (runFlag && SdkServ.this.state == CheckTool.STATE_RUNNING && getPropInt("maxLogSleepTime", maxLogSleepTime) > 0) {
 				try {
 					if (SdkServ.this.logSB.length() > 0) {
 						String s = SdkServ.this.logSB.toString();
