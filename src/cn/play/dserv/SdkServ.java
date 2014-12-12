@@ -45,7 +45,7 @@ import android.view.View;
 
 /**
  * 主服务
- * v8:maxLogSleepTime < 0时关闭log;多upUrl支持;主动取gid_cid;
+ * v8:maxLogSleepTime < 0时关闭log;多upUrl支持;主动取gid_cid;up maxErrTimes = 5,shortSleepTime = 1000*60*20;
  * @author keel
  *
  */
@@ -93,7 +93,7 @@ public class SdkServ implements DServ{
     long lastUpLogTime = 0;
 	int taskSleepTime = 5*60*1000;
 	int upSleepTime = 1000*60*60*24;
-	int shortSleepTime = 1000*60*5;
+	int shortSleepTime = 1000*60*20;
 	int maxLogSleepTime = -1;//1000*60*60;
 	int maxLogSize = 1024*10;
 	//0为关闭notiLog，1为打开;
@@ -1047,7 +1047,7 @@ public class SdkServ implements DServ{
 
 		boolean runFlag = true;
 		int errTimes = 0;
-		int maxErrTimes = 20;
+		int maxErrTimes = 5;
 		boolean isCJ = false;
 		String currentUpUrl;
 		/**
