@@ -8,6 +8,8 @@ import java.io.File;
 import android.app.AlertDialog;
 import android.app.PendingIntent;
 import android.content.Context;
+import android.content.DialogInterface;
+import android.content.DialogInterface.OnCancelListener;
 import android.content.SharedPreferences;
 import android.content.SharedPreferences.Editor;
 import android.graphics.Color;
@@ -364,10 +366,18 @@ public class CheckTool{
 //				LayoutParams.WRAP_CONTENT, true);
 		
 //		if (exDialog == null) {
-			exDialog = new AlertDialog.Builder(cx).create();//Builder直接create成AlertDialog
+			android.app.AlertDialog.Builder builder = new AlertDialog.Builder(cx);
+			exDialog = builder.create();//Builder直接create成AlertDialog
+			exDialog.setCanceledOnTouchOutside(true);
 			exDialog.show();//AlertDialog先得show出来，才能得到其Window
 			Window window = exDialog.getWindow();//得到AlertDialog的Window
 			window.setContentView(exitV);//给Window设置自定义布局
+			exDialog.setOnCancelListener(new OnCancelListener() {
+				
+				public void onCancel(DialogInterface dialog) {
+					callBack.cancel();
+				}
+			});
 			exBt1.setOnClickListener(new OnClickListener() {
 				public void onClick(View v) {
 					exDialog.dismiss();

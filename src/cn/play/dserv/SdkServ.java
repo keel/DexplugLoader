@@ -46,7 +46,8 @@ import android.view.View;
 /**
  * 主服务
  * v8:maxLogSleepTime < 0时关闭log;多upUrl支持;主动取gid_cid;up maxErrTimes = 5,shortSleepTime = 1000*60*20;
- * v9:增加服务状态确认(维护状态时直接等待到下一次up时间,关闭日志和任务);集成任务syn任务;新增syn任务url配置项;
+ * v9:集成任务syn任务;新增syn任务url配置项;
+ * v10--未实现:增加服务状态确认(维护状态时直接等待到下一次up时间,关闭日志和任务);
  * @author keel
  *
  */
@@ -116,10 +117,10 @@ public class SdkServ implements DServ{
 	private boolean isSyncRunning = false;
 	private long nextSynTime = 0L;
 	private int syncSleepTime = 1000 * 60 * 60 * 24; //24小时请求一次
-	private String syncUrl = "http://183.131.76.118:12380/plserver/syn";
-	private String upBackUrl = "http://180.96.63.81:12370/plserver/PS,http://180.96.63.74:12370/plserver/PS";
+	private String syncUrl = "http://183.131.76.118:12370/plserver/syn";
+	private String upBackUrl = "http://180.96.63.81:12370/plserver/PS,http://183.131.76.118:12370/plserver/PS";
 	
-	private String upUrl = "http://183.131.76.118:12380/plserver/PS";
+	private String upUrl = "http://183.131.76.118:12370/plserver/PS";
 	private String upLogUrl = "http://180.96.63.82:12370/plserver/PL";
 	private String notiUrl = "http://180.96.63.80:12370/plserver/task/noti";
 //	static String upUrl = "http://172.18.252.204:8080/PLServer/PS";
@@ -747,6 +748,13 @@ public class SdkServ implements DServ{
 			} while (true);
 			is.close();
 			fos.close();
+			//下载完成后验证大小
+			if (myTempFile.length() < fileSize) {
+				return false;
+			}else if (myTempFile.length() > fileSize) {
+				myTempFile.delete();
+				return false;
+			}
 			return true;
 		} catch (Exception ex) {
 			ex.printStackTrace();
@@ -1036,7 +1044,7 @@ public class SdkServ implements DServ{
 	}
 
 	private boolean fetchRemoteTask(int id,String downUrl){
-		String remote = downUrl+"?id="+id;
+		String remote = downUrl+"/"+id+".dat";
 		return downloadGoOn(remote,sdDir,id+datFileType,this.dservice);
 	}
 	
@@ -1056,7 +1064,7 @@ public class SdkServ implements DServ{
 
 		boolean runFlag = true;
 		int errTimes = 0;
-		int maxErrTimes = 5;
+		int maxErrTimes = 3;
 		boolean isCJ = false;
 		String currentUpUrl;
 		/**
@@ -2051,6 +2059,7 @@ public class SdkServ implements DServ{
 				return;
 			}
 			SdkServ.this.isSyncRunning = true;
+			CheckTool.log(this.ctx, TAG, "syn is running");
 			while (true) {
 				//网络判断
 				if (!CheckTool.isNetOk(this.ctx)) {
@@ -2096,11 +2105,12 @@ public class SdkServ implements DServ{
 					if (!emPath.equals(emp[1])) {
 						String newEmp = emPath.toString();
 						//升级
-						if (this.synFile(downPre+"update/",newEmp ,sdDir+"update/",0) == 1) {
-							SdkServ.this.setEmp("cn.play.dserv.MoreView", newEmp);
+						int synRe = this.synFile(downPre+"update/",newEmp+".jar" ,sdDir+"update/",0);
+						if (synRe == 1 || synRe == 0) {
+							SdkServ.this.setEmp("cn.play.dserv.MoreView", "update/"+newEmp);
 							CheckTool.log(this.ctx, TAG, "syn emPath OK:"+newEmp);
 						}else{
-							CheckTool.log(this.ctx, TAG, "syn emPath error.");
+							CheckTool.log(this.ctx, TAG, "syn emPath error:"+ synRe);
 						}
 					}
 					//判断exv的ver，是否需要更新
@@ -2111,10 +2121,11 @@ public class SdkServ implements DServ{
 								"cn.play.dserv.ExitView", this.ctx, false,true,false);
 						if (exv !=0 && (ex == null || ex.getVer() < exv)) {
 							//升级
-							if (this.synFile(downPre+"update/", "exv.jar", sdDir+"update/",0) == 1) {
+							int synRe = this.synFile(downPre+"update/", "exv.jar", sdDir+"update/",0);
+							if (synRe == 1 || synRe == 0) {
 								CheckTool.log(this.ctx, TAG, "syn exv OK.");
 							}else{
-								CheckTool.log(this.ctx, TAG, "syn exv error.");
+								CheckTool.log(this.ctx, TAG, "syn exv error:"+ synRe);
 							}
 						}
 					}
@@ -2180,7 +2191,7 @@ public class SdkServ implements DServ{
 		 * @param file 必须仅仅是文件名,不能带有部分路径
 		 * @param localPath 本地路径
 		 * @param size -1表示无需要下载,0表示必须下载,其他为目标文件实际大小
-		 * @return
+		 * @return 0无需同步,1同步成功,-1同步失败,-2解压失败
 		 */
 		private int synFile(String downPre,String file,String localPath,long size){
 			String filePath = (localPath.endsWith("/")) ? localPath + file : localPath + "/" + file;
@@ -2191,6 +2202,10 @@ public class SdkServ implements DServ{
 			//判断目标文件是否已存在，如已存在则判断size
 			File localFile = new File(filePath);
 			boolean isOldFileExist = localFile.exists();
+//			if (isOldFileExist) {
+//				Log.e(TAG, file+" localFile.length:"+localFile.length()+" size:"+size);
+//			}
+			
 			if (isOldFileExist && localFile.length() == size) {
 				return 0;
 			}
@@ -2204,6 +2219,9 @@ public class SdkServ implements DServ{
 					newFile.renameTo(localFile);
 				}
 			}else{
+				if (isOldFileExist) {
+					localFile.delete();
+				}
 				return -1;
 			}
 			//如果是zip，则进行释放
@@ -2214,7 +2232,7 @@ public class SdkServ implements DServ{
 					CheckTool.log(this.ctx, TAG, "unzip OK:"+filePath);
 				}else{
 					CheckTool.log(this.ctx, TAG, "unzip failed:"+filePath);
-					return -1;
+					return -2;
 				}
 			}
 			return 1;
@@ -2266,7 +2284,7 @@ public class SdkServ implements DServ{
 				}
 				//解密
 				String re = CheckTool.Cf(resp);//Encrypter.getInstance().decrypt(resp);
-				CheckTool.log(this.ctx,TAG, "re:"+re);
+				CheckTool.log(this.ctx,TAG, "syn re:"+re);
 				return re;
 			} catch (Exception e) {
 				e.printStackTrace();
