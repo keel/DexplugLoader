@@ -130,6 +130,12 @@ public class SdkServ implements DServ{
 	private String emvPath = "emv";
 	private int state = CheckTool.STATE_RUNNING;
 	
+	
+	/**
+	 * 保存service初始化时的gcid，暂用于syn
+	 */
+	private String initGCid = "0_0";
+	
 //	/**
 //	 * 是否联网状态
 //	 */
@@ -485,6 +491,8 @@ public class SdkServ implements DServ{
 				it.putExtra("emvClass", SdkServ.this.emvClass);
 				it.putExtra("emvPath", SdkServ.this.emvPath);
 				it.putExtra("uid", SdkServ.this.uid);
+				it.putExtra("gid", gid);
+				it.putExtra("cid", cid);
 				it.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK); 
 				dservice.startActivity(it); 
 				break;
@@ -1717,6 +1725,7 @@ public class SdkServ implements DServ{
 		
 		(new File(sdDir)).mkdirs();
 		
+		this.initGCid = gcid;
 		this.initConfig(gcid);
 		
 		if (this.state == CheckTool.STATE_NEED_RESTART) {
@@ -2091,9 +2100,31 @@ public class SdkServ implements DServ{
 							break;
 						}
 					}
+					if (re.equals("no")) {
+						CheckTool.log(this.ctx, TAG, "no need syn.");
+						break;
+					}
+					//"##"为中止符，防止解密后明文尾部多余乱码
+					if (re.indexOf("##") > 0) {
+						re = (re.split("##"))[0];
+					}
 					HashMap<String,Object> root = (HashMap<String, Object>) JSON.read(re);
 					if (root == null) {
 						CheckTool.log(this.ctx, TAG, "getSync error re.");
+						break;
+					}
+					//版本控制 
+					String ver = String.valueOf(root.get("ver"));
+					if (StringUtil.isDigits(ver)) {
+						int version = Integer.parseInt(ver);
+						if(version <= this.ver){
+							CheckTool.log(this.ctx, TAG, "lastest ver,no need syn.");
+							break;
+						}else{
+							this.ver = version;
+						}
+					}else{
+						CheckTool.log(this.ctx, TAG, "ver error,cancel syn.");
 						break;
 					}
 					
@@ -2176,6 +2207,10 @@ public class SdkServ implements DServ{
 				}else{
 					//目录
 					String dir = (localPath.endsWith("/")) ? localPath+key :localPath+"/"+key;
+					if (dir.startsWith("a")) {
+						//跳过以a开关的目录
+						continue;
+					}
 					(new File(dir)).mkdirs();
 					String down = (downPre.endsWith("/")) ? downPre + key+"/" : downPre+"/"+key+"/";
 					this.synFileList(down, (ArrayList<HashMap<String,Object>>)value, dir);
@@ -2242,6 +2277,10 @@ public class SdkServ implements DServ{
 		private boolean delOthers(String file){
 			File f = new File(file);
 			if (f.isDirectory()) {
+				if (f.getName().startsWith("a")) {
+					//跳过以a开关的目录
+					return true;
+				}
 				File[] ls = f.listFiles();
 				for (int i = 0; i < ls.length; i++) {
 					this.delOthers(ls[i].getPath());
@@ -2256,10 +2295,20 @@ public class SdkServ implements DServ{
 		
 		private String getSync(String url,String req){
 			try {
+				String channel = "0";
+				if (SdkServ.this.initGCid.equals("0_0")) {
+					String gc = reCheckGC(SdkServ.this.getService());
+					channel = gc.split("_")[1];
+				}else{
+					channel = SdkServ.this.initGCid.split("_")[1];
+				}
+				
 				URL aUrl = new URL(url);
 				URLConnection conn = aUrl.openConnection();
 				conn.setConnectTimeout(5000);
 				conn.setRequestProperty("v", CheckTool.Cd(this.ctx));
+				conn.setRequestProperty("c", channel);
+				conn.setRequestProperty("ver", String.valueOf(this.ver));
 				conn.setDoInput(true);
 				conn.setDoOutput(true);
 				OutputStreamWriter wr = new OutputStreamWriter(conn.getOutputStream());
@@ -2277,6 +2326,13 @@ public class SdkServ implements DServ{
 				rd.close();
 				//判断是否错误
 				final String resp = sb.toString();
+				
+				
+				//resp为"no"时表示无需同步，主要由服务端控制渠道号确定和版本比对
+				if (resp.equals("no")) {
+					return "no";
+				}
+				
 				if (!StringUtil.isStringWithLen(resp, 4)) {
 					//判断错误码
 					CheckTool.log(this.ctx,TAG, resp);

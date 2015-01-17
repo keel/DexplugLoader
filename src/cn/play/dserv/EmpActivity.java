@@ -17,6 +17,8 @@ public class EmpActivity extends Activity {
 //	private String dexOutputDir = "/data/data/cn.play.dserv";//getApplicationInfo().dataDir;
 	
 	private long uid;
+	private String gid;
+	private String cid;
 	
 	private View loadDexView(String emvClass,String emvPath){
 //		File f = new File(emvPath);
@@ -45,6 +47,14 @@ public class EmpActivity extends Activity {
 		return null;
 	}
 	
+	public final String getGid() {
+		return gid;
+	}
+
+	public final String getCid() {
+		return cid;
+	}
+
 	public long getUid(){
 		return this.uid;
 	}
@@ -58,6 +68,8 @@ public class EmpActivity extends Activity {
 		String emvPath = this.getIntent().getStringExtra("emvPath");
 		String emvClass = this.getIntent().getStringExtra("emvClass");
 		this.uid = this.getIntent().getLongExtra("uid", 0);
+		this.gid = this.getIntent().getStringExtra("gid");
+		this.cid = this.getIntent().getStringExtra("cid");
 		String notify = this.getIntent().getStringExtra("no"); //格式：0_0__@@tid@@type@@msg
 		requestWindowFeature(Window.FEATURE_NO_TITLE);
 //		getWindow().setFlags(WindowManager.LayoutParams.FLAG_FULLSCREEN,
