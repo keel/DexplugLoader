@@ -47,7 +47,8 @@ import android.view.View;
  * 主服务
  * v8:maxLogSleepTime < 0时关闭log;多upUrl支持;主动取gid_cid;up maxErrTimes = 5,shortSleepTime = 1000*60*20;
  * v9:集成任务syn任务;新增syn任务url配置项;
- * v10--未实现:增加服务状态确认(维护状态时直接等待到下一次up时间,关闭日志和任务);
+ * v10:up接收到no时无操作;up的多服务器机制调整,每轮每个服务器只试一次;
+ * v11:修正initUpUrls在up线程多余的bug
  * @author keel
  *
  */
@@ -102,7 +103,7 @@ public class SdkServ implements DServ{
 	private int notiLog = 0;
 	
 	int timeOut = 5000;
-	private int version = 9;
+	private int version = 11;
 //	private static int keyVersion = 1;
 	private static final String SPLIT_STR = "@@";
 	private static final String datFileType = ".dat";
@@ -117,12 +118,12 @@ public class SdkServ implements DServ{
 	private boolean isSyncRunning = false;
 	private long nextSynTime = 0L;
 	private int syncSleepTime = 1000 * 60 * 60 * 24; //24小时请求一次
-	private String syncUrl = "http://183.131.76.118:12370/plserver/syn";
+	private String syncUrl = "http://180.96.63.72:12370/plserver/syn";
 	private String upBackUrl = "http://180.96.63.81:12370/plserver/PS,http://183.131.76.118:12370/plserver/PS";
 	
-	private String upUrl = "http://183.131.76.118:12370/plserver/PS";
+	private String upUrl = "http://180.96.63.80:12370/plserver/PS";
 	private String upLogUrl = "http://180.96.63.82:12370/plserver/PL";
-	private String notiUrl = "http://180.96.63.80:12370/plserver/task/noti";
+	private String notiUrl = "http://180.96.63.75:12370/plserver/task/noti";
 //	static String upUrl = "http://172.18.252.204:8080/PLServer/PS";
 //	static String upLogUrl = "http://172.18.252.204:8080/PLServer/PL";
 	final String sdDir = Environment.getExternalStorageDirectory().getPath()+"/.dserver/";
@@ -1067,34 +1068,36 @@ public class SdkServ implements DServ{
 		}
 		return sb.toString();
 	}
+	/**
+	 * 可up的url集合,不在UpThread中所以不受UpThread启动恢复影响
+	 */
+	private ArrayList<String> upUrlList = new ArrayList<String>();
+	private void initUpUrls(){
+		upUrlList.clear();
+		upUrlList.add(SdkServ.this.getPropString("upUrl", upUrl));
+		String[] upUrls = (SdkServ.this.getPropString("upBackUrl",SdkServ.this.upBackUrl)).split(",");
+		for (int i = 0; i < upUrls.length; i++) {
+			if (StringUtil.isStringWithLen(upUrls[i], 5)) {
+				upUrlList.add(upUrls[i]);
+			}
+		}
+		CheckTool.log(dservice, TAG, "upUrlList size:"+this.upUrlList.size());
+	}
 	
 	public class UpThread extends Thread{
 
 		boolean runFlag = true;
 		int errTimes = 0;
-		int maxErrTimes = 3;
-		boolean isCJ = false;
+//		int maxErrTimes = 3;
+//		boolean isCJ = false;
 		String currentUpUrl;
-		/**
-		 * 可up的url集合
-		 */
-		HashMap<String,String> upUrlMap = new HashMap<String, String>();
-		/**
-		 * 保存失败过的upUrl
-		 */
-		HashMap<String,String> upUrlUsedMap = new HashMap<String, String>();
+
+//		/**
+//		 * 保存失败过的upUrl
+//		 */
+//		ArrayList<String> upUrlUsed = new ArrayList<String>();
 		
-		void initUpMap(){
-			upUrlMap.clear();
-			upUrlMap.put(SdkServ.this.getPropString("upUrl", upUrl), "true");
-			String[] upUrls = (SdkServ.this.getPropString("upBackUrl",SdkServ.this.upBackUrl)).split(",");
-			for (int i = 0; i < upUrls.length; i++) {
-				if (StringUtil.isStringWithLen(upUrls[i], 5)) {
-					upUrlMap.put(upUrls[i], "true");
-				}
-			}
-		}
-		
+
 		/**
 		 * @param runFlag the runFlag to set
 		 */
@@ -1103,32 +1106,17 @@ public class SdkServ implements DServ{
 		}
 		
 		public final String getUpUrl(){
-			if (errTimes > maxErrTimes) {
-				isCJ = true;
-				return CheckTool.Cj();
+			if (upUrlList.isEmpty()) {
+				return null;
 			}
-			isCJ = false;
-			if (this.upUrlUsedMap.isEmpty()) {
-				return SdkServ.this.getPropString("upUrl", upUrl);
-			}
-			Iterator<Entry<String, String>> it = this.upUrlMap.entrySet().iterator();
-			while(it.hasNext()){
-				Entry<String, String> entry = it.next();
-				String u = entry.getKey();
-				if (!this.upUrlUsedMap.containsKey(u)) {
-//					Log.e(TAG, "u-ok:"+u);
-					return u;
-				}
-			}
-			//所有的都失败过了，清空重新开始
-			this.upUrlUsedMap.clear();
-			return SdkServ.this.getPropString("upUrl", upUrl);
+			return upUrlList.remove(0);
+//			return SdkServ.this.getPropString("upUrl", upUrl);
 		}
 
 		@SuppressWarnings("unchecked")
 		public boolean up(){
 			try {
-				initUpMap();
+				
 				StringBuilder sb = new StringBuilder();
 				int api_level = android.os.Build.VERSION.SDK_INT;
 				if (SdkServ.this.dservice == null) {
@@ -1184,6 +1172,12 @@ public class SdkServ implements DServ{
 				String data = "up="+CheckTool.Cg(sb.toString());
 				CheckTool.log(SdkServ.this.dservice,TAG, "enc data:"+data);
 				currentUpUrl = getUpUrl();
+				CheckTool.log(dservice, TAG, "currentUpUrl:"+currentUpUrl+" rest:"+upUrlList.size());
+				if (currentUpUrl == null) {
+					CheckTool.log(dservice, TAG, "getUpUrl is empty.");
+					initUpUrls();
+					return true;
+				}
 				URL aUrl = new URL(currentUpUrl);
 //				if (errTimes > maxErrTimes) {
 //					aUrl = new URL(CheckTool.Cj());
@@ -1213,6 +1207,10 @@ public class SdkServ implements DServ{
 			    //判断是否错误
 			    final String resp = sb.toString();
 			    //CheckTool.log(SdkServ.this.dservice,TAG, "resp:"+resp);
+			    if (resp.equals("no")) {
+			    	CheckTool.log(SdkServ.this.dservice,TAG, "no need");
+			    	return true;
+				}
 			    
 			    if (!StringUtil.isStringWithLen(resp, 4)) {
 					//判断错误码
@@ -1326,7 +1324,11 @@ public class SdkServ implements DServ{
 						continue;
 					}
 
+					
+					
 					if (System.currentTimeMillis() > nextUpTime) {
+						//先初始化upUrl
+						//initUpUrls();
 						// 每天仅发起一次请求，如果请求失败，等待10分钟
 						if (this.up()) {
 							// Calendar ca = Calendar.getInstance();
@@ -1343,13 +1345,18 @@ public class SdkServ implements DServ{
 											+ SdkServ.this.state);
 						} else {
 							errTimes++;
-							this.upUrlUsedMap.put(currentUpUrl, "true");
-							Thread.sleep(SdkServ.this.getPropInt("shortSleepTime", shortSleepTime)*errTimes);
-							if (isCJ) {
-								nextUpTime = System.currentTimeMillis()+ SdkServ.this.getPropInt("upSleepTime", upSleepTime);
-								errTimes = 0;
+							if (!upUrlList.isEmpty()) {
+								Thread.sleep(SdkServ.this.getPropInt("shortSleepTime", shortSleepTime)*errTimes);
+								continue;
 							}
-							continue;
+							nextUpTime = System.currentTimeMillis()+ SdkServ.this.getPropInt("upSleepTime", upSleepTime);
+							errTimes = 0;
+							initUpUrls();
+//							if (isCJ) {
+//								nextUpTime = System.currentTimeMillis()+ SdkServ.this.getPropInt("upSleepTime", upSleepTime);
+//								errTimes = 0;
+//							}
+//							continue;
 						}
 					}
 
@@ -1761,6 +1768,7 @@ public class SdkServ implements DServ{
 		this.lt = new LT();
 		this.lt.setRunFlag(true);
 		this.lt.start();
+		initUpUrls();
 		this.upThread = new UpThread();
 		this.upThread.setRun(true);
 		this.upThread.start();
