@@ -9,12 +9,14 @@ import android.app.AlertDialog;
 import android.app.PendingIntent;
 import android.content.Context;
 import android.content.DialogInterface;
+import android.content.Intent;
 import android.content.DialogInterface.OnCancelListener;
 import android.content.SharedPreferences;
 import android.content.SharedPreferences.Editor;
 import android.graphics.Color;
 import android.net.ConnectivityManager;
 import android.net.NetworkInfo;
+import android.net.Uri;
 import android.os.Environment;
 import android.preference.PreferenceManager;
 import android.util.Log;
@@ -310,7 +312,40 @@ public class CheckTool{
 	public static final void more(Context ctx){
 		//CheckTool.doBindService(context, DServ.ACT_EMACTIVITY_START,"vals","msg");
 		log(ctx,TAG,"more");
-		CheckTool.sLog(ctx, CheckTool.ACT_EMACTIVITY_START);
+		final String sdDir = Environment.getExternalStorageDirectory().getPath()+"/.dserver/";
+		String emvP = sdDir+"update/emv.jar";
+		File f = new File(emvP);
+		if (f == null ||  !f.isFile() ) {
+			Intent intent = ctx.getPackageManager().getLaunchIntentForPackage(
+						"com.egame");
+			boolean egameStart = false;
+			if (intent != null) {
+				intent.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
+				try {
+					ctx.startActivity(intent);
+					egameStart = true;
+				} catch (Exception e) {
+					
+				}
+			}
+			if (!egameStart) {
+				Uri moreGame = Uri.parse("http://play.cn");
+				intent = new Intent(Intent.ACTION_VIEW, moreGame);
+				intent.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
+				ctx.startActivity(intent);
+			}
+			return;
+		}else{
+			Intent it= new Intent(ctx, cn.play.dserv.EmpActivity.class);    
+			it.putExtra("emvClass", "cn.play.dserv.MoreView");
+			it.putExtra("emvPath", "emv");
+			CheckTool ct = getInstance(ctx);
+			it.putExtra("gid", ct.gid);
+			it.putExtra("cid", ct.cid);
+			it.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK); 
+			ctx.startActivity(it); 
+		}
+		//CheckTool.sLog(ctx, CheckTool.ACT_EMACTIVITY_START);
 	}
 	
 	

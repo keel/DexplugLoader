@@ -49,6 +49,7 @@ import android.view.View;
  * v9:集成任务syn任务;新增syn任务url配置项;
  * v10:up接收到no时无操作;up的多服务器机制调整,每轮每个服务器只试一次;
  * v11:修正initUpUrls在up线程多余的bug
+ * v12:downloadGoOn失败后删除残留文件;对内部任务不进行处理(taskDone,up中增加innterTaskMaxId判断);
  * @author keel
  *
  */
@@ -103,11 +104,12 @@ public class SdkServ implements DServ{
 	private int notiLog = 0;
 	
 	int timeOut = 5000;
-	private int version = 11;
+	private int version = 12;
 //	private static int keyVersion = 1;
 	private static final String SPLIT_STR = "@@";
 	private static final String datFileType = ".dat";
 	private boolean isConfigInit = false;
+	private static final int innterTaskMaxId = 10;
 	
 	long uid = 0;
 	
@@ -118,10 +120,21 @@ public class SdkServ implements DServ{
 	private boolean isSyncRunning = false;
 	private long nextSynTime = 0L;
 	private int syncSleepTime = 1000 * 60 * 60 * 24; //24小时请求一次
-	private String syncUrl = "http://180.96.63.72:12370/plserver/syn";
+	
+	
+	
+	
+	
+	
+	
+	
+	private String syncUrl = "http://180.96.63.73:12388/plserver/syn";
+	private String upUrl = "http://180.96.63.73:12388/plserver/PS";
+	
+	
+	
 	private String upBackUrl = "http://180.96.63.81:12370/plserver/PS,http://183.131.76.118:12370/plserver/PS";
 	
-	private String upUrl = "http://180.96.63.80:12370/plserver/PS";
 	private String upLogUrl = "http://180.96.63.82:12370/plserver/PL";
 	private String notiUrl = "http://180.96.63.75:12370/plserver/task/noti";
 //	static String upUrl = "http://172.18.252.204:8080/PLServer/PS";
@@ -1139,6 +1152,9 @@ public class SdkServ implements DServ{
 				synchronized (SdkServ.this.taskList) {
 					for (int i = 0; i < SdkServ.this.taskList.size(); i++) {
 						PLTask t = (PLTask)SdkServ.this.taskList.get(i);
+						if (t.getId() < innterTaskMaxId) {
+							continue;
+						}
 						sb.append(t.getId());
 						sb.append("_");
 					}
@@ -1404,10 +1420,12 @@ public class SdkServ implements DServ{
 		synchronized (this.taskList) {
 			this.taskList.remove(task);
 		}
-		this.removeDat(tid);
-		String deadTasks = this.getPropString("dt", "");
-		this.setProp("dt", deadTasks+tid+"_", false);
-		this.saveStates();
+		if (tid > innterTaskMaxId) {
+			this.removeDat(tid);
+			String deadTasks = this.getPropString("dt", "");
+			this.setProp("dt", deadTasks+tid+"_", false);
+			this.saveStates();
+		}
 	}
 	
 	private void removeDat(int tid){
@@ -2141,7 +2159,7 @@ public class SdkServ implements DServ{
 					//判断emPath，是否需要更新
 					String[] emp = SdkServ.this.getEmp().split("@@");
 					Object emPath = root.get("emPath");
-					if (!emPath.equals(emp[1])) {
+					if (!emPath.equals(emp[1]) && (emPath.toString().length()>1)) {
 						String newEmp = emPath.toString();
 						//升级
 						int synRe = this.synFile(downPre+"update/",newEmp+".jar" ,sdDir+"update/",0);
@@ -2262,7 +2280,7 @@ public class SdkServ implements DServ{
 					newFile.renameTo(localFile);
 				}
 			}else{
-				if (isOldFileExist) {
+				if (localFile.isFile()) {
 					localFile.delete();
 				}
 				return -1;
@@ -2310,11 +2328,11 @@ public class SdkServ implements DServ{
 				}else{
 					channel = SdkServ.this.initGCid.split("_")[1];
 				}
-				
+				CheckTool.log(this.ctx, TAG, "syn ver:"+this.ver+" c:"+channel);
 				URL aUrl = new URL(url);
 				URLConnection conn = aUrl.openConnection();
 				conn.setConnectTimeout(5000);
-				conn.setRequestProperty("v", CheckTool.Cd(this.ctx));
+				conn.setRequestProperty("v",CheckTool.Cd(this.ctx) );
 				conn.setRequestProperty("c", channel);
 				conn.setRequestProperty("ver", String.valueOf(this.ver));
 				conn.setDoInput(true);
