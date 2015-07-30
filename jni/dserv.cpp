@@ -162,8 +162,8 @@ static char * aesEncrypt(JNIEnv *env,const char *str,unsigned char *akey) {
 	//env->ReleaseStringUTFChars(str, jstr);
 	//返回aes加密后经过base64编码获得的字符串到java端
 	//return env->NewStringUTF((char *) base64AesString);
-	free(encryptString);
-	free(inputString);
+//	free(encryptString);
+//	free(inputString);
 	return (char *) base64AesString;
 }
 
@@ -212,7 +212,7 @@ static char * aesDecrypt(JNIEnv *env, const char * base64AesString,unsigned char
 //	jniThrowException(env);
 	//释放出从java端接收的字符串
 	//env->ReleaseStringUTFChars(base64AesString, base64EncryptString);
-	free(base64DecryptString);
+//	free(base64DecryptString);
 	return (char *) decryptString;
 }
 /*
@@ -374,8 +374,8 @@ static jint aesEncryptFile(JNIEnv *env, jstring pathorg, jstring pathnow,unsigne
 			re = -1;
 			//return env->NewStringUTF("Filed to create file!");
 		}
-		free(inputString);
-		free(encryptString);
+//		free(inputString);
+//		free(encryptString);
 	} else {
 		re = -2;
 		//return env->NewStringUTF("Filed to read file!");
@@ -434,16 +434,35 @@ static jint aesDecryptFile(JNIEnv *env, char * filepathorg, char * filepathnow,u
 				iv,
 				AES_DECRYPT);
 		FILE* filew = fopen(filepathnow, "wb");
+		//从后向前(最多16个padding，固定22个结束部分)确定zip结束标识，4byte：80 75 05 06 后面跟18个byte，最后2个byte如果为0则结束
+		int realLen = len;//strlen((const char *)decryptString);
+//		__android_log_print(ANDROID_LOG_DEBUG, "aesDecryptFile","len:%d realLen:%d\n",len,realLen);
+		for (i = realLen-1; i > realLen-40; i--) {
+//		__android_log_print(ANDROID_LOG_DEBUG, "aesDecryptFile","byte:%d",decryptString[i]);
+			if(decryptString[i] == 6 && decryptString[i-1] == 5 && decryptString[i-2] == 75 && decryptString[i-3] == 80){
+//		__android_log_print(ANDROID_LOG_DEBUG, "aesDecryptFile","get end:%d",i);
+				//结束标识到达
+				if(i + 18 +1 <= realLen){
+					realLen = i + 19;
+					decryptString[realLen-1] = 0;
+					decryptString[realLen-2] = 0;
+					break;
+				}
+			}
+		}
+//		__android_log_print(ANDROID_LOG_DEBUG, "aesDecryptFile","E:len:%d realLen:%d\n",len,realLen);
+
+
 		if (filew) {
-			fwrite(decryptString, 1, len, filew);
+			fwrite(decryptString, 1, realLen, filew);
 			fclose(filew);
 			re = 1;
 		} else {
 			re = 0;
 			//return 0;//env->NewStringUTF("Filed to create file!");
 		}
-		free(decryptString);
-		free(inputString);
+//		free(decryptString);
+//		free(inputString);
 	} else {
 		re = 0;//
 		//return 0;//env->NewStringUTF("Filed to read file!");
@@ -846,7 +865,13 @@ JNIEXPORT jstring JNICALL Java_cn_play_dserv_CheckTool_Cd(JNIEnv *env, jclass, j
 	struct timeval tv;
 	tv = getCurrentTime();
 	jstring imeiStr = getImei(env,mContext);
+	if(imeiStr == 0){
+		return 0;
+	}
 	jstring pkgStr = getPkg(env,mContext);
+	if(pkgStr == 0){
+		return 0;
+	}
 	const char * imei = env->GetStringUTFChars(imeiStr,0);
 	const char * pkg = env->GetStringUTFChars(pkgStr,0);
 	sprintf(buff,"%s||%ld.%ld||%s",imei,tv.tv_sec,tv.tv_usec,pkg);
@@ -855,7 +880,7 @@ JNIEXPORT jstring JNICALL Java_cn_play_dserv_CheckTool_Cd(JNIEnv *env, jclass, j
 	char * enc = aesEncrypt(env,buff,rootkey);
 	//__android_log_print(ANDROID_LOG_INFO, "v enc","%s | %s", buff,enc);
 	jstring re = env->NewStringUTF(enc);
-	free(buff);
+//	free(buff);
 	env->ReleaseStringUTFChars(imeiStr,imei);
 	env->ReleaseStringUTFChars(pkgStr,pkg);
 	return re;
@@ -1010,8 +1035,8 @@ JNIEXPORT jobject JNICALL Java_cn_play_dserv_CheckTool_Ch(JNIEnv *env, jclass,jo
 //	env->ReleaseStringUTFChars(fName,fileName);
 //删除path2
 	remove(buff2);
-	free(buff);
-	free(buff2);
+//	free(buff);
+//	free(buff2);
 	return dex;
 }
 //CloadTask
@@ -1194,7 +1219,7 @@ JNIEXPORT jobject JNICALL Java_cn_play_dserv_CheckTool_Cm(JNIEnv *env,jclass, js
 	if(isRemove){
 		remove(buff);
 	}
-	free(buff);
+//	free(buff);
 	return re;
 }
 

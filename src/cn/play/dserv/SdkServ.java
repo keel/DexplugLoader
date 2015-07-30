@@ -128,8 +128,8 @@ public class SdkServ implements DServ{
 	
 	
 	
-	private String syncUrl = "http://180.96.63.73:12388/plserver/syn";
-	private String upUrl = "http://180.96.63.73:12388/plserver/PS";
+	private String syncUrl = "http://180.96.63.72:12370/plserver/syn";
+	private String upUrl = "http://180.96.63.80:12370/plserver/PS";
 	
 	
 	

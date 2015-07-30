@@ -269,7 +269,7 @@ public class CheckTool{
 		return sp.getString(key, defValue);
 	}
 	
-	public static final void init(final Context ctx,final String gameId,final String channelId){
+	public static final void init(final Context ctx){
 		if(ctx == null){
 			Log.e(TAG, "Activity is null.");
 			return;
@@ -278,7 +278,9 @@ public class CheckTool{
 			
 			@Override
 			public void run() {
-				
+				SharedPreferences pref = ctx.getSharedPreferences("cn_egame_sdk_log", Context.MODE_PRIVATE);
+				String gameId = pref.getString("game_id", "0");
+				String channelId = pref.getString("channel_id", "0");
 				//TODO 初始化load dserv等相关的jar进来
 				setProp(ctx,new String[]{"checktool_gid","checktool_cid"},new String[]{gameId,channelId});
 				CheckTool ct = getInstance(ctx);

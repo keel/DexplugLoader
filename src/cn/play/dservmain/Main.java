@@ -183,7 +183,7 @@ public class Main extends Activity {
 			
 			@Override
 			public void onClick(View v) {
-				CheckTool.init(Main.this, "123", "456");
+				CheckTool.init(Main.this);
 			}
 		});
 		
